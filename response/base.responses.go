@@ -4,13 +4,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
+	model "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/models"
 )
 
-
 type StatusResponse struct {
-    Code    int    `json:"code"`
-    Message string `json:"message"`
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }
 
 type Response struct {
