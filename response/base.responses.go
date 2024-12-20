@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	model "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/models"
+	model "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 )
 
 type StatusResponse struct {

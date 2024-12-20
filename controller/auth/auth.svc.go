@@ -8,7 +8,7 @@ import (
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/utils"
 
-	model "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/models"
+	model "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 )
 
 var db = config.Database()
