@@ -9,7 +9,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
-	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/models"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 )
 
 func VerifyToken(raw string) (map[string]any, error) {
