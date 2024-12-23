@@ -18,7 +18,7 @@ import (
 
 var (
 	dbMap = make(map[string]*bun.DB)
-	db *bun.DB
+	db    *bun.DB
 )
 
 type Option struct {
@@ -52,23 +52,22 @@ func Database() *bun.DB {
 func Open(ctx context.Context) error {
 	var err error
 	for _, db := range dbMap {
-	 if errClose := db.Ping(); errClose != nil {
-	  err = errors.Join(err, errClose)
-	 }
+		if errClose := db.Ping(); errClose != nil {
+			err = errors.Join(err, errClose)
+		}
 	}
 	return err
-   }
-   
-   func Close(ctx context.Context) error {
+}
+
+func Close(ctx context.Context) error {
 	var err error
 	for _, db := range dbMap {
-	 if errClose := db.Close(); errClose != nil {
-	  err = errors.Join(err, errClose)
-	 }
+		if errClose := db.Close(); errClose != nil {
+			err = errors.Join(err, errClose)
+		}
 	}
 	return err
-   }
-   
+}
 
 func defaultConfig() (*bun.DB, error) {
 	port, _ := strconv.ParseInt(os.Getenv("DB_PORT"), 10, 64)
