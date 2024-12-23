@@ -9,7 +9,7 @@ type Products struct {
 	Name     string `bun:"name"`
 	Price    int64  `bun:"price"`
 	Details  string `bun:"details"`
-	stock    int64  `bun:"stock"`
+	// stock    int64  `bun:"stock"`
 	Image string `bun:"image"`
 
 	CreateUnixTimestamp
