@@ -7,6 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/cmd"
 	config "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/users"
+	// "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/middlewares"
 	"github.com/spf13/cobra"
 )
 
@@ -27,6 +29,12 @@ func main() {
 		AllowWebSockets:        true,
 		AllowFiles:             false,
 	}))
+
+	// md := middlewares.AuthMiddleware()
+
+	// User
+	r.POST("/user/create", users.CreateUser)
+	r.GET("/user/:id", users.GetUserByID)
 
 	
 
