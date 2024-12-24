@@ -7,10 +7,13 @@ type Products struct {
 
 	Id       int64  `bun:",type:serial,autoincrement,pk"`
 	Name     string `bun:"name"`
-	Price    int64  `bun:"price"`
-	Details  string `bun:"details"`
-	// stock    int64  `bun:"stock"`
+	Price    float64  `bun:"price"`
+	Detail  string `bun:"detail"`
+	Stock    int64  `bun:"stock"`
 	Image string `bun:"image"`
+	Category_id int64 `bun:"category_id"`
 
 	CreateUnixTimestamp
+	UpdateUnixTimestamp
+	SoftDelete
 }

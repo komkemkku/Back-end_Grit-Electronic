@@ -11,4 +11,5 @@ type UserRole struct {
 	Updated_at    int64  `bun:"updated_at"`
 
 	CreateUnixTimestamp
+	UpdateUnixTimestamp
 }

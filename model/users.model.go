@@ -13,4 +13,5 @@ type Users struct {
 	Bank_number string `bun:"bank_number"`
 
 	CreateUnixTimestamp
+	UpdateUnixTimestamp
 }

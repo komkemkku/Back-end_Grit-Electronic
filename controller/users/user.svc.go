@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	config "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
@@ -55,6 +54,7 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*m
 		Bank_number: req.Bank_number,
 	}
 	user.SetCreatedNow()
+	user.SetUpdateNow()
 
 	_, err = db.NewInsert().Model(user).Exec(ctx)
 	if err != nil {
@@ -67,15 +67,14 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*m
 		return nil, errors.New("invalid role_id format: " + err.Error())
 	}
 
-	currentTime := time.Now().Unix()
-
 	// ใช้ roleID ที่แปลงแล้วใน struct
 	userRole := &model.UserRole{
 		User_id:    user.Id,
 		Role_id:    roleID,
-		Created_at: currentTime,
-		Updated_at: currentTime,
 	}
+	userRole.SetCreatedNow()
+	userRole.SetUpdateNow()
+
 	_, err = db.NewInsert().Model(userRole).Exec(ctx)
 	if err != nil {
 		return nil, errors.New("failed to assign role to user: " + err.Error())

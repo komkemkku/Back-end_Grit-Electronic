@@ -7,7 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/cmd"
 	config "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/products"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/users"
+
 	// "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/middlewares"
 	"github.com/spf13/cobra"
 )
@@ -36,7 +38,12 @@ func main() {
 	r.POST("/user/create", users.CreateUser)
 	r.GET("/user/:id", users.GetUserByID)
 
-	
+	// Product
+	r.POST("/product/create", products.CreateProduct)
+	r.GET("/product/:id", products.GetProductByID)
+	r.GET("/product", products.ProductList)
+	r.DELETE("/product/:id", products.DeleteProduct)
+	r.PATCH("/product/:id", products.UpdateProduct)
 
 	r.Run()
 
