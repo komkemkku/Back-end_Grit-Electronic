@@ -8,6 +8,7 @@ import (
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/cmd"
 	config "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/products"
+	systembank "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/system_bank"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/users"
 
 	// "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/middlewares"
@@ -44,6 +45,16 @@ func main() {
 	r.GET("/product", products.ProductList)
 	r.DELETE("/product/:id", products.DeleteProduct)
 	r.PATCH("/product/:id", products.UpdateProduct)
+
+	// Order
+
+	// System bank
+	r.POST("/system/create", systembank.CreateSystembank)
+	r.GET("/system/:id", systembank.GetSystemBankByID)
+	r.GET("/system", systembank.SystemBankList)
+	r.DELETE("/system/:id", systembank.DeleteSystemBank)
+	r.PATCH("/system/:id", systembank.UpdateSystemBank)
+
 
 	r.Run()
 

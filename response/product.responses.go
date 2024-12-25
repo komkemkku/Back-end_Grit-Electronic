@@ -15,4 +15,5 @@ type ProductResponses struct {
 type CategoryResponses struct {
     ID   int64  `json:"id"`
     Name string `json:"name"`
+    
 }
