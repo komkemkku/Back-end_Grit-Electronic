@@ -13,4 +13,5 @@ type SystemBank struct {
 
 	CreateUnixTimestamp
 	UpdateUnixTimestamp
+	SoftDelete
 }

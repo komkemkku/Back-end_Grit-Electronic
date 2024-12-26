@@ -8,6 +8,7 @@ import (
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/cmd"
 	config "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/auth"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/categories"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/products"
 	systembank "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/system_bank"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/users"
@@ -47,13 +48,12 @@ func main() {
 	r.DELETE("/product/:id", products.DeleteProduct)
 	r.PATCH("/product/:id", products.UpdateProduct)
 
-<<<<<<< HEAD
 	//autn
 	r.POST("/auth/login", auth.Login)
 
 	//authadmin
 	//r.POST("/auth/login", auth.Login)
-=======
+
 	// Order
 
 	// System bank
@@ -63,8 +63,13 @@ func main() {
 	r.DELETE("/system/:id", systembank.DeleteSystemBank)
 	r.PATCH("/system/:id", systembank.UpdateSystemBank)
 
+	// Category
+	r.POST("/category/create", categories.CreateCategory)
+	r.GET("/category/:id", categories.GetCategoryByID)
+	r.GET("/category", categories.CategoryList)
+	r.DELETE("/category/:id", categories.DeleteCeategory)
+	r.PATCH("/category/:id", categories.UpdateCategory)
 
->>>>>>> origin/main
 	r.Run()
 
 }
