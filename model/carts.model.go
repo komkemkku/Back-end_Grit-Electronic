@@ -5,10 +5,10 @@ import "github.com/uptrace/bun"
 type Carts struct {
 	bun.BaseModel `bun:"table:carts"`
 
-	Id         int64 `bun:",type:serial,autoincrement,pk"`
+	ID         int64 `bun:",type:serial,autoincrement,pk"`
 	Quantity   int64 `bun:"quantity"`
-	User_id    int64 `bun:"bun:user_id"`
-	Product_id int64 `bun:"bun:product_id"`
+	UserID    int64 `bun:"bun:user_id"`
+	ProductID int64 `bun:"bun:product_id"`
 
 	CreateUnixTimestamp
 }

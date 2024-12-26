@@ -5,14 +5,14 @@ import "github.com/uptrace/bun"
 type Shipments struct {
 	bun.BaseModel `bun:"table:shipments"`
 
-	Id           int64  `bun:",type:serial,autoincrement,pk"`
+	ID           int64  `bun:",type:serial,autoincrement,pk"`
 	Address      string `bun:"address"`
-	Zip_code     string `bun:"zip_code"`
-	Sub_district string `bun:"sub_district"`
+	ZipCode     string `bun:"zip_code"`
+	SubDistrict string `bun:"sub_district"`
 	District     string `bun:"district"`
 	Province     string `bun:"province"`
-	User_id      int64  `bun:"bun:user_id"`
-	Order_id     int64  `bun:"bun:order_id"`
+	UserID      int64  `bun:"bun:user_id"`
+	OrderID     int64  `bun:"bun:order_id"`
 
 	CreateUnixTimestamp
 }
