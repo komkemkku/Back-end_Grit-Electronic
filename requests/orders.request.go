@@ -7,24 +7,24 @@ type OrderRequest struct {
 }
 
 type OrderIdRequest struct {
-	Id int64 `uri:"id"`
+	ID int64 `uri:"id"`
 }
 
 type OrderCreateRequest struct {
-	User_id      int64  `json:"user_id"`
-	Shipment_id  int64  `json:"shipment_id"`
-	Payment_id   int64  `json:"payment_id"`
-	Total_price  int64  `json:"total_price"`
-	Total_amount int64  `json:"total_amount"`
+	UserID       int64  `json:"user_id"`
+	ShipmentID  int64  `json:"shipment_id"`
+	PaymentID   int64  `json:"payment_id"`
+	TotalPrice  int64  `json:"total_price"`
+	TotalAmount int64  `json:"total_amount"`
 	Status       string `json:"status"`
 }
 
 type OrderUpdateRequest struct {
-	Id           int64  `json:"id"`
-	User_id      int64  `json:"user_id"`
-	Shipment_id  int64  `json:"shipment_id"`
-	Payment_id   int64  `json:"payment_id"`
-	Total_price  int64  `json:"total_price"`
-	Total_amount int64  `json:"total_amount"`
+	ID           int64  `json:"id"`
+	UserID       int64  `json:"user_id"`
+	ShipmentID  int64  `json:"shipment_id"`
+	PaymentID   int64  `json:"payment_id"`
+	TotalPrice  int64  `json:"total_price"`
+	TotalAmount int64  `json:"total_amount"`
 	Status       string `json:"status"`
 }

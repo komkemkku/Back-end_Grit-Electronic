@@ -7,20 +7,20 @@ type ImageRequest struct {
 }
 
 type ImageIdRequest struct {
-	Id int64 `uri:"id"`
+	ID int64 `uri:"id"`
 }
 
 type ImageCreateRequest struct {
-	Product_id    int64  `json:"product_id"`
-	Image_product string `json:"image_product"`
-	Review_id     int64  `json:"review_id"`
-	Image_review  string `json:"image_review"`
+	ProductID    int64  `json:"product_id"`
+	ImageProduct string `json:"image_product"`
+	ReviewID     int64  `json:"review_id"`
+	ImageReview  string `json:"image_review"`
 }
 
 type ImageUpdateRequest struct {
-	Id            int64  `json:"id"`
-	Product_id    int64  `json:"product_id"`
-	Image_product string `json:"image_product"`
-	Review_id     int64  `json:"review_id"`
-	Image_review  string `json:"image_review"`
+	ID            int64  `json:"id"`
+	ProductID    int64  `json:"product_id"`
+	ImageProduct string `json:"image_product"`
+	ReviewID     int64  `json:"review_id"`
+	ImageReview  string `json:"image_review"`
 }

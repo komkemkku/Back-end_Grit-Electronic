@@ -7,5 +7,5 @@ type ReportRequest struct {
 }
 
 type ReportIdRequest struct {
-	Id int64 `uri:"id"`
+	ID int64 `uri:"id"`
 }

@@ -7,7 +7,7 @@ type ProductRequest struct {
 }
 
 type ProductIdRequest struct {
-	Id int64 `uri:"id"`
+	ID int64 `uri:"id"`
 }
 
 type ProductCreateRequest struct {
@@ -16,7 +16,7 @@ type ProductCreateRequest struct {
 	Detail  string `json:"detail"`
 	Stock int64 `json:"stock"`
 	Image string `json:"image"`
-	Category_id int64 `json:"category_id"`
+	CategoryID int64 `json:"category_id"`
 }
 
 type ProductUpdateRequest struct {
@@ -26,5 +26,5 @@ type ProductUpdateRequest struct {
 	Detail string `json:"detail"`
 	Stock int64 `json:"stock"`
 	Image string `json:"image"`
-	Category_id int64 `json:"category_id"`
+	CategoryID int64 `json:"category_id"`
 }
