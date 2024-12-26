@@ -7,8 +7,8 @@ func Models() []any {
 
 		// (*models.Users)(nil),
 		// (*model.Products)(nil),
-		// (*model.Category)(nil),
-		(*model.SystemBank)(nil),
+		(*model.Category)(nil),
+		// (*model.SystemBank)(nil),
 	}
 }
 

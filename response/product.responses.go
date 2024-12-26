@@ -11,9 +11,3 @@ type ProductResponses struct {
     Created_at int64              `json:"created_at"`
     Updated_at int64              `json:"updated_at"`
 }
-
-type CategoryResponses struct {
-    ID   int64  `json:"id"`
-    Name string `json:"name"`
-    
-}
