@@ -70,6 +70,11 @@ func main() {
 	r.DELETE("/category/:id", categories.DeleteCeategory)
 	r.PATCH("/category/:id", categories.UpdateCategory)
 
+	//autn
+	r.POST("/auth/login", auth.Login)
+
+	//authadmin
+	//r.POST("/auth/login", auth.Login)
 	r.Run()
 
 }
