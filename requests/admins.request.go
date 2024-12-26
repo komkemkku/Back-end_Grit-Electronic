@@ -7,16 +7,16 @@ type AdminRequest struct {
 }
 
 type AdminIdRequest struct {
-	Id int64 `uri:"id"`
+	ID int64 `uri:"id"`
 }
 
 type AdminCreateRequest struct {
-	User_id int64 `json:"user_id"`
-	Role_id int64 `json:"role_id"`
+	UserID int64 `json:"user_id"`
+	RoleID int64 `json:"role_id"`
 }
 
 type AdminUpdateRequest struct {
-	Id       int64  `json:"id"`
-	User_id int64 `json:"user_id"`
-	Role_id int64 `json:"role_id"`
+	ID       int64  `json:"id"`
+	UserID int64 `json:"user_id"`
+	RoleID int64 `json:"role_id"`
 }

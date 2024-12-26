@@ -7,7 +7,7 @@ type UserRequest struct {
 }
 
 type UserIdRequest struct {
-	Id int64 `uri:"id"`
+	ID int64 `uri:"id"`
 }
 
 type UserCreateRequest struct {
@@ -15,8 +15,8 @@ type UserCreateRequest struct {
 	Password    string `json:"password"`
 	Email       string `json:"email"`
 	Phone       string `json:"phone"`
-	Bank_number string `json:"bank_number"`
-	Role_id     string `json:"role_id"`
+	BankNumber string `json:"bank_number"`
+	RoleID     string `json:"role_id"`
 }
 
 type UserUpdateRequest struct {
@@ -24,6 +24,6 @@ type UserUpdateRequest struct {
 	Username    string `json:"username"`
 	Email       string `json:"email"`
 	Phone       string `json:"phone"`
-	Bank_number string `json:"bank_number"`
-	Role_id     string `json:"role_id"`
+	BankNumber string `json:"bank_number"`
+	RoleID     string `json:"role_id"`
 }

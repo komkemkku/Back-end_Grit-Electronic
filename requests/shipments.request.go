@@ -7,28 +7,28 @@ type ShipmentRequest struct {
 }
 
 type ShipmentIdRequest struct {
-	Id int64 `uri:"id"`
+	ID int64 `uri:"id"`
 }
 
 type ShipmentCreateRequest struct {
 	Address      string `json:"address"`
-	Zip_code     string `json:"zip_code"`
-	Sub_district string `json:"sub_district"`
+	ZipCode     string `json:"zip_code"`
+	SubDistrict string `json:"sub_district"`
 	District     string `json:"district"`
 	Province     string `json:"province"`
-	User_id      string `json:"user_id"`
-	Order_id     string `json:"order_id"`
+	UserID      string `json:"user_id"`
+	OrderID     string `json:"order_id"`
 	Status       string `json:"status"`
 }
 
 type ShipmentUpdateRequest struct {
-	Id           string `json:"id"`
+	ID           string `json:"id"`
 	Address      string `json:"address"`
-	Zip_code     string `json:"zip_code"`
-	Sub_district string `json:"sub_district"`
+	ZipCode     string `json:"zip_code"`
+	SubDistrict string `json:"sub_district"`
 	District     string `json:"district"`
 	Province     string `json:"province"`
-	User_id      string `json:"user_id"`
-	Order_id     string `json:"order_id"`
+	UserID      string `json:"user_id"`
+	OrderID     string `json:"order_id"`
 	Status       string `json:"status"`
 }

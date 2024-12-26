@@ -7,16 +7,16 @@ type WishlistRequest struct {
 }
 
 type WishlistIdRequest struct {
-	ProductId int64 `uri:"product_id"`
+	ProductID int64 `uri:"product_id"`
 }
 
 type WishlistAddRequest struct {
-	Product_id int64 `json:"product_id"`
-	User_id    int64 `json:"user_id"`
+	ProductID int64 `json:"product_id"`
+	UserID    int64 `json:"user_id"`
 }
 
 type WishlistUpdateRequest struct {
-	Id         int64 `json:"id"`
-	Product_id int64 `json:"product_id"`
-	User_id    int64 `json:"user_id"`
+	ID         int64 `json:"id"`
+	ProductID int64 `json:"product_id"`
+	UserID    int64 `json:"user_id"`
 }

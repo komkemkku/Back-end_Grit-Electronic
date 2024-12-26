@@ -7,11 +7,11 @@ type RolePermissionRequest struct {
 }
 
 type RolePermissionIdRequest struct {
-	Id int64 `uri:"id"`
+	ID int64 `uri:"id"`
 }
 
 type RolePremissionUpdateRequest struct {
-	Id           int64  `json:"id"`
-	Role_id       string `json:"role_id"`
-	Permission_id string `json:"permission_id"`
+	ID           int64  `json:"id"`
+	RoleID       string `json:"role_id"`
+	PermissionID string `json:"permission_id"`
 }

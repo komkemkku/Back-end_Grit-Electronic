@@ -7,20 +7,20 @@ type SystemBankRequest struct {
 }
 
 type SystemBankIdRequest struct {
-	Id int64 `uri:"id"`
+	ID int64 `uri:"id"`
 }
 
 type SystemBankCreateRequest struct {
-	Bank_name      string `json:"bank_name"`
-	Account_name   string `json:"account_name"`
-	Account_number string `json:"account_number"`
+	BankName      string `json:"bank_name"`
+	AccountName   string `json:"account_name"`
+	AccountNumber string `json:"account_number"`
 	Image          string `json:"image"`
 }
 
 type SystemBankUpdateRequest struct {
 	Id             int64  `json:"id"`
-	Bank_name      string `json:"bank_name"`
-	Account_name   string `json:"account_name"`
-	Account_number string `json:"account_number"`
+	BankName      string `json:"bank_name"`
+	AccountName   string `json:"account_name"`
+	AccountNumber string `json:"account_number"`
 	Image          string `json:"image"`
 }
