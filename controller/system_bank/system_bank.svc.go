@@ -67,9 +67,9 @@ func CreateSystemBankService(ctx context.Context, req requests.SystemBankCreateR
 
 	// เพิ่มเลขบัญชีระบบ
 	systembank := &model.SystemBank{
-		BankName:      req.Bank_name,
-		AccountName:   req.Account_name,
-		AccountNumber: req.Account_number,
+		BankName:      req.BankName,
+		AccountName:   req.AccountName,
+		AccountNumber: req.AccountNumber,
 		Image:          req.Image,
 	}
 	systembank.SetCreatedNow()
@@ -99,9 +99,9 @@ func UpdateSystembankService(ctx context.Context, id int64, req requests.SystemB
 	if err != nil {
 		return nil, err
 	}
-	systembank.BankName = req.Bank_name
-	systembank.AccountName = req.Account_name
-	systembank.AccountNumber = req.Account_number
+	systembank.BankName = req.BankName
+	systembank.AccountName = req.AccountName
+	systembank.AccountNumber = req.AccountNumber
 	systembank.Image = req.Image
 	systembank.SetUpdateNow()
 

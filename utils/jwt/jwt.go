@@ -46,12 +46,12 @@ func GenerateToken(ctx context.Context, user *model.Users) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 
 		"sub": jwt.MapClaims{
-			"id":     user.Id,
+			"id":     user.ID,
 			"username":   user.Username,
 			"password": user.Password,
 			"email":  user.Email,
 			"phone": user.Phone,
-			"bank_number": user.Bank_number,
+			"bank_number": user.BankNumber,
 		},
 		"nbf": time.Now().Unix(),
 		"exp": time.Now().Add(tokenDuration).Unix(),

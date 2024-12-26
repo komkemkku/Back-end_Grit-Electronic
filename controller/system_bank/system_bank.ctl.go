@@ -29,7 +29,7 @@ func DeleteSystemBank(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	err := DeleteSystemBankService(c, id.Id)
+	err := DeleteSystemBankService(c, id.ID)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -45,7 +45,7 @@ func GetSystemBankByID(c *gin.Context) {
 		return
 	}
 
-	data, err := GetByIdSystemBankService(c, id.Id)
+	data, err := GetByIdSystemBankService(c, id.ID)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -89,7 +89,7 @@ func UpdateSystemBank(c *gin.Context) {
 		return
 	}
 
-	data, err := UpdateSystembankService(c, id.Id, req)
+	data, err := UpdateSystembankService(c, id.ID, req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return

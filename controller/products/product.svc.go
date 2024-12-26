@@ -72,7 +72,7 @@ func GetByIdProductService(ctx context.Context, id int64) (*response.ProductResp
 func CreateProductService(ctx context.Context, req requests.ProductCreateRequest) (*model.Products, error) {
 
 	// ตรวจสอบว่า category_id มีอยู่ในระบบหรือไม่
-	ex, err := db.NewSelect().TableExpr("categories").Where("id =?", req.Category_id).Exists(ctx)
+	ex, err := db.NewSelect().TableExpr("categories").Where("id =?", req.CategoryID).Exists(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func CreateProductService(ctx context.Context, req requests.ProductCreateRequest
 		Detail:      req.Detail,
 		Stock:       req.Stock,
 		Image:       req.Image,
-		CategoryID: req.Category_id,
+		CategoryID: req.CategoryID,
 	}
 	product.SetCreatedNow()
 	product.SetUpdateNow()
@@ -121,7 +121,7 @@ func UpdateProductService(ctx context.Context, id int64, req requests.ProductUpd
 	product.Detail = req.Detail
 	product.Stock = req.Stock
 	product.Image = req.Image
-	product.CategoryID = req.Category_id
+	product.CategoryID = req.CategoryID
 	product.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(product).Where("id = ?", id).Exec(ctx)

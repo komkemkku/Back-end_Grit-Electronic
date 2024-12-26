@@ -24,7 +24,7 @@ func GetUserByID(c *gin.Context) {
 		return
 	}
 
-	data, err := GetByIdUserService(c, id.Id)
+	data, err := GetByIdUserService(c, id.ID)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -33,11 +33,11 @@ func GetUserByID(c *gin.Context) {
 }
 
 func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*model.Users, error) {
-	if req.Role_id == "" {
-		req.Role_id = DefaultRoleID
+	if req.RoleID == "" {
+		req.RoleID = DefaultRoleID
 	}
 
-	ex, err := db.NewSelect().TableExpr("roles").Where("id =?", req.Role_id).Exists(ctx)
+	ex, err := db.NewSelect().TableExpr("roles").Where("id =?", req.RoleID).Exists(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*m
 		Password:    hashpassword,
 		Email:       req.Email,
 		Phone:       req.Phone,
-		BankNumber: req.Bank_number,
+		BankNumber: req.BankNumber,
 	}
 	user.SetCreatedNow()
 	user.SetUpdateNow()
@@ -62,7 +62,7 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*m
 	}
 
 	// แปลง req.Role_id จาก string เป็น int64
-	roleID, err := strconv.ParseInt(req.Role_id, 10, 64)
+	roleID, err := strconv.ParseInt(req.RoleID, 10, 64)
 	if err != nil {
 		return nil, errors.New("invalid role_id format: " + err.Error())
 	}
