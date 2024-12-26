@@ -38,3 +38,32 @@ func LoginService(ctx context.Context, req requests.LoginRequest) (*model.Users,
 
 	return user, nil
 }
+
+//func LoginAdmin(ctx context.Context, req requests.LoginRequest) (*model.Admin, error) {
+	//ex, err := db.NewSelect().TableExpr("users").Where("email = ?", req.Email).Exists(ctx)
+	//if err != nil {
+		//return nil, err
+	//}
+
+	//if !ex {
+		//return nil, errors.New("email or password not found")
+	//}
+
+	//admin := &model.Admin{}
+
+	//err = db.NewSelect().Model(admin).Where("email =?", req.Email).Scan(ctx)
+	//if err != nil {
+		//return nil, err
+	//}
+
+	//bool := utils.CheckPasswordHash(req.Password, admin.Password)
+
+	//if !bool {
+		//return nil, errors.New("email or password not found")
+	//}
+
+	//return admin, nil
+//}
+
+
+

@@ -29,3 +29,4 @@ func Login(c *gin.Context) {
 	}
 	response.Success(c, token)
 }
+

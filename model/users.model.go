@@ -15,3 +15,15 @@ type Users struct {
 	CreateUnixTimestamp
 	UpdateUnixTimestamp
 }
+
+type Admin struct {
+	bun.BaseModel `bun:"table:users"`
+
+	Id          int64  `bun:",type:serial,autoincrement,pk"`
+	Username    string `bun:"username"`
+	Password    string `bun:"password"`
+	Email       string `bun:"email"`
+
+	CreateUnixTimestamp
+	UpdateUnixTimestamp
+}
