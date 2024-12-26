@@ -87,7 +87,7 @@ func CreateProductService(ctx context.Context, req requests.ProductCreateRequest
 		Detail:      req.Detail,
 		Stock:       req.Stock,
 		Image:       req.Image,
-		Category_id: req.Category_id,
+		CategoryID: req.Category_id,
 	}
 	product.SetCreatedNow()
 	product.SetUpdateNow()
@@ -121,7 +121,7 @@ func UpdateProductService(ctx context.Context, id int64, req requests.ProductUpd
 	product.Detail = req.Detail
 	product.Stock = req.Stock
 	product.Image = req.Image
-	product.Category_id = req.Category_id
+	product.CategoryID = req.Category_id
 	product.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(product).Where("id = ?", id).Exec(ctx)

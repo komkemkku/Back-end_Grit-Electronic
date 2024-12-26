@@ -51,7 +51,7 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*m
 		Password:    hashpassword,
 		Email:       req.Email,
 		Phone:       req.Phone,
-		Bank_number: req.Bank_number,
+		BankNumber: req.Bank_number,
 	}
 	user.SetCreatedNow()
 	user.SetUpdateNow()
@@ -69,8 +69,8 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*m
 
 	// ใช้ roleID ที่แปลงแล้วใน struct
 	userRole := &model.UserRole{
-		User_id:    user.Id,
-		Role_id:    roleID,
+		UserID:    user.ID,
+		RoleID:    roleID,
 	}
 	
 
