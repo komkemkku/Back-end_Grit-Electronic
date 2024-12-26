@@ -72,8 +72,7 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*m
 		User_id:    user.Id,
 		Role_id:    roleID,
 	}
-	userRole.SetCreatedNow()
-	userRole.SetUpdateNow()
+	
 
 	_, err = db.NewInsert().Model(userRole).Exec(ctx)
 	if err != nil {

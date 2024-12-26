@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/cmd"
 	config "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/auth"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/products"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/users"
 
@@ -45,6 +46,11 @@ func main() {
 	r.DELETE("/product/:id", products.DeleteProduct)
 	r.PATCH("/product/:id", products.UpdateProduct)
 
+	//autn
+	r.POST("/auth/login", auth.Login)
+
+	//authadmin
+	//r.POST("/auth/login", auth.Login)
 	r.Run()
 
 }

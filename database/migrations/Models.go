@@ -5,9 +5,10 @@ import "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 func Models() []any {
 	return []any{
 
-		// (*models.Users)(nil),
+		//(*model.Users)(nil),
 		// (*model.Products)(nil),
-		(*model.Category)(nil),
+		//(*model.Category)(nil),
+		(*model.Roles)(nil),
 	}
 }
 
