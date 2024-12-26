@@ -14,4 +14,6 @@ type Orders struct {
 	Payment_id   int64  `bun:"bun:payment_id"`
 
 	CreateUnixTimestamp
+	UpdateUnixTimestamp
+	SoftDelete
 }
