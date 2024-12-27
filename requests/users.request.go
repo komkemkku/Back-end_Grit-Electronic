@@ -11,19 +11,19 @@ type UserIdRequest struct {
 }
 
 type UserCreateRequest struct {
-	Username    string `json:"username"`
-	Password    string `json:"password"`
-	Email       string `json:"email"`
-	Phone       string `json:"phone"`
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+	Email      string `json:"email"`
+	Phone      string `json:"phone"`
 	BankNumber string `json:"bank_number"`
 	RoleID     string `json:"role_id"`
 }
 
 type UserUpdateRequest struct {
-	Id          int64  `json:"id"`
-	Username    string `json:"username"`
-	Email       string `json:"email"`
-	Phone       string `json:"phone"`
+	Id         int64  `json:"id"`
+	Username   string `json:"username"`
+	Email      string `json:"email"`
+	Phone      string `json:"phone"`
 	BankNumber string `json:"bank_number"`
 	RoleID     string `json:"role_id"`
 }
