@@ -7,20 +7,20 @@ type ReviewRequest struct {
 }
 
 type ReviewIdRequest struct {
-	ID int64 `uri:"id"`
+	Id int64 `uri:"id"`
 }
 
 type ReviewCreateRequest struct {
-	ReviewText string `json:"review_text"`
+	Review_text string `json:"review_text"`
 	Rating      int64  `json:"rating"`
-	ProductID  int64  `json:"product_id"`
-	UserId      int64  `json:"user_id"`
+	Product_id  int64  `json:"product_id"`
+	User_id     int64  `json:"user_id"`
 }
 
 type ReviewUpdateRequest struct {
-	ID          int64  `json:"id"`
-	ReviewText string `json:"review_text"`
+	Id          int64  `json:"id"`
+	Review_text string `json:"review_text"`
 	Rating      int64  `json:"rating"`
-	ProductID  int64  `json:"product_id"`
-	UserId      int64  `json:"user_id"`
+	Product_id  int64  `json:"product_id"`
+	User_id     int64  `json:"user_id"`
 }

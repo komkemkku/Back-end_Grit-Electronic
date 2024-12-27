@@ -16,7 +16,7 @@ type AdminCreateRequest struct {
 }
 
 type AdminUpdateRequest struct {
-	ID       int64  `json:"id"`
+	ID     int64 `json:"id"`
 	UserID int64 `json:"user_id"`
 	RoleID int64 `json:"role_id"`
 }
