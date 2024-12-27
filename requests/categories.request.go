@@ -11,12 +11,12 @@ type CategoryIdRequest struct {
 }
 
 type CategoryCreateRequest struct {
-	Name string `json:"name"`
+	Name  string `json:"name"`
 	Image string `json:"image"`
 }
 
 type CategoryUpdateRequest struct {
-    ID     int64  `json:"id"`
-    Name   string `json:"name"`
-    Image string `json:"image"`
+	ID    int64  `json:"id"`
+	Name  string `json:"name"`
+	Image string `json:"image"`
 }

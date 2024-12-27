@@ -14,13 +14,13 @@ type SystemBankCreateRequest struct {
 	BankName      string `json:"bank_name"`
 	AccountName   string `json:"account_name"`
 	AccountNumber string `json:"account_number"`
-	Image          string `json:"image"`
+	Image         string `json:"image"`
 }
 
 type SystemBankUpdateRequest struct {
-	Id             int64  `json:"id"`
+	ID            int64  `json:"id"`
 	BankName      string `json:"bank_name"`
 	AccountName   string `json:"account_name"`
 	AccountNumber string `json:"account_number"`
-	Image          string `json:"image"`
+	Image         string `json:"image"`
 }

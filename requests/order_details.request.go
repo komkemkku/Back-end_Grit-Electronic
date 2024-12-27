@@ -11,18 +11,18 @@ type OrderDetailIdRequest struct {
 }
 
 type OrderDetailCreateRequest struct {
-	Quantity    int64   `json:"quantity"`
-	ProductID   int64   `json:"product_id"`
-	OrderID     int64   `json:"order_id"`
+	Quantity   int64   `json:"quantity"`
+	ProductID  int64   `json:"product_id"`
+	OrderID    int64   `json:"order_id"`
 	UnitPrice  float64 `json:"unit_price"`
 	TotalPrice int64   `json:"total_price"`
 }
 
 type OrderDetailUpdateRequest struct {
-	Id          string  `json:"id"`
-	Quantity    int64   `json:"quantity"`
-	ProductID   int64   `json:"product_id"`
-	OrderID     int64   `json:"order_id"`
+	Id         string  `json:"id"`
+	Quantity   int64   `json:"quantity"`
+	ProductID  int64   `json:"product_id"`
+	OrderID    int64   `json:"order_id"`
 	UnitPrice  float64 `json:"unit_price"`
 	TotalPrice int64   `json:"total_price"`
 }

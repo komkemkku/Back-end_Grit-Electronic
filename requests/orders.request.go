@@ -11,20 +11,20 @@ type OrderIdRequest struct {
 }
 
 type OrderCreateRequest struct {
-	UserID       int64  `json:"user_id"`
+	UserID      int64  `json:"user_id"`
 	ShipmentID  int64  `json:"shipment_id"`
 	PaymentID   int64  `json:"payment_id"`
 	TotalPrice  int64  `json:"total_price"`
 	TotalAmount int64  `json:"total_amount"`
-	Status       string `json:"status"`
+	Status      string `json:"status"`
 }
 
 type OrderUpdateRequest struct {
-	ID           int64  `json:"id"`
-	UserID       int64  `json:"user_id"`
+	ID          int64  `json:"id"`
+	UserID      int64  `json:"user_id"`
 	ShipmentID  int64  `json:"shipment_id"`
 	PaymentID   int64  `json:"payment_id"`
 	TotalPrice  int64  `json:"total_price"`
 	TotalAmount int64  `json:"total_amount"`
-	Status       string `json:"status"`
+	Status      string `json:"status"`
 }
