@@ -11,12 +11,16 @@ type AdminIdRequest struct {
 }
 
 type AdminCreateRequest struct {
-	UserID int64 `json:"user_id"`
-	RoleID int64 `json:"role_id"`
+	Name     string  `json:"name"`
+	Password string `json:"password"`
+	Email    string `json:"email"`
+	RoleID   int64  `json:"role_id"`
 }
 
 type AdminUpdateRequest struct {
-	ID     int64 `json:"id"`
-	UserID int64 `json:"user_id"`
-	RoleID int64 `json:"role_id"`
+	ID       int64  `json:"id"`
+	Name     string  `json:"usnameer_id"`
+	Password string `json:"password"`
+	Email    string `json:"email"`
+	RoleID   int64  `json:"role_id"`
 }
