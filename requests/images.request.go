@@ -18,7 +18,7 @@ type ImageCreateRequest struct {
 }
 
 type ImageUpdateRequest struct {
-	ID            int64  `json:"id"`
+	ID           int64  `json:"id"`
 	ProductID    int64  `json:"product_id"`
 	ImageProduct string `json:"image_product"`
 	ReviewID     int64  `json:"review_id"`

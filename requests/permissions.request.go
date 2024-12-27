@@ -12,7 +12,7 @@ type PermissionIdRequest struct {
 
 type PermissionUpdateRequest struct {
 	Id          int64  `json:"id"`
-	GroupName  string `json:"group_name"`
+	GroupName   string `json:"group_name"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }

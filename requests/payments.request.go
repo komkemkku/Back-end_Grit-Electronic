@@ -11,20 +11,20 @@ type PaymentIdRequest struct {
 }
 
 type PaymentCreateRequest struct {
-	Price    int64  `json:"price"`
-	Amount   int64  `json:"amount"`
-	Status   string `json:"status"`
-	Slip     string `json:"slip"`
-	UserID   int64  `json:"user_id"`
+	Price   int64  `json:"price"`
+	Amount  int64  `json:"amount"`
+	Status  string `json:"status"`
+	Slip    string `json:"slip"`
+	UserID  int64  `json:"user_id"`
 	OrderID int64  `json:"order_id"`
 }
 
 type PaymentUpdateRequest struct {
-	Id       int64  `json:"id"`
-	Price    int64  `json:"price"`
-	Amount   int64  `json:"amount"`
-	Status   string `json:"status"`
-	Slip     string `json:"slip"`
-	UserID   int64  `json:"user_id"`
+	Id      int64  `json:"id"`
+	Price   int64  `json:"price"`
+	Amount  int64  `json:"amount"`
+	Status  string `json:"status"`
+	Slip    string `json:"slip"`
+	UserID  int64  `json:"user_id"`
 	OrderID int64  `json:"order_id"`
 }
