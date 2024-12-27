@@ -9,9 +9,3 @@ type UserResponses struct {
 	Create_at   int64         `json:"create_at"`
 	Role        RoleResponses `json:"role"`
 }
-
-type RoleResponses struct {
-	Id        int64  `json:"id"`
-	Name      string `json:"name"`
-	Create_at int64  `json:"create_at"`
-}
