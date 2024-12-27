@@ -48,11 +48,9 @@ func main() {
 	r.DELETE("/product/:id", products.DeleteProduct)
 	r.PATCH("/product/:id", products.UpdateProduct)
 
-	//autn
-	r.POST("/auth/login", auth.Login)
-
-	//authadmin
-	//r.POST("/auth/login", auth.Login)
+	//auth
+	r.POST("/auth/login", auth.LoginUser)
+	// r.POST("/auth/login/admin", auth.LoginAdmin)
 
 	// Order
 
@@ -70,11 +68,6 @@ func main() {
 	r.DELETE("/category/:id", categories.DeleteCeategory)
 	r.PATCH("/category/:id", categories.UpdateCategory)
 
-	//autn
-	r.POST("/auth/login", auth.Login)
-
-	//authadmin
-	//r.POST("/auth/login", auth.Login)
 	r.Run()
 
 }

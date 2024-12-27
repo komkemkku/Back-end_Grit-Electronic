@@ -35,7 +35,7 @@ func VerifyToken(raw string) (map[string]any, error) {
 	return nil, errors.New("invalid token claims")
 }
 
-func GenerateToken(ctx context.Context, user *model.Users) (string, error) {
+func GenerateTokenUser(ctx context.Context, user *model.Users) (string, error) {
 	godotenv.Load()
 	tokenDurationStr := os.Getenv("TOKEN_DURATION_USER")
 	tokenDuration, err := time.ParseDuration(tokenDurationStr)
@@ -46,11 +46,11 @@ func GenerateToken(ctx context.Context, user *model.Users) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 
 		"sub": jwt.MapClaims{
-			"id":     user.ID,
-			"username":   user.Username,
-			"password": user.Password,
-			"email":  user.Email,
-			"phone": user.Phone,
+			"id":          user.ID,
+			"username":    user.Username,
+			"password":    user.Password,
+			"email":       user.Email,
+			"phone":       user.Phone,
 			"bank_number": user.BankNumber,
 		},
 		"nbf": time.Now().Unix(),
@@ -58,6 +58,35 @@ func GenerateToken(ctx context.Context, user *model.Users) (string, error) {
 	})
 
 	secret := []byte(os.Getenv("TOKEN_SECRET_USER"))
+	tokenString, err := token.SignedString(secret)
+	if err != nil {
+		log.Printf("[error]: %v", err)
+		return "", err
+	}
+	return tokenString, nil
+}
+
+func GenerateTokenAdmin(ctx context.Context, admin *model.Admins) (string, error) {
+	godotenv.Load()
+	tokenDurationStr := os.Getenv("TOKEN_DURATION_AMIN")
+	tokenDuration, err := time.ParseDuration(tokenDurationStr)
+	if err != nil {
+		log.Printf("[error]: %v", err)
+		return "", err
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+
+		"sub": jwt.MapClaims{
+			"id":       admin.ID,
+			"name":     admin.Name,
+			"password": admin.Password,
+			"email":    admin.Email,
+		},
+		"nbf": time.Now().Unix(),
+		"exp": time.Now().Add(tokenDuration).Unix(),
+	})
+
+	secret := []byte(os.Getenv("TOKEN_DURATION_AMIN"))
 	tokenString, err := token.SignedString(secret)
 	if err != nil {
 		log.Printf("[error]: %v", err)
