@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/cmd"
 	config "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/admins"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/auth"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/categories"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/products"
@@ -53,6 +54,13 @@ func main() {
 	// r.POST("/auth/login/admin", auth.LoginAdmin)
 
 	// Order
+
+	// Admin
+	r.POST("/admin/create", admins.CreateAdmin)
+	r.GET("/admin/:id", admins.GetAdminByID)
+	r.GET("/admin", admins.AdmintList)
+	r.DELETE("/admin/:id", admins.DeleteAdmin)
+	r.PATCH("/admin/:id", admins.UpdateAdmin)
 
 	// System bank
 	r.POST("/system/create", systembank.CreateSystembank)

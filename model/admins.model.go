@@ -12,4 +12,5 @@ type Admins struct {
 	RoleID   int64  `bun:"role_id"`
 
 	CreateUnixTimestamp
+	UpdateUnixTimestamp
 }
