@@ -11,16 +11,22 @@ type PaymentIdRequest struct {
 }
 
 type PaymentCreateRequest struct {
-	Price   int64  `json:"price"`
-	Amount  int64  `json:"amount"`
-	Status  string `json:"status"`
-	Slip    string `json:"slip"`
+	Price         int64  `json:"price"`
+	Amount        int64  `json:"amount"`
+	Status        string `json:"status"`
+	Slip          string `json:"slip"`
+	BankName      string `json:"bank_name"`
+	AccountName   string `json:"account_name"`
+	AccountNumber string `json:"account_number"`
 }
 
 type PaymentUpdateRequest struct {
-	Id      int64  `json:"id"`
-	Price   int64  `json:"price"`
-	Amount  int64  `json:"amount"`
-	Status  string `json:"status"`
-	Slip    string `json:"slip"`
+	Id            int64  `json:"id"`
+	Price         int64  `json:"price"`
+	Amount        int64  `json:"amount"`
+	Status        string `json:"status"`
+	Slip          string `json:"slip"`
+	BankName      string `json:"bank_name"`
+	AccountName   string `json:"account_name"`
+	AccountNumber string `json:"account_number"`
 }

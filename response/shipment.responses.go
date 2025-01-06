@@ -2,6 +2,8 @@ package response
 
 type ShipmentResponses struct {
 	ID          int64  `json:"id"`
+	Firstname   string `json:"firstname"`
+	Lastname    string `json:"lastname"`
 	Address     string `json:"address"`
 	ZipCode     string `json:"zip_code"`
 	SubDistrict string `json:"sub_district"`

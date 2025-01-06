@@ -51,7 +51,6 @@ func GenerateTokenUser(ctx context.Context, user *model.Users) (string, error) {
 			"password":    user.Password,
 			"email":       user.Email,
 			"phone":       user.Phone,
-			"bank_number": user.BankNumber,
 		},
 		"nbf": time.Now().Unix(),
 		"exp": time.Now().Add(tokenDuration).Unix(),

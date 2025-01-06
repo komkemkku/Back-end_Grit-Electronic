@@ -46,8 +46,6 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*m
 		Password:   hashpassword,
 		Email:      req.Email,
 		Phone:      req.Phone,
-		BankNumber: req.BankNumber,
-		BankName:   req.BankName,
 	}
 	user.SetCreatedNow()
 	user.SetUpdateNow()

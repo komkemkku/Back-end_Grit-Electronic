@@ -3,6 +3,8 @@ package orders
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strconv"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
@@ -66,15 +68,20 @@ func GetByIdOrderService(ctx context.Context, id int64) (*response.OrderResponse
 
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
 
+	statusInt, err := strconv.Atoi(req.Status)
+	if err != nil {
+        return nil, fmt.Errorf("invalid status value: %v", err) // จัดการข้อผิดพลาด
+    }
+
 	order := &model.Orders{
 		TotalPrice:  float64(req.TotalPrice),
-		TotalAmount: req.TotalAmount,
-		Status:      req.Status,
+		TotalAmount: int(req.TotalAmount),
+		Status:      statusInt,
 	}
 	order.SetCreatedNow()
 	order.SetUpdateNow()
 
-	_, err := db.NewInsert().Model(order).Exec(ctx)
+	_, err = db.NewInsert().Model(order).Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -94,13 +101,16 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 
 	order := &model.Orders{}
 
+	statusInt, err := strconv.Atoi(req.Status)
+
+
 	err = db.NewSelect().Model(order).Where("id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
 	order.TotalPrice = float64(req.TotalPrice)
-	order.TotalAmount = req.TotalAmount
-	order.Status = req.Status
+	order.TotalAmount = int(req.TotalAmount)
+	order.Status = statusInt
 	order.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(order).Where("id = ?", id).Exec(ctx)
