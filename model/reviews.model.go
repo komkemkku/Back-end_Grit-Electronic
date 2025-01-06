@@ -8,8 +8,9 @@ type Reviews struct {
 	ID          int64  `bun:",type:serial,autoincrement,pk"`
 	ReviewText string `bun:"review_text"`
 	Rating      string `bun:"rating"`
-	UserID     int64  `bun:"bun:user_id"`
 	ProductID  int64  `bun:"bun:product_id"`
 
 	CreateUnixTimestamp
+	UpdateUnixTimestamp
+	SoftDelete
 }

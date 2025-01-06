@@ -68,7 +68,7 @@ func GenerateTokenUser(ctx context.Context, user *model.Users) (string, error) {
 
 func GenerateTokenAdmin(ctx context.Context, admin *model.Admins) (string, error) {
 	godotenv.Load()
-	tokenDurationStr := os.Getenv("TOKEN_DURATION_AMIN")
+	tokenDurationStr := os.Getenv("TOKEN_DURATION_ADMIN")
 	tokenDuration, err := time.ParseDuration(tokenDurationStr)
 	if err != nil {
 		log.Printf("[error]: %v", err)
@@ -86,7 +86,7 @@ func GenerateTokenAdmin(ctx context.Context, admin *model.Admins) (string, error
 		"exp": time.Now().Add(tokenDuration).Unix(),
 	})
 
-	secret := []byte(os.Getenv("TOKEN_DURATION_AMIN"))
+	secret := []byte(os.Getenv("TOKEN_DURATION_ADMIN"))
 	tokenString, err := token.SignedString(secret)
 	if err != nil {
 		log.Printf("[error]: %v", err)

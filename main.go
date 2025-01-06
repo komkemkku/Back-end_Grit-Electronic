@@ -10,7 +10,10 @@ import (
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/admins"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/auth"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/categories"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/orders"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/payments"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/products"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/shipments"
 	systembank "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/system_bank"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/users"
 
@@ -51,9 +54,16 @@ func main() {
 
 	//auth
 	r.POST("/auth/login", auth.LoginUser)
-	// r.POST("/auth/login/admin", auth.LoginAdmin)
+	r.POST("/auth/login/admin", auth.LoginAdmin)
 
 	// Order
+	r.POST("/order/create", orders.CreateOrder)
+    r.GET("/order/:id", orders.GetOrderByID)
+    r.GET("/order", orders.OrderList)
+    r.DELETE("/order/:id", orders.DeleteOrder)
+    r.PATCH("/order/:id", orders.UpdateOrder)
+
+    // Wishlist
 
 	// Admin
 	r.POST("/admin/create", admins.CreateAdmin)
@@ -75,6 +85,20 @@ func main() {
 	r.GET("/category", categories.CategoryList)
 	r.DELETE("/category/:id", categories.DeleteCeategory)
 	r.PATCH("/category/:id", categories.UpdateCategory)
+
+	// Shipment
+	r.POST("/shipment/create", shipments.CreateShipment)
+	r.GET("/shipment/:id", shipments.GetShipmentByID)
+	r.GET("/shipment", shipments.ShipmenttList)
+	r.DELETE("/shipment/:id", shipments.DeleteShipment)
+	r.PATCH("/shipment/:id", shipments.UpdateShipment)
+
+	// Payment
+	r.POST("/payment/create", payments.CreatePayment)
+	r.GET("/payment/:id", payments.GetPaymentByID)
+	r.GET("/payment", payments.PaymentList)
+	r.DELETE("/payment/:id", payments.DeletePayment)
+	r.PATCH("/payment/:id", payments.UpdatePayment)
 
 	r.Run()
 

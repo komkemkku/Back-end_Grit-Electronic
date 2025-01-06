@@ -15,8 +15,6 @@ type PaymentCreateRequest struct {
 	Amount  int64  `json:"amount"`
 	Status  string `json:"status"`
 	Slip    string `json:"slip"`
-	UserID  int64  `json:"user_id"`
-	OrderID int64  `json:"order_id"`
 }
 
 type PaymentUpdateRequest struct {
@@ -25,6 +23,4 @@ type PaymentUpdateRequest struct {
 	Amount  int64  `json:"amount"`
 	Status  string `json:"status"`
 	Slip    string `json:"slip"`
-	UserID  int64  `json:"user_id"`
-	OrderID int64  `json:"order_id"`
 }

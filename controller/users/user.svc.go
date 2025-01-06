@@ -3,7 +3,6 @@ package users
 import (
 	"context"
 	"errors"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	config "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
@@ -14,8 +13,6 @@ import (
 )
 
 var db = config.Database()
-
-const DefaultRoleID = "3"
 
 func GetUserByID(c *gin.Context) {
 	id := requests.UserIdRequest{}
@@ -33,26 +30,24 @@ func GetUserByID(c *gin.Context) {
 }
 
 func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*model.Users, error) {
-	if req.RoleID == "" {
-		req.RoleID = DefaultRoleID
-	}
 
-	ex, err := db.NewSelect().TableExpr("roles").Where("id =?", req.RoleID).Exists(ctx)
+	// ตรวจสอบว่า Role ID = 3 มีอยู่ในตาราง roles หรือไม่
+	ex, err := db.NewSelect().TableExpr("roles").Where("id = ?", 3).Exists(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if !ex {
-		return nil, errors.New("role not found")
+		return nil, errors.New("default role not found (role_id = 3)")
 	}
 
 	hashpassword, _ := utils.HashPassword(req.Password)
 	user := &model.Users{
-		Username:   req.Username,
-		Password:   hashpassword,
-		Email:      req.Email,
-		Phone:      req.Phone,
+		Username:    req.Username,
+		Password:    hashpassword,
+		Email:       req.Email,
+		Phone:       req.Phone,
 		BankNumber: req.BankNumber,
-		BankName:   req.BankName,
+		BankName: req.BankName,
 	}
 	user.SetCreatedNow()
 	user.SetUpdateNow()
@@ -62,16 +57,10 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*m
 		return nil, err
 	}
 
-	// แปลง req.Role_id จาก string เป็น int64
-	roleID, err := strconv.ParseInt(req.RoleID, 10, 64)
-	if err != nil {
-		return nil, errors.New("invalid role_id format: " + err.Error())
-	}
-
-	// ใช้ roleID ที่แปลงแล้วใน struct
+	// กำหนด Role เป็น 3 โดยอัตโนมัติ
 	userRole := &model.UserRole{
 		UserID: user.ID,
-		RoleID: roleID,
+		RoleID: 3,
 	}
 
 	_, err = db.NewInsert().Model(userRole).Exec(ctx)

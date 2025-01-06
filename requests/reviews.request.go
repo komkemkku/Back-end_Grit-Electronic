@@ -14,7 +14,6 @@ type ReviewCreateRequest struct {
 	Review_text string `json:"review_text"`
 	Rating      int64  `json:"rating"`
 	Product_id  int64  `json:"product_id"`
-	User_id     int64  `json:"user_id"`
 }
 
 type ReviewUpdateRequest struct {
@@ -22,5 +21,4 @@ type ReviewUpdateRequest struct {
 	Review_text string `json:"review_text"`
 	Rating      int64  `json:"rating"`
 	Product_id  int64  `json:"product_id"`
-	User_id     int64  `json:"user_id"`
 }

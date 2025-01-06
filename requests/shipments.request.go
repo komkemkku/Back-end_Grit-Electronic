@@ -11,24 +11,20 @@ type ShipmentIdRequest struct {
 }
 
 type ShipmentCreateRequest struct {
-	Address      string `json:"address"`
+	Address     string `json:"address"`
 	ZipCode     string `json:"zip_code"`
 	SubDistrict string `json:"sub_district"`
-	District     string `json:"district"`
-	Province     string `json:"province"`
-	UserID      string `json:"user_id"`
-	OrderID     string `json:"order_id"`
-	Status       string `json:"status"`
+	District    string `json:"district"`
+	Province    string `json:"province"`
+	Status      string `json:"status"`
 }
 
 type ShipmentUpdateRequest struct {
-	ID           string `json:"id"`
-	Address      string `json:"address"`
+	ID          string `json:"id"`
+	Address     string `json:"address"`
 	ZipCode     string `json:"zip_code"`
 	SubDistrict string `json:"sub_district"`
-	District     string `json:"district"`
-	Province     string `json:"province"`
-	UserID      string `json:"user_id"`
-	OrderID     string `json:"order_id"`
-	Status       string `json:"status"`
+	District    string `json:"district"`
+	Province    string `json:"province"`
+	Status      string `json:"status"`
 }
