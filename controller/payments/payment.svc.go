@@ -3,6 +3,8 @@ package payments
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strconv"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
@@ -24,7 +26,7 @@ func ListPaymentService(ctx context.Context, req requests.PaymentRequest) ([]res
 	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("payments AS p").
-		Column("p.id", "p.price", "p.amount", "p.slip", "p.status", "p.created_at", "p.updated_at")
+		Column("p.id", "p.price", "p.amount", "p.slip", "p.status", "p.bank_name", "p.account_name", "p.account_number", "p.created_at", "p.updated_at")
 
 	if req.Search != "" {
 		query.Where("p.status ILIKE ?", "%"+req.Search+"%")
@@ -55,7 +57,7 @@ func GetByIdPaymentService(ctx context.Context, id int64) (*response.PaymentResp
 	payment := &response.PaymentResponses{}
 
 	err = db.NewSelect().TableExpr("payments AS p").
-		Column("p.id", "p.price", "p.amount", "p.slip", "p.status", "p.created_at", "p.updated_at").
+		Column("p.id", "p.price", "p.amount", "p.slip", "p.status", "p.bank_name", "p.account_name", "p.account_number", "p.created_at", "p.updated_at").
 		Where("p.id = ?", id).Scan(ctx, payment)
 	if err != nil {
 		return nil, err
@@ -65,17 +67,25 @@ func GetByIdPaymentService(ctx context.Context, id int64) (*response.PaymentResp
 
 func CreatePaymentService(ctx context.Context, req requests.PaymentCreateRequest) (*model.Payments, error) {
 
+	statusInt, err := strconv.Atoi(req.Status)
+	if err != nil {
+        return nil, fmt.Errorf("invalid status value: %v", err) // จัดการข้อผิดพลาด
+    }
+
 
 	payment := &model.Payments{
 		Price:    float64(req.Price),
-        Amount:   req.Amount,
+        Amount:   int(req.Amount),
         Slip:     req.Slip,
-        Status:   req.Status,
+        Status:   statusInt,
+		BankName: req.BankName,
+		AccountName: req.AccountName,
+		AccountNumber: req.AccountNumber,
 	}
 	payment.SetCreatedNow()
 	payment.SetUpdateNow()
 
-	_, err := db.NewInsert().Model(payment).Exec(ctx)
+	_, err = db.NewInsert().Model(payment).Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -95,14 +105,19 @@ func UpdatePaymentService(ctx context.Context, id int64, req requests.PaymentUpd
 
 	payment := &model.Payments{}
 
+	statusInt, err := strconv.Atoi(req.Status)
+
 	err = db.NewSelect().Model(payment).Where("id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
 	payment.Price = float64(req.Price)
-	payment.Amount = req.Amount
+	payment.Amount = int(req.Amount)
 	payment.Slip = req.Slip
-	payment.Status = req.Status
+	payment.Status = statusInt
+	payment.BankName = req.BankName
+	payment.AccountName = req.AccountName
+	payment.AccountNumber = req.AccountNumber
 	payment.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(payment).Where("id = ?", id).Exec(ctx)

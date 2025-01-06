@@ -12,19 +12,21 @@ type ProductIdRequest struct {
 
 type ProductCreateRequest struct {
 	Name       string `json:"name"`
-	Price      int64  `json:"price"`
+	Price      int    `json:"price"`
 	Detail     string `json:"detail"`
-	Stock      int64  `json:"stock"`
+	Stock      int    `json:"stock"`
 	Image      string `json:"image"`
-	CategoryID int64  `json:"category_id"`
+	Spec       string `json:"spec"`
+	CategoryID int    `json:"category_id"`
 }
 
 type ProductUpdateRequest struct {
-	Id         int64  `json:"id"`
+	Id         int    `json:"id"`
 	Name       string `json:"name"`
-	Price      int64  `json:"price"`
+	Price      int    `json:"price"`
 	Detail     string `json:"detail"`
-	Stock      int64  `json:"stock"`
+	Stock      int    `json:"stock"`
 	Image      string `json:"image"`
-	CategoryID int64  `json:"category_id"`
+	Spec       string `json:"spec"`
+	CategoryID int    `json:"category_id"`
 }

@@ -3,6 +3,8 @@ package shipments
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strconv"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
@@ -23,8 +25,8 @@ func ListShipmentService(ctx context.Context, req requests.ShipmentRequest) ([]r
 
 	// สร้าง query
 	query := db.NewSelect().
-		TableExpr("shipments AS s").
-		Column("s.id", "s.address", "s.zip_code", "s.sub_district", "s.district", "s.province", "s.status", "s.created_at", "s.updated_at")
+    TableExpr("shipments AS s").
+    Column("s.id", "s.firstname", "s.lastname", "s.address", "s.zip_code", "s.sub_district", "s.district", "s.province", "s.status", "s.created_at", "s.updated_at")
 
 	if req.Search != "" {
 		query.Where("s.zip_code LIKE ?", "%"+req.Search+"%")
@@ -56,7 +58,7 @@ func GetByIdShipmentService(ctx context.Context, id int64) (*response.ShipmentRe
 
 	err = db.NewSelect().
 		TableExpr("shipments AS s").
-		Column("s.id", "s.address", "s.zip_code", "s.sub_district", "s.district", "s.province", "s.status", "s.created_at", "s.updated_at").
+		Column("s.id", "s.firstname", "s.lastname", "s.address", "s.zip_code", "s.sub_district", "s.district", "s.province", "s.status", "s.created_at", "s.updated_at").
 		Where("s.id = ?", id).Scan(ctx, shipment)
 
 	if err != nil {
@@ -67,19 +69,26 @@ func GetByIdShipmentService(ctx context.Context, id int64) (*response.ShipmentRe
 
 func CreateShipmentService(ctx context.Context, req requests.ShipmentCreateRequest) (*model.Shipments, error) {
 
+	statusInt, err := strconv.Atoi(req.Status)
+	if err != nil {
+        return nil, fmt.Errorf("invalid status value: %v", err) // จัดการข้อผิดพลาด
+    }
+
 	// เพิ่ม
 	shipment := &model.Shipments{
+		Firstname: req.Firstname,
+		Lastname:  req.Lastname,
 		Address:     req.Address,
 		ZipCode:     req.ZipCode,
 		SubDistrict: req.SubDistrict,
 		District:    req.District,
 		Province:    req.Province,
-		Status:      req.Status,
+		Status:      statusInt,
 	}
 	shipment.SetCreatedNow()
 	shipment.SetUpdateNow()
 
-	_, err := db.NewInsert().Model(shipment).Exec(ctx)
+	_, err = db.NewInsert().Model(shipment).Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -99,16 +108,23 @@ func UpdateShipmentService(ctx context.Context, id int64, req requests.ShipmentU
 
 	shipment := &model.Shipments{}
 
+	statusInt, err := strconv.Atoi(req.Status)
+	if err!= nil {
+        return nil, fmt.Errorf("invalid status value: %v", err)
+    }
+
 	err = db.NewSelect().Model(shipment).Where("id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
+	shipment.Firstname = req.Firstname
+	shipment.Lastname = req.Lastname
 	shipment.Address = req.Address
 	shipment.ZipCode = req.ZipCode
 	shipment.SubDistrict = req.SubDistrict
 	shipment.District = req.District
 	shipment.Province = req.Province
-	shipment.Status = req.Status
+	shipment.Status = statusInt
 	shipment.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(shipment).Where("id = ?", id).Exec(ctx)
