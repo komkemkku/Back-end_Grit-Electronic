@@ -42,12 +42,12 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*m
 
 	hashpassword, _ := utils.HashPassword(req.Password)
 	user := &model.Users{
-		Username:    req.Username,
-		Password:    hashpassword,
-		Email:       req.Email,
-		Phone:       req.Phone,
+		Username:   req.Username,
+		Password:   hashpassword,
+		Email:      req.Email,
+		Phone:      req.Phone,
 		BankNumber: req.BankNumber,
-		BankName: req.BankName,
+		BankName:   req.BankName,
 	}
 	user.SetCreatedNow()
 	user.SetUpdateNow()
