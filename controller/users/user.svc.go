@@ -47,12 +47,12 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*m
 
 	hashpassword, _ := utils.HashPassword(req.Password)
 	user := &model.Users{
-		Username:    req.Username,
-		Password:    hashpassword,
-		Email:       req.Email,
-		Phone:       req.Phone,
+		Username:   req.Username,
+		Password:   hashpassword,
+		Email:      req.Email,
+		Phone:      req.Phone,
 		BankNumber: req.BankNumber,
-		BankName: req.BankName,
+		BankName:   req.BankName,
 	}
 	user.SetCreatedNow()
 	user.SetUpdateNow()
@@ -70,10 +70,9 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*m
 
 	// ใช้ roleID ที่แปลงแล้วใน struct
 	userRole := &model.UserRole{
-		UserID:    user.ID,
-		RoleID:    roleID,
+		UserID: user.ID,
+		RoleID: roleID,
 	}
-	
 
 	_, err = db.NewInsert().Model(userRole).Exec(ctx)
 	if err != nil {
