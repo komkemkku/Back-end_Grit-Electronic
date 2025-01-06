@@ -17,7 +17,7 @@ type UserCreateRequest struct {
 	Phone      string `json:"phone"`
 	BankNumber string `json:"bank_number"`
 	BankName   string `json:"bank_name"`
-	RoleID     string `json:"role_id"`
+	RoleID     int64 `json:"role_id"`
 }
 
 type UserUpdateRequest struct {
@@ -27,5 +27,5 @@ type UserUpdateRequest struct {
 	Phone      string `json:"phone"`
 	BankNumber string `json:"bank_number"`
 	BankName   string `json:"bank_name"`
-	RoleID     string `json:"role_id"`
+	RoleID     int64 `json:"role_id"`
 }

@@ -12,4 +12,6 @@ type Images struct {
 	ImageReview  string `bun:"image_review"`
 
 	CreateUnixTimestamp
+	UpdateUnixTimestamp
+	SoftDelete
 }

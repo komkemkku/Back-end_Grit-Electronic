@@ -13,4 +13,5 @@ type Admins struct {
 
 	CreateUnixTimestamp
 	UpdateUnixTimestamp
+	SoftDelete
 }

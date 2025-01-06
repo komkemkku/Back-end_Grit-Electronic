@@ -39,31 +39,31 @@ func LoginUserService(ctx context.Context, req requests.LoginRequest) (*model.Us
 	return user, nil
 }
 
-// func LoginAdminService(ctx context.Context, req requests.LoginRequest) (*model.Admins, error) {
-// 	ex, err := db.NewSelect().TableExpr("admins").Where("email = ?", req.Email).Exists(ctx)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func LoginAdminService(ctx context.Context, req requests.LoginRequest) (*model.Admins, error) {
+	ex, err := db.NewSelect().TableExpr("admins").Where("email = ?", req.Email).Exists(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-// 	if !ex {
-// 		return nil, errors.New("email or password not found")
-// 	}
+	if !ex {
+		return nil, errors.New("email or password not found")
+	}
 
-// 	admin := &model.Admins{}
+	admin := &model.Admins{}
 
-// 	err = db.NewSelect().Model(admin).Where("email =?", req.Email).Scan(ctx)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	err = db.NewSelect().Model(admin).Where("email =?", req.Email).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-// 	bool := utils.CheckPasswordHash(req.Password, admin.Password)
+	bool := utils.CheckPasswordHash(req.Password, admin.Password)
 
-// 	if !bool {
-// 		return nil, errors.New("email or password not found")
-// 	}
+	if !bool {
+		return nil, errors.New("email or password not found")
+	}
 
-// 	return admin, nil
-// }
+	return admin, nil
+}
 
 
 

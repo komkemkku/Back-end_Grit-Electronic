@@ -12,11 +12,9 @@ type WishlistIdRequest struct {
 
 type WishlistAddRequest struct {
 	ProductID int64 `json:"product_id"`
-	UserID    int64 `json:"user_id"`
 }
 
 type WishlistUpdateRequest struct {
 	ID        int64 `json:"id"`
 	ProductID int64 `json:"product_id"`
-	UserID    int64 `json:"user_id"`
 }
