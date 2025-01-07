@@ -43,3 +43,40 @@ func CreateUser(c *gin.Context) {
 
 	response.Success(c, data)
 }
+
+func UpdateUser(c *gin.Context) {
+	id := requests.UserIdRequest{}
+	if err := c.BindUri(&id); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	req := requests.UserUpdateRequest{}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	data, err := UpdateUserService(c, id.ID, req)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+	response.Success(c, data)
+}
+
+func DeleteUser(c *gin.Context) {
+	id := requests.UserIdRequest{}
+	if err := c.BindUri(&id); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+	err := DeleteUserService(c, id.ID)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+
+	response.Success(c, "delete successfully")
+}

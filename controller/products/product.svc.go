@@ -32,6 +32,7 @@ func ListProductService(ctx context.Context, req requests.ProductRequest) ([]res
 	if req.Search != "" {
 		query.Where("p.name ILIKE ?", "%"+req.Search+"%")
 	}
+		
 
 	total, err := query.Count(ctx)
 	if err != nil {

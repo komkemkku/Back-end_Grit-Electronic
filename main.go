@@ -9,10 +9,12 @@ import (
 	config "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/admins"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/auth"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/carts"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/categories"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/orders"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/payments"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/products"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/reviews"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/shipments"
 	systembank "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/system_bank"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/users"
@@ -64,6 +66,20 @@ func main() {
     r.PATCH("/order/:id", orders.UpdateOrder)
 
     // Wishlist
+
+	// Cart
+	r.POST("/cart/create", carts.AddCart)
+	r.GET("/cart/:id", carts.GetCartByID)
+	r.GET("/cart", carts.CartList)
+	r.DELETE("/cart/:id", carts.DeleteCart)
+	r.PATCH("/cart/:id", carts.UpdateCart)
+
+	// Review
+	r.POST("/review/create", reviews.CreateReview)
+    r.GET("/review/:id", reviews.GetReviewByID)
+    r.GET("/review", reviews.ReviewList)
+    r.DELETE("/review/:id", reviews.DeleteReview)
+    r.PATCH("/review/:id", reviews.UpdateReview)
 
 	// Admin
 	r.POST("/admin/create", admins.CreateAdmin)

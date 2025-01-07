@@ -42,6 +42,8 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*m
 
 	hashpassword, _ := utils.HashPassword(req.Password)
 	user := &model.Users{
+		FirstName: req.Firstname,
+		LastName:  req.Lastname,
 		Username:   req.Username,
 		Password:   hashpassword,
 		Email:      req.Email,
@@ -67,4 +69,53 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*m
 	}
 
 	return user, nil
+}
+
+func UpdateUserService(ctx context.Context, id int64, req requests.UserUpdateRequest) (*model.Users, error) {
+
+	ex, err := db.NewSelect().TableExpr("roles").Where("id = ?", 3).Exists(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !ex {
+		return nil, errors.New("default role not found (role_id = 3)")
+	}
+
+	user := &model.Users{}
+
+	err = db.NewSelect().Model(user).Where("id = ?", id).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	user.FirstName = req.Firstname
+	user.LastName =  req.Lastname
+	user.Username = req.Username
+	user.Email =      req.Email
+	user.Phone =      req.Phone
+	user.SetUpdateNow()
+
+	_, err = db.NewUpdate().Model(user).Where("id = ?", id).Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func DeleteUserService(ctx context.Context, id int64) error {
+	ex, err := db.NewSelect().TableExpr("users").Where("id=?", id).Exists(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	if !ex {
+		return errors.New("user not found")
+	}
+
+	_, err = db.NewDelete().TableExpr("users").Where("id =?", id).Exec(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
 }

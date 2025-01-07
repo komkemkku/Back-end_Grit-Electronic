@@ -6,9 +6,11 @@ type Reviews struct {
 	bun.BaseModel `bun:"table:reviews"`
 
 	ID          int64  `bun:",type:serial,autoincrement,pk"`
-	ReviewText string `bun:"review_text"`
-	Rating      string `bun:"rating"`
-	ProductID  int64  `bun:"bun:product_id"`
+	TextReview  string `bun:"text_review"`
+	Rating      int64  `bun:"rating"`
+	ProductID   int64  `bun:"product_id"`
+	UserID      int64  `bun:"user_id"`
+	ImageReview string `bun:"image_review"`
 
 	CreateUnixTimestamp
 	UpdateUnixTimestamp

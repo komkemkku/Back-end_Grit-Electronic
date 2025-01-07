@@ -12,3 +12,16 @@ type ProductResponses struct {
 	Created_at int64             `json:"created_at"`
 	Updated_at int64             `json:"updated_at"`
 }
+
+type ProductResp struct {
+	ID    int64   `json:"id"`
+	Name  string  `json:"name"`
+	Price float64 `json:"price"`
+	Image string  `json:"image"`
+}
+
+type ProductRespReview struct {
+	ID    int64   `json:"id"`
+	Name  string  `json:"name"`
+
+}

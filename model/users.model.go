@@ -10,6 +10,8 @@ type Users struct {
 	Password   string `bun:"password"`
 	Email      string `bun:"email"`
 	Phone      string `bun:"phone"`
+	FirstName string `bun:"firstname"`
+	LastName string `bun:"lastname"`
 
 	CreateUnixTimestamp
 	UpdateUnixTimestamp
