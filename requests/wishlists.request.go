@@ -1,20 +1,20 @@
 package requests
 
-type WishlistRequest struct {
+type WishlistsRequest struct {
 	Page   int64  `form:"page"`
 	Size   int64  `form:"size"`
 	Search string `form:"search"`
 }
 
-type WishlistIdRequest struct {
+type WishlistsIdRequest struct {
 	ProductID int64 `uri:"product_id"`
 }
 
-type WishlistAddRequest struct {
+type WishlistsAddRequest struct {
 	ProductID int64 `json:"product_id"`
 }
 
-type WishlistUpdateRequest struct {
+type WishlistsUpdateRequest struct {
 	ID        int64 `json:"id"`
 	ProductID int64 `json:"product_id"`
 }

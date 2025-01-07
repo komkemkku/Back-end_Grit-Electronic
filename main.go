@@ -16,6 +16,7 @@ import (
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/shipments"
 	systembank "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/system_bank"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/users"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/wishlist"
 
 	// "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/middlewares"
 	"github.com/spf13/cobra"
@@ -58,12 +59,17 @@ func main() {
 
 	// Order
 	r.POST("/order/create", orders.CreateOrder)
-    r.GET("/order/:id", orders.GetOrderByID)
-    r.GET("/order", orders.OrderList)
-    r.DELETE("/order/:id", orders.DeleteOrder)
-    r.PATCH("/order/:id", orders.UpdateOrder)
+	r.GET("/order/:id", orders.GetOrderByID)
+	r.GET("/order", orders.OrderList)
+	r.DELETE("/order/:id", orders.DeleteOrder)
+	r.PATCH("/order/:id", orders.UpdateOrder)
 
-    // Wishlist
+	// Wishlist
+	r.POST("/wish/create", wishlist.CreateWishlist)
+	//r.GET("/wish/:id", Wishlist.GetWishlistByID)
+	r.GET("/wish", wishlist.CreateWishlist)
+	//r.DELETE("/wish/:id", Wishlist.DeleteWishlist)
+	//r.PATCH("/wish/:id", Wishlist.UpdateWishlist)
 
 	// Admin
 	r.POST("/admin/create", admins.CreateAdmin)
