@@ -14,4 +14,4 @@ type Orders struct {
 	UpdateUnixTimestamp
 	SoftDelete
 }
-     
+    
