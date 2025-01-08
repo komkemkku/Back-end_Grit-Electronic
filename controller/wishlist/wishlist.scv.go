@@ -25,9 +25,9 @@ func ListWishlistsService(ctx context.Context, req requests.ProductRequest) ([]r
 	query := db.NewSelect().
 		TableExpr("products AS p").
 		Column("p.id", "p.name", "p.price", "p.detail", "p.stock", "p.image", "p.spec", "p.created_at", "p.updated_at").
-		ColumnExpr("c.id AS category__id").
-		ColumnExpr("c.name AS category__name").
-		Join("LEFT JOIN categories as c ON c.id = p.category_id")
+		ColumnExpr("c.id AS Product__id").
+		ColumnExpr("c.name AS Product__name").
+		Join("LEFT JOIN Product as c ON c.id = w.Product_id")
 
 	if req.Search != "" {
 		query.Where("p.name ILIKE ?", "%"+req.Search+"%")
@@ -71,7 +71,7 @@ func GetByIdWishlistsService(ctx context.Context, id int64) (*response.ProductRe
 func CreateWishlistsService(ctx context.Context, req requests.WishlistsAddRequest) (*model.Wishlists, error) {
 
 	// ตรวจสอบว่า category_id มีอยู่ในระบบหรือไม่
-	// เพิ่มสินค้าใหม่
+	
 	Wishlists := &model.Wishlists{
 		ProductID: req.ProductID,
 	}
