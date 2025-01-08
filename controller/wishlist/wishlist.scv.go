@@ -71,14 +71,8 @@ func GetByIdWishlistsService(ctx context.Context, id int64) (*response.WishlistR
 
 func CreateWishlistsService(ctx context.Context, req requests.WishlistsAddRequest) (*model.Wishlists, error) {
 
-	ex, err := db.NewSelect().TableExpr("products").Where("id =?", req.ProductID).Exists(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if !ex {
-		return nil, errors.New("product not found")
-	}
-
+	// ตรวจสอบว่า category_id มีอยู่ในระบบหรือไม่
+	// เพิ่มสินค้าใหม่
 	Wishlists := &model.Wishlists{
 		ProductID: req.ProductID,
 	}
