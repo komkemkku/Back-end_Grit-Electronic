@@ -2,7 +2,6 @@ package response
 
 type ReviewResponses struct {
 	ID          int64             `json:"id"`
-	// UserID      int64             `json:"user_id"`
 	User        UserRespReview    `json:"user"`
 	Product     ProductRespReview `json:"product"`
 	Rating      int64             `json:"rating"`

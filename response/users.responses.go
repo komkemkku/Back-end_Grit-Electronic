@@ -12,6 +12,6 @@ type UserResponses struct {
 }
 
 type UserRespReview struct {
-	UserID   int    `json:"id"`
-	UserName string `json:"name"`
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }

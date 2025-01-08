@@ -47,6 +47,8 @@ func main() {
 	// User
 	r.POST("/user/create", users.CreateUser)
 	r.GET("/user/:id", users.GetUserByID)
+	r.DELETE("/user/:id", users.DeleteUser)
+	r.PATCH("/user/:id", users.UpdateUser)
 
 	// Product
 	r.POST("/product/create", products.CreateProduct)
@@ -68,8 +70,8 @@ func main() {
 
 	// Wishlist
 	r.POST("/wish/create", wishlist.CreateWishlist)
-	//r.GET("/wish/:id", Wishlist.GetWishlistByID)
-	r.GET("/wish", wishlist.CreateWishlist)
+	r.GET("/wish/:id", wishlist.GetWishlistByID)
+	r.GET("/wish", wishlist.Wishlist)
 	//r.DELETE("/wish/:id", Wishlist.DeleteWishlist)
 	//r.PATCH("/wish/:id", Wishlist.UpdateWishlist)
 

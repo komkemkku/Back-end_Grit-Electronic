@@ -28,8 +28,8 @@ func ListReviewService(ctx context.Context, req requests.ReviewRequest) ([]respo
 		Column("r.id", "r.text_review", "r.rating", "r.image_review", "r.created_at", "r.updated_at").
 		ColumnExpr("p.id AS product__id").
 		ColumnExpr("p.name AS product__name").
-		// ColumnExpr("u.id AS user__id").
-		// ColumnExpr("u.username AS user__name").
+		ColumnExpr("u.id AS user__id").
+		ColumnExpr("u.username AS user__name").
 		Join("LEFT JOIN products as p ON p.id = r.product_id").
 		Join("LEFT JOIN users as u ON u.id = r.user_id")
 
@@ -62,10 +62,13 @@ func GetByIdReviewService(ctx context.Context, id int64) (*response.ReviewRespon
 	review := &response.ReviewResponses{}
 
 	err = db.NewSelect().TableExpr("reviews AS r").
-		Column("r.id", "r.text_review", "r.rating", "r.user_id", "r.image_review", "r.created_at", "r.updated_at").
+		Column("r.id", "r.text_review", "r.rating", "r.image_review", "r.created_at", "r.updated_at").
 		ColumnExpr("p.id AS product__id").
 		ColumnExpr("p.name AS product__name").
-		Join("LEFT JOIN products as p ON p.id = r.product_id").Where("p.id = ?", id).Scan(ctx, review)
+		ColumnExpr("u.id AS user__id").
+		ColumnExpr("u.username AS user__name").
+		Join("LEFT JOIN products as p ON p.id = r.product_id").
+		Join("LEFT JOIN users as u ON u.id = r.user_id").Where("r.id = ?", id).Scan(ctx, review)
 	if err != nil {
 		return nil, err
 	}
@@ -96,11 +99,11 @@ func CreateReviewService(ctx context.Context, req requests.ReviewCreateRequest) 
 
 	// เพิ่มรีวิวใหม่
 	review := &model.Reviews{
-		TextReview: req.ReviewText,
-		Rating:     int64(req.Rating),
-		ProductID:  int64(req.ProductID),
-		UserID:     int64(req.UserID),
-		ImageReview:  req.ImageReview,
+		TextReview:  req.ReviewText,
+		Rating:      int64(req.Rating),
+		ProductID:   int64(req.ProductID),
+		UserID:      int64(req.UserID),
+		ImageReview: req.ImageReview,
 	}
 
 	review.SetCreatedNow()

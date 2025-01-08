@@ -7,7 +7,7 @@ type WishlistsRequest struct {
 }
 
 type WishlistsIdRequest struct {
-	ProductID int64 `uri:"product_id"`
+	ID int `uri:"id"`
 }
 
 type WishlistsAddRequest struct {

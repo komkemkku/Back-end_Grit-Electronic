@@ -5,7 +5,7 @@ import "github.com/uptrace/bun"
 type Wishlists struct {
 	bun.BaseModel `bun:"table:wishlists"`
 
-	Id        int64 `bun:",type:serial,autoincrement,pk"`
+	ID        int64 `bun:",type:serial,autoincrement,pk"`
 	ProductID int64 `bun:"bun:product_id"`
 
 	CreateUnixTimestamp

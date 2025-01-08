@@ -7,54 +7,8 @@ import (
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
 )
 
-func CreateWishlist(c *gin.Context) {
-	req := requests.WishlistsAddRequest{}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, err.Error())
-		return
-	}
-
-	data, err := CreateWishlistsService(c, req)
-	if err != nil {
-		response.InternalError(c, err.Error())
-		return
-	}
-	response.Success(c, data)
-}
-
-func DeleteWishlist(c *gin.Context) {
-	id := requests.ProductIdRequest{}
-	if err := c.BindUri(&id); err != nil {
-		response.BadRequest(c, err.Error())
-		return
-	}
-	err := DeleteWishlistsService(c, id.ID)
-	if err != nil {
-		response.InternalError(c, err.Error())
-		return
-	}
-
-	response.Success(c, "delete successfully")
-}
-
-func GetWishlistByID(c *gin.Context) {
-	id := requests.ProductIdRequest{}
-	if err := c.BindUri(&id); err != nil {
-		response.BadRequest(c, err.Error())
-		return
-	}
-
-	data, err := GetByIdWishlistsService(c, id.ID)
-	if err != nil {
-		response.InternalError(c, err.Error())
-		return
-	}
-	response.Success(c, data)
-}
-
-func WishlistsList(c *gin.Context) {
-	req := requests.ProductRequest{}
+func Wishlist(c *gin.Context) {
+	req := requests.WishlistsRequest{}
 	if err := c.BindQuery(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
@@ -75,21 +29,30 @@ func WishlistsList(c *gin.Context) {
 	response.SuccessWithPaginate(c, data, paginate)
 }
 
-func UpdateWishlist(c *gin.Context) {
-	id := requests.ProductIdRequest{}
-	if err := c.BindUri(&id); err != nil {
-		response.BadRequest(c, err.Error())
-		return
-	}
-
-	req := requests.ProductUpdateRequest{}
+func CreateWishlist(c *gin.Context) {
+	req := requests.WishlistsAddRequest{}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
 
-	data, err := UpdateWishlistsService(c, id.ID, req)
+	data, err := CreateWishlistsService(c, req)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+	response.Success(c, data)
+}
+
+func GetWishlistByID(c *gin.Context) {
+	id := requests.WishlistsIdRequest{}
+	if err := c.BindUri(&id); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	data, err := GetByIdWishlistsService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
