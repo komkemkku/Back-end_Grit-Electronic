@@ -30,7 +30,7 @@ func ListWishlistsService(ctx context.Context, req requests.WishlistsRequest) ([
 		Join("LEFT JOIN products AS p ON p.id = w.product_id")
 
 	// if req.Search != "" {
-	// 	query.Where("p.name ILIKE ?", "%"+req.Search+"%")
+	//   query.Where("p.name ILIKE ?", "%"+req.Search+"%")
 	// }
 
 	total, err := query.Count(ctx)
@@ -59,7 +59,7 @@ func GetByIdWishlistsService(ctx context.Context, id int64) (*response.WishlistR
 	wish := &response.WishlistResponses{}
 
 	err = db.NewSelect().TableExpr("wishlists AS w").
-	Column("w.id", "w.created_at", "w.updated_at").
+	Column("w.id", "p.created_at", "p.updated_at").
 	ColumnExpr("p.id AS product__id").
 	ColumnExpr("p.name AS product__name").
 	Join("LEFT JOIN products AS p ON p.id = w.product_id").Where("w.id = ?", id).Scan(ctx, wish)
@@ -87,4 +87,3 @@ func CreateWishlistsService(ctx context.Context, req requests.WishlistsAddReques
 	return Wishlists, nil
 
 }
-
