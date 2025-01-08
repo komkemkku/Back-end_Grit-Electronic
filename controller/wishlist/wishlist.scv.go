@@ -24,7 +24,7 @@ func ListWishlistsService(ctx context.Context, req requests.WishlistsRequest) ([
 	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("wishlists AS w").
-		Column("p.id", "p.created_at", "p.updated_at").
+		Column("w.id", "w.created_at", "w.updated_at").
 		ColumnExpr("p.id AS product__id").
 		ColumnExpr("p.name AS product__name").
 		Join("LEFT JOIN products AS p ON p.id = w.product_id")
@@ -59,7 +59,7 @@ func GetByIdWishlistsService(ctx context.Context, id int64) (*response.WishlistR
 	wish := &response.WishlistResponses{}
 
 	err = db.NewSelect().TableExpr("wishlists AS w").
-	Column("w.id", "p.created_at", "p.updated_at").
+	Column("w.id", "w.created_at", "w.updated_at").
 	ColumnExpr("p.id AS product__id").
 	ColumnExpr("p.name AS product__name").
 	Join("LEFT JOIN products AS p ON p.id = w.product_id").Where("w.id = ?", id).Scan(ctx, wish)
@@ -79,7 +79,7 @@ func CreateWishlistsService(ctx context.Context, req requests.WishlistsAddReques
 	Wishlists.SetCreatedNow()
 	Wishlists.SetUpdateNow()
 
-	_, err = db.NewInsert().Model(Wishlists).Exec(ctx)
+	_, err := db.NewInsert().Model(Wishlists).Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
