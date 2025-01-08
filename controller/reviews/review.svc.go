@@ -25,10 +25,13 @@ func ListReviewService(ctx context.Context, req requests.ReviewRequest) ([]respo
 	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("reviews AS r").
-		Column("r.id", "r.text_review", "r.rating", "r.user_id", "r.image_review", "r.created_at", "r.updated_at").
+		Column("r.id", "r.text_review", "r.rating", "r.image_review", "r.created_at", "r.updated_at").
 		ColumnExpr("p.id AS product__id").
 		ColumnExpr("p.name AS product__name").
-		Join("LEFT JOIN products as p ON p.id = r.product_id")
+		// ColumnExpr("u.id AS user__id").
+		// ColumnExpr("u.username AS user__name").
+		Join("LEFT JOIN products as p ON p.id = r.product_id").
+		Join("LEFT JOIN users as u ON u.id = r.user_id")
 
 	if req.Search != "" {
 		query.Where("p.name ILIKE ?", "%"+req.Search+"%")

@@ -10,3 +10,8 @@ type UserResponses struct {
 	Create_at int64         `json:"create_at"`
 	Role      RoleResponses `json:"role"`
 }
+
+type UserRespReview struct {
+	UserID   int    `json:"id"`
+	UserName string `json:"name"`
+}

@@ -15,7 +15,7 @@ type ReviewCreateRequest struct {
 	Rating      int    `json:"rating"`
 	ProductID   int    `json:"product_id"`
 	UserID      int64  `json:"user_id"`
-	ImageReview string `json:"image_review"`
+	ImageReview []string `json:"image_review"`
 }
 
 type ReviewUpdateRequest struct {
@@ -24,5 +24,5 @@ type ReviewUpdateRequest struct {
 	Rating      int    `json:"rating"`
 	ProductID   int64  `json:"product_id"`
 	UserID      int64  `json:"user_id"`
-	ImageReview string `json:"image_review"`
+	ImageReview []string `json:"image_review"`
 }

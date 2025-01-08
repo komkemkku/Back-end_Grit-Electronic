@@ -13,7 +13,7 @@ type ProductResponses struct {
 	Updated_at int64             `json:"updated_at"`
 }
 
-type ProductResp struct {
+type ProductRespCart struct {
 	ID    int64   `json:"id"`
 	Name  string  `json:"name"`
 	Price float64 `json:"price"`
@@ -21,7 +21,6 @@ type ProductResp struct {
 }
 
 type ProductRespReview struct {
-	ID    int64   `json:"id"`
-	Name  string  `json:"name"`
-
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
 }
