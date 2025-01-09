@@ -36,7 +36,7 @@ func GetAdminByID(c *gin.Context) {
 		return
 	}
 
-	data, err := GetByIdAdminService(c, id.ID)
+	data, err := GetByIdAdminService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -66,7 +66,7 @@ func DeleteAdmin(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	err := DeleteAdminService(c, id.ID)
+	err := DeleteAdminService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -89,7 +89,7 @@ func UpdateAdmin(c *gin.Context) {
 		return
 	}
 
-	data, err := UpdateAdminService(c, id.ID, req)
+	data, err := UpdateAdminService(c, int64(id.ID), req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return

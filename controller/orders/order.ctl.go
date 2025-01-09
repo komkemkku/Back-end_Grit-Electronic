@@ -29,7 +29,7 @@ func DeleteOrder(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	err := DeleteOrderService(c, id.ID)
+	err := DeleteOrderService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -45,7 +45,7 @@ func GetOrderByID(c *gin.Context) {
 		return
 	}
 
-	data, err := GetByIdOrderService(c, id.ID)
+	data, err := GetByIdOrderService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -89,7 +89,7 @@ func UpdateOrder(c *gin.Context) {
 		return
 	}
 
-	data, err := UpdateOrderService(c, id.ID, req)
+	data, err := UpdateOrderService(c, int64(id.ID), req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return

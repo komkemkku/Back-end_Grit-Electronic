@@ -7,18 +7,18 @@ type OrderRequest struct {
 }
 
 type OrderIdRequest struct {
-	ID int64 `uri:"id"`
+	ID int `uri:"id"`
 }
 
 type OrderCreateRequest struct {
-	TotalPrice  int64  `json:"total_price"`
-	TotalAmount int64  `json:"total_amount"`
+	TotalPrice  int  `json:"total_price"`
+	TotalAmount int  `json:"total_amount"`
 	Status      string `json:"status"`
 }
 
 type OrderUpdateRequest struct {
-	ID          int64  `json:"id"`
-	TotalPrice  int64  `json:"total_price"`
-	TotalAmount int64  `json:"total_amount"`
+	ID          int  `json:"id"`
+	TotalPrice  int  `json:"total_price"`
+	TotalAmount int  `json:"total_amount"`
 	Status      string `json:"status"`
 }

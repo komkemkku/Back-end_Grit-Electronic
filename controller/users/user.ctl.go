@@ -58,7 +58,7 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
-	data, err := UpdateUserService(c, id.ID, req)
+	data, err := UpdateUserService(c, int64(id.ID), req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -72,7 +72,7 @@ func DeleteUser(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	err := DeleteUserService(c, id.ID)
+	err := DeleteUserService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return

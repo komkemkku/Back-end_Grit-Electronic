@@ -29,7 +29,7 @@ func DeleteProduct(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	err := DeleteProductService(c, id.ID)
+	err := DeleteProductService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -45,7 +45,7 @@ func GetProductByID(c *gin.Context) {
 		return
 	}
 
-	data, err := GetByIdProductService(c, id.ID)
+	data, err := GetByIdProductService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -89,7 +89,7 @@ func UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	data, err := UpdateProductService(c, id.ID, req)
+	data, err := UpdateProductService(c, int64(id.ID), req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return

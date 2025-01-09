@@ -134,8 +134,8 @@ func UpdateReviewService(ctx context.Context, id int64, req requests.ReviewUpdat
 	}
 	review.TextReview = req.ReviewText
 	review.Rating = int64(req.Rating)
-	review.ProductID = req.ProductID
-	review.UserID = req.UserID
+	review.ProductID = int64(req.ProductID)
+	review.UserID = int64(req.UserID)
 	review.ImageReview = req.ImageReview
 	review.SetUpdateNow()
 

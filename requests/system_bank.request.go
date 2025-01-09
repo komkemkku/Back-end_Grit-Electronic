@@ -7,7 +7,7 @@ type SystemBankRequest struct {
 }
 
 type SystemBankIdRequest struct {
-	ID int64 `uri:"id"`
+	ID int `uri:"id"`
 }
 
 type SystemBankCreateRequest struct {
@@ -18,7 +18,7 @@ type SystemBankCreateRequest struct {
 }
 
 type SystemBankUpdateRequest struct {
-	ID            int64  `json:"id"`
+	ID            int  `json:"id"`
 	BankName      string `json:"bank_name"`
 	AccountName   string `json:"account_name"`
 	AccountNumber string `json:"account_number"`
