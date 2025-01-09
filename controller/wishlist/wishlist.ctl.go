@@ -66,12 +66,8 @@ func DeleteWishlists(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
-
-	// แปลง id.ID จาก int เป็น int64
-	int64ID := int64(id.ID)
-
 	// เรียกใช้ DeleteWishlistsService พร้อม id ที่แปลงแล้ว
-	err := DeleteWishlistsService(c, int64ID)
+	err := DeleteWishlistsService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -80,4 +76,25 @@ func DeleteWishlists(c *gin.Context) {
 	response.Success(c, "delete successfully")
 }
 
-	
+func UpdateWishlists(c *gin.Context) {
+	id := requests.WishlistsIdRequest{}
+	if err := c.BindUri(&id); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	req := requests.WishlistsUpdateRequest{}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	data, err := UpdateWishlistsService(c, int64(id.ID), req)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+
+	}
+	response.Success(c, data)
+}
