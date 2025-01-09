@@ -7,7 +7,7 @@ type CategoryRequest struct {
 }
 
 type CategoryIdRequest struct {
-	ID int64 `uri:"id"`
+	ID int `uri:"id"`
 }
 
 type CategoryCreateRequest struct {
@@ -16,7 +16,7 @@ type CategoryCreateRequest struct {
 }
 
 type CategoryUpdateRequest struct {
-	ID    int64  `json:"id"`
+	ID    int  `json:"id"`
 	Name  string `json:"name"`
 	Image string `json:"image"`
 }

@@ -21,7 +21,7 @@ func GetUserByID(c *gin.Context) {
 		return
 	}
 
-	data, err := GetByIdUserService(c, id.ID)
+	data, err := GetByIdUserService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return

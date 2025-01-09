@@ -7,7 +7,7 @@ type ShipmentRequest struct {
 }
 
 type ShipmentIdRequest struct {
-	ID int64 `uri:"id"`
+	ID int `uri:"id"`
 }
 
 type ShipmentCreateRequest struct {

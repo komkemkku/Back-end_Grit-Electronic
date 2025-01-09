@@ -7,16 +7,16 @@ type CartRequest struct {
 }
 
 type CartIdRequest struct {
-	ID int64 `uri:"id"`
+	ID int `uri:"id"`
 }
 
 type CartAddItemRequest struct {
-	ProductID int64 `json:"product_id"`
+	ProductID int `json:"product_id"`
 	Quantity  int `json:"quantity"`
 }
 
 type CartUpdateItemRequest struct {
-	ID        int64 `json:"id"`
-	ProductID int64 `json:"product"`
+	ID        int `json:"id"`
+	ProductID int `json:"product"`
 	Quantity  int `json:"quantity"`
 }

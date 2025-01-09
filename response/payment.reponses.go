@@ -1,9 +1,9 @@
 package response
 
 type PaymentResponses struct {
-	ID         int64   `json:"id"`
+	ID         int   `json:"id"`
 	Price      float64 `json:"price"`
-	Amount     int64   `json:"amount"`
+	Amount     int   `json:"amount"`
 	Slip       string  `json:"slip"`
 	Status     string  `json:"status"`
 	BankName string `json:"bank_name"`

@@ -1,7 +1,7 @@
 package response
 
 type SystemBankResponses struct {
-	Id             int64  `json:"id"`
+	Id             int  `json:"id"`
 	Bank_name      string `json:"bank_name"`
 	Account_name   string `json:"account_name"`
 	Account_number string `json:"account_number"`

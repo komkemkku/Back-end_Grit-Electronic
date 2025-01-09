@@ -29,7 +29,7 @@ func DeletePayment(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	err := DeletePaymentService(c, id.ID)
+	err := DeletePaymentService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -45,7 +45,7 @@ func GetPaymentByID(c *gin.Context) {
 		return
 	}
 
-	data, err := GetByIdPaymentService(c, id.ID)
+	data, err := GetByIdPaymentService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -89,7 +89,7 @@ func UpdatePayment(c *gin.Context) {
 		return
 	}
 
-	data, err := UpdatePaymentService(c, id.ID, req)
+	data, err := UpdatePaymentService(c, int64(id.ID), req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return

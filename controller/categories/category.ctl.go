@@ -29,7 +29,7 @@ func DeleteCeategory(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	err := DeleteCetegoryService(c, id.ID)
+	err := DeleteCetegoryService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -45,7 +45,7 @@ func GetCategoryByID(c *gin.Context) {
 		return
 	}
 
-	data, err := GetByIdCategoryService(c, id.ID)
+	data, err := GetByIdCategoryService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -89,7 +89,7 @@ func UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	data, err := UpdateCategoryService(c, id.ID, req)
+	data, err := UpdateCategoryService(c, int64(id.ID), req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return

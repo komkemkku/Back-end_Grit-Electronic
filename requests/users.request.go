@@ -7,7 +7,7 @@ type UserRequest struct {
 }
 
 type UserIdRequest struct {
-	ID int64 `uri:"id"`
+	ID int `uri:"id"`
 }
 
 type UserCreateRequest struct {
@@ -17,15 +17,15 @@ type UserCreateRequest struct {
 	Password  string `json:"password"`
 	Email     string `json:"email"`
 	Phone     string `json:"phone"`
-	RoleID    int64  `json:"role_id"`
+	RoleID    int  `json:"role_id"`
 }
 
 type UserUpdateRequest struct {
-	Id        int64  `json:"id"`
+	Id        int  `json:"id"`
 	Firstname string `json:"firstname"`
 	Lastname  string `json:"lastname"`
 	Username  string `json:"username"`
 	Email     string `json:"email"`
 	Phone     string `json:"phone"`
-	RoleID    int64  `json:"role_id"`
+	RoleID    int  `json:"role_id"`
 }

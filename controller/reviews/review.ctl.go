@@ -51,7 +51,7 @@ func DeleteReview(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	err := DeleteReviewService(c, id.ID)
+	err := DeleteReviewService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -67,7 +67,7 @@ func GetReviewByID(c *gin.Context) {
 		return
 	}
 
-	data, err := GetByIdReviewService(c, id.ID)
+	data, err := GetByIdReviewService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -89,7 +89,7 @@ func UpdateReview(c *gin.Context) {
 		return
 	}
 
-	data, err := UpdateReviewService(c, id.ID, req)
+	data, err := UpdateReviewService(c, int64(id.ID), req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return

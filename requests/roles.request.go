@@ -7,10 +7,10 @@ type RoleRequest struct {
 }
 
 type RoleIdRequest struct {
-	ID int64 `uri:"id"`
+	ID int `uri:"id"`
 }
 
 type RoleUpdateRequest struct {
-	ID   int64  `json:"id"`
+	ID   int  `json:"id"`
 	Name string `json:"name"`
 }

@@ -1,12 +1,12 @@
 package response
 
 type ProductResponses struct {
-	ID         int64             `json:"id"`
+	ID         int             `json:"id"`
 	Name       string            `json:"name"`
 	Price      float64           `json:"price"`
 	Detail     string            `json:"detail"`
 	Spec       string            `json:"spec"`
-	Stock      int64             `json:"stock"`
+	Stock      int             `json:"stock"`
 	Image      string            `json:"image"`
 	Category   CategoryResponses `json:"category"`
 	Created_at int64             `json:"created_at"`
@@ -14,13 +14,13 @@ type ProductResponses struct {
 }
 
 type ProductRespCart struct {
-	ID    int64   `json:"id"`
+	ID    int   `json:"id"`
 	Name  string  `json:"name"`
 	Price float64 `json:"price"`
 	Image string  `json:"image"`
 }
 
 type ProductRespReview struct {
-	ID   int64  `json:"id"`
+	ID   int  `json:"id"`
 	Name string `json:"name"`
 }

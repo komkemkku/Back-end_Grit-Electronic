@@ -29,7 +29,7 @@ func DeleteShipment(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	err := DeleteShipmentService(c, id.ID)
+	err := DeleteShipmentService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -45,7 +45,7 @@ func GetShipmentByID(c *gin.Context) {
 		return
 	}
 
-	data, err := GetByIdShipmentService(c, id.ID)
+	data, err := GetByIdShipmentService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -89,7 +89,7 @@ func UpdateShipment(c *gin.Context) {
 		return
 	}
 
-	data, err := UpdateShipmentService(c, id.ID, req)
+	data, err := UpdateShipmentService(c, int64(id.ID), req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return

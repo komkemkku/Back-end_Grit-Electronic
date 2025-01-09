@@ -31,7 +31,7 @@ func DeleteCart(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	err := DeleteCartService(c, id.ID)
+	err := DeleteCartService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -47,7 +47,7 @@ func GetCartByID(c *gin.Context) {
 		return
 	}
 
-	data, err := GetByIdCartService(c, id.ID)
+	data, err := GetByIdCartService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -97,7 +97,7 @@ func UpdateCart(c *gin.Context) {
 		return
 	}
 
-	data, err := UpdateCartService(c, id.ID, req)
+	data, err := UpdateCartService(c, int64(id.ID), req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
