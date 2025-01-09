@@ -59,3 +59,25 @@ func GetWishlistByID(c *gin.Context) {
 	}
 	response.Success(c, data)
 }
+func DeleteWishlists(c *gin.Context) {
+	// รับค่า id จาก request และทำการ bind
+	id := requests.WishlistsIdRequest{}
+	if err := c.BindUri(&id); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	// แปลง id.ID จาก int เป็น int64
+	int64ID := int64(id.ID)
+
+	// เรียกใช้ DeleteWishlistsService พร้อม id ที่แปลงแล้ว
+	err := DeleteWishlistsService(c, int64ID)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+
+	response.Success(c, "delete successfully")
+}
+
+	

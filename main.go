@@ -72,7 +72,7 @@ func main() {
 	r.POST("/wish/create", wishlist.CreateWishlist)
 	r.GET("/wish/:id", wishlist.GetWishlistByID)
 	r.GET("/wish", wishlist.Wishlist)
-	//r.DELETE("/wish/:id", Wishlist.DeleteWishlist)
+	r.DELETE("/wish/:id", wishlist.DeleteWishlists)
 	//r.PATCH("/wish/:id", Wishlist.UpdateWishlist)
 
 	// Cart
