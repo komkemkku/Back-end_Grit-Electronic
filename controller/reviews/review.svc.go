@@ -29,7 +29,7 @@ func ListReviewService(ctx context.Context, req requests.ReviewRequest) ([]respo
 		ColumnExpr("p.id AS product__id").
 		ColumnExpr("p.name AS product__name").
 		ColumnExpr("u.id AS user__id").
-		ColumnExpr("u.username AS user__name").
+		ColumnExpr("u.username AS user__username").
 		Join("LEFT JOIN products as p ON p.id = r.product_id").
 		Join("LEFT JOIN users as u ON u.id = r.user_id")
 
