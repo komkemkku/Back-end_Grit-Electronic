@@ -87,3 +87,29 @@ func CreateWishlistsService(ctx context.Context, req requests.WishlistsAddReques
 	return Wishlists, nil
 
 }
+
+func DeleteWishlistsService(ctx context.Context, id int64) error {
+	// ตรวจสอบว่า Wishlist มีอยู่หรือไม่
+	ex, err := db.NewSelect().TableExpr("wishlists").Where("id = ?", id).Exists(ctx)
+
+	if err != nil {
+		// กรณีเกิดข้อผิดพลาดจากฐานข้อมูล
+		return err
+	}
+
+	if !ex {
+		// กรณี Wishlist ไม่พบในฐานข้อมูล
+		return errors.New("Wishlist not found")
+	}
+
+	// ลบ Wishlist ที่พบในฐานข้อมูล
+	_, err = db.NewDelete().TableExpr("wishlists").Where("id = ?", id).Exec(ctx)
+	if err != nil {
+		// กรณีลบไม่สำเร็จ
+		return err
+	}
+
+	// สำเร็จ
+	return nil
+}
+
