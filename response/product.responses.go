@@ -7,7 +7,7 @@ type ProductResponses struct {
 	Detail     string              `json:"detail"`
 	Spec       string              `json:"spec"`
 	Stock      int                 `json:"stock"`
-	Image      string              `json:"image"`
+	Image      []string            `json:"image"`
 	Category   CategoryProductResp `json:"category"`
 	Review     ReviewProductResp   `json:"review"`
 	Created_at int64               `json:"created_at"`
@@ -15,10 +15,10 @@ type ProductResponses struct {
 }
 
 type ProductRespCart struct {
-	ID    int     `json:"id"`
-	Name  string  `json:"name"`
-	Price float64 `json:"price"`
-	Image string  `json:"image"`
+	ID    int      `json:"id"`
+	Name  string   `json:"name"`
+	Price float64  `json:"price"`
+	Image []string `json:"image"`
 }
 
 type ProductRespReview struct {

@@ -11,24 +11,24 @@ type ProductIdRequest struct {
 }
 
 type ProductCreateRequest struct {
-	Name       string `json:"name"`
-	Price      int    `json:"price"`
-	Detail     string `json:"detail"`
-	Stock      int    `json:"stock"`
-	Image      string `json:"image"`
-	Spec       string `json:"spec"`
-	CategoryID int    `json:"category_id"`
-	ReviewID   int    `json:"review_id"`
+	Name       string   `json:"name"`
+	Price      int      `json:"price"`
+	Detail     string   `json:"detail"`
+	Stock      int      `json:"stock"`
+	Image      []string `json:"image"`
+	Spec       string   `json:"spec"`
+	CategoryID int      `json:"category_id"`
+	// ReviewID   int      `json:"review_id"`
 }
 
 type ProductUpdateRequest struct {
-	Id         int    `json:"id"`
-	Name       string `json:"name"`
-	Price      int    `json:"price"`
-	Detail     string `json:"detail"`
-	Stock      int    `json:"stock"`
-	Image      string `json:"image"`
-	Spec       string `json:"spec"`
-	CategoryID int    `json:"category_id"`
-	ReviewID   int    `json:"review_id"`
+	Id         int      `json:"id"`
+	Name       string   `json:"name"`
+	Price      int      `json:"price"`
+	Detail     string   `json:"detail"`
+	Stock      int      `json:"stock"`
+	Image      []string `json:"image"`
+	Spec       string   `json:"spec"`
+	CategoryID int      `json:"category_id"`
+	ReviewID   int      `json:"review_id"`
 }

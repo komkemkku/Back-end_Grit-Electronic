@@ -12,7 +12,7 @@ type ReviewResponses struct {
 }
 
 type ReviewProductResp struct {
-	Username    string   `json:"username"`
-	Rating      int      `json:"rating"`
-	TextReview  string   `json:"text_review"`
+	Username   string `json:"username"`
+	Rating     int    `json:"rating"`
+	TextReview string `json:"text_review"`
 }

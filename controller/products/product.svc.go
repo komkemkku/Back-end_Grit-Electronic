@@ -23,24 +23,22 @@ func ListProductService(ctx context.Context, req requests.ProductRequest) ([]res
 
 	// สร้าง query
 	query := db.NewSelect().
-    TableExpr("products AS p").
-    Column("p.id", "p.name", "p.price", "p.detail", "p.stock", "p.image", "p.spec", "p.created_at", "p.updated_at").
-	ColumnExpr("u.id AS user__id").
-	ColumnExpr("u.username AS user__username").
-    ColumnExpr("c.id AS category__id").
-    ColumnExpr("c.name AS category__name").
-    ColumnExpr("r.id AS review__id").
-    ColumnExpr("r.text_review AS review__text").
-    ColumnExpr("r.rating AS review__rating").
-    Join("LEFT JOIN categories AS c ON c.id = p.category_id").
-    Join("LEFT JOIN reviews AS r ON r.id = p.review_id").
-	Join("LEFT JOIN users as u ON u.id = r.user_id")
-
+		TableExpr("products AS p").
+		Column("p.id", "p.name", "p.price", "p.detail", "p.stock", "p.image", "p.spec", "p.created_at", "p.updated_at").
+		ColumnExpr("u.id AS user__id").
+		ColumnExpr("u.username AS user__username").
+		ColumnExpr("c.id AS category__id").
+		ColumnExpr("c.name AS category__name").
+		ColumnExpr("r.id AS review__id").
+		ColumnExpr("r.text_review AS review__text").
+		ColumnExpr("r.rating AS review__rating").
+		Join("LEFT JOIN categories AS c ON c.id = p.category_id").
+		Join("LEFT JOIN reviews AS r ON r.id = p.review_id").
+		Join("LEFT JOIN users as u ON u.id = r.user_id")
 
 	if req.Search != "" {
 		query.Where("p.name ILIKE ?", "%"+req.Search+"%")
 	}
-		
 
 	total, err := query.Count(ctx)
 	if err != nil {
@@ -98,7 +96,7 @@ func CreateProductService(ctx context.Context, req requests.ProductCreateRequest
 		Image:      req.Image,
 		Spec:       req.Spec,
 		CategoryID: int(req.CategoryID),
-		ReviewID:   int(req.ReviewID),
+		// ReviewID:   int(req.ReviewID),
 	}
 	product.SetCreatedNow()
 	product.SetUpdateNow()
@@ -147,7 +145,6 @@ func UpdateProductService(ctx context.Context, id int64, req requests.ProductUpd
 
 	return product, nil
 }
-
 
 func DeleteProductService(ctx context.Context, id int64) error {
 	ex, err := db.NewSelect().TableExpr("products").Where("id=?", id).Exists(ctx)
