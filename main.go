@@ -11,6 +11,7 @@ import (
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/auth"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/carts"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/categories"
+	orederdetail "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/orderdetails"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/orders"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/payments"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/products"
@@ -84,10 +85,10 @@ func main() {
 
 	// Review
 	r.POST("/review/create", reviews.CreateReview)
-    r.GET("/review/:id", reviews.GetReviewByID)
-    r.GET("/review", reviews.ReviewList)
-    r.DELETE("/review/:id", reviews.DeleteReview)
-    r.PATCH("/review/:id", reviews.UpdateReview)
+	r.GET("/review/:id", reviews.GetReviewByID)
+	r.GET("/review", reviews.ReviewList)
+	r.DELETE("/review/:id", reviews.DeleteReview)
+	r.PATCH("/review/:id", reviews.UpdateReview)
 
 	// Admin
 	r.POST("/admin/create", admins.CreateAdmin)
@@ -123,6 +124,14 @@ func main() {
 	r.GET("/payment", payments.PaymentList)
 	r.DELETE("/payment/:id", payments.DeletePayment)
 	r.PATCH("/payment/:id", payments.UpdatePayment)
+
+	// Order Details
+	r.POST("/orderdetails/create", orederdetail.CreateOrderDetail)
+	r.GET("/orderdetails", orederdetail.OrderDetailList)
+	// r.GET("/orderdetails/:id", orederdetail.GetOrderDetailByID)
+	r.DELETE("/orderdetails/:id", orederdetail.DeleteOrderDetail)
+
+	//r.PATCH("/payment/:id", payments.UpdatePayment)
 
 	r.Run()
 
