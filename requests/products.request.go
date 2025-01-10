@@ -18,7 +18,6 @@ type ProductCreateRequest struct {
 	Image      []string `json:"image"`
 	Spec       string   `json:"spec"`
 	CategoryID int      `json:"category_id"`
-	// ReviewID   int      `json:"review_id"`
 }
 
 type ProductUpdateRequest struct {
@@ -30,5 +29,4 @@ type ProductUpdateRequest struct {
 	Image      []string `json:"image"`
 	Spec       string   `json:"spec"`
 	CategoryID int      `json:"category_id"`
-	ReviewID   int      `json:"review_id"`
 }

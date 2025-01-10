@@ -2,7 +2,7 @@ package response
 
 type ReviewResponses struct {
 	ID          int               `json:"id"`
-	Username    UserRespReview    `json:"user"`
+	User        UserRespReview    `json:"user"`
 	Product     ProductRespReview `json:"product"`
 	Rating      int               `json:"rating"`
 	TextReview  string            `json:"text_review"`
@@ -12,7 +12,8 @@ type ReviewResponses struct {
 }
 
 type ReviewProductResp struct {
-	Username   string `json:"username"`
-	Rating     int    `json:"rating"`
-	TextReview string `json:"text_review"`
+	ID        int    `json:"id"`
+	Username  string `json:"username"`
+	Rating    int    `json:"rating"`
+	Text      string `json:"text_review"`
 }

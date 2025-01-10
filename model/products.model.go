@@ -13,7 +13,6 @@ type Products struct {
 	Image      []string `bun:"image"`
 	Spec       string   `bun:"spec,notnull"`
 	CategoryID int      `bun:"category_id"`
-	ReviewID   int      `bun:"review_id"`
 
 	CreateUnixTimestamp
 	UpdateUnixTimestamp

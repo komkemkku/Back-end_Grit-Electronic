@@ -28,6 +28,9 @@ func ListWishlistsService(ctx context.Context, req requests.WishlistsRequest) ([
 		Column("w.id", "w.created_at", "w.updated_at").
 		ColumnExpr("p.id AS product__id").
 		ColumnExpr("p.name AS product__name").
+		ColumnExpr("p.detail AS product__detail").
+		ColumnExpr("p.price AS product__price").
+		ColumnExpr("p.image AS product__image").
 		Join("LEFT JOIN products AS p ON p.id = w.product_id")
 
 	// if req.Search != "" {
@@ -60,9 +63,12 @@ func GetByIdWishlistsService(ctx context.Context, id int64) (*response.WishlistR
 	wish := &response.WishlistResponses{}
 
 	err = db.NewSelect().TableExpr("wishlists AS w").
-		Column("w.id", "p.created_at", "p.updated_at").
+		Column("w.id", "w.created_at", "w.updated_at").
 		ColumnExpr("p.id AS product__id").
 		ColumnExpr("p.name AS product__name").
+		ColumnExpr("p.detail AS product__detail").
+		ColumnExpr("p.price AS product__price").
+		ColumnExpr("p.image AS product__image").
 		Join("LEFT JOIN products AS p ON p.id = w.product_id").Where("w.id = ?", id).Scan(ctx, wish)
 	if err != nil {
 		return nil, err
@@ -116,57 +122,57 @@ func DeleteWishlistsService(ctx context.Context, id int64) error {
 // The UpdateWishlistsService function checks and updates a wishlist with a specified ID and product ID
 // in the database.
 func UpdateWishlistsService(ctx context.Context, id int64, req requests.WishlistsUpdateRequest) (*model.Wishlists, error) {
-    // ตรวจสอบว่า Wishlist มีอยู่ในระบบหรือไม่
-    exists, err := db.NewSelect().
-        TableExpr("wishlists").
-        Where("id = ?", id).
-        Exists(ctx)
+	// ตรวจสอบว่า Wishlist มีอยู่ในระบบหรือไม่
+	exists, err := db.NewSelect().
+		TableExpr("wishlists").
+		Where("id = ?", id).
+		Exists(ctx)
 
-    if err != nil {
-        return nil, fmt.Errorf("failed to check wishlist existence: %v", err)
-    }
+	if err != nil {
+		return nil, fmt.Errorf("failed to check wishlist existence: %v", err)
+	}
 
-    if !exists {
-        return nil, fmt.Errorf("wishlist with id %d not found", id)
-    }
+	if !exists {
+		return nil, fmt.Errorf("wishlist with id %d not found", id)
+	}
 
-    // ตรวจสอบว่า product_id มีอยู่ในระบบหรือไม่
-    productExists, err := db.NewSelect().
-        TableExpr("products").
-        Where("id = ?", req.ProductID).
-        Exists(ctx)
+	// ตรวจสอบว่า product_id มีอยู่ในระบบหรือไม่
+	productExists, err := db.NewSelect().
+		TableExpr("products").
+		Where("id = ?", req.ProductID).
+		Exists(ctx)
 
-    if err != nil {
-        return nil, fmt.Errorf("failed to check product existence: %v", err)
-    }
+	if err != nil {
+		return nil, fmt.Errorf("failed to check product existence: %v", err)
+	}
 
-    if !productExists {
-        return nil, fmt.Errorf("product with id %d not found", req.ProductID)
-    }
+	if !productExists {
+		return nil, fmt.Errorf("product with id %d not found", req.ProductID)
+	}
 
-    // ดึงข้อมูล Wishlist
-    wishlist := &model.Wishlists{}
-    err = db.NewSelect().
-        Model(wishlist).
-        Where("id = ?", id).
-        Scan(ctx)
+	// ดึงข้อมูล Wishlist
+	wishlist := &model.Wishlists{}
+	err = db.NewSelect().
+		Model(wishlist).
+		Where("id = ?", id).
+		Scan(ctx)
 
-    if err != nil {
-        return nil, fmt.Errorf("failed to retrieve wishlist: %v", err)
-    }
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve wishlist: %v", err)
+	}
 
-    // อัปเดต Wishlist
-    wishlist.ProductID = int64(req.ProductID) // แปลงค่าเป็น int64
-    wishlist.SetUpdateNow()
+	// อัปเดต Wishlist
+	wishlist.ProductID = int64(req.ProductID) // แปลงค่าเป็น int64
+	wishlist.SetUpdateNow()
 
-    _, err = db.NewUpdate().
-        Model(wishlist).
-        Where("id = ?", id).
-        Exec(ctx)
+	_, err = db.NewUpdate().
+		Model(wishlist).
+		Where("id = ?", id).
+		Exec(ctx)
 
-    if err != nil {
-        return nil, fmt.Errorf("failed to update wishlist: %v", err)
-    }
+	if err != nil {
+		return nil, fmt.Errorf("failed to update wishlist: %v", err)
+	}
 
-    return wishlist, nil
+	return wishlist, nil
 }
