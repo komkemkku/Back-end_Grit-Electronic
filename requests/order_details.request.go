@@ -28,5 +28,5 @@ type OrderDetailUpdateRequest struct {
 	ProductID  int     `json:"product_id"`
 	OrderID    int     `json:"order_id"`
 	UnitPrice  float64 `json:"unit_price"`
-	TotalPrice int     `json:"total_price"`
+	// TotalPrice int     `json:"total_price"`
 }

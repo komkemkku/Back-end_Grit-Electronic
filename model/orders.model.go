@@ -8,10 +8,9 @@ type Orders struct {
 	ID          int     `bun:",type:serial,autoincrement,pk"`
 	TotalPrice  float64 `bun:"total_price"`
 	TotalAmount int     `bun:"total_amount"`
-	Status      int  `bun:"status"`
+	Status      int     `bun:"status"`
 
 	CreateUnixTimestamp
 	UpdateUnixTimestamp
 	SoftDelete
 }
-    

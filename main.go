@@ -130,11 +130,11 @@ func main() {
 	r.PATCH("/payment/:id", payments.UpdatePayment)
 
 	// Order Details
-	r.POST("/orderdetails/create", orederdetail.CreateOrderDetail)
-	r.GET("/orderdetails", orederdetail.OrderDetailList)
-	r.GET("/orderdetails/:id", orederdetail.GetOrderDetailByID)
-	r.DELETE("/orderdetails/:id", orederdetail.DeleteOrderDetail)
-	r.PATCH("/orederdetails/:id", orederdetail.UpdateOrderDetaill)
+	r.POST("/orderdetail/create", orederdetail.CreateOrderDetail)
+	r.GET("/orderdetail", orederdetail.OrderDetailList)
+	r.GET("/orderdetail/:id", orederdetail.GetOrderDetailByID)
+	r.DELETE("/orderdetail/:id", orederdetail.DeleteOrderDetail)
+	r.PATCH("/orderdetail/:id", orederdetail.UpdateOrderDetaill)
 
 
 	r.Run()

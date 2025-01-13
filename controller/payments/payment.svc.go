@@ -3,8 +3,6 @@ package payments
 import (
 	"context"
 	"errors"
-	"fmt"
-	"strconv"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
@@ -67,17 +65,11 @@ func GetByIdPaymentService(ctx context.Context, id int64) (*response.PaymentResp
 
 func CreatePaymentService(ctx context.Context, req requests.PaymentCreateRequest) (*model.Payments, error) {
 
-	statusInt, err := strconv.Atoi(req.Status)
-	if err != nil {
-        return nil, fmt.Errorf("invalid status value: %v", err) // จัดการข้อผิดพลาด
-    }
-
-
 	payment := &model.Payments{
 		Price:    float64(req.Price),
         Amount:   int(req.Amount),
         Slip:     req.Slip,
-        Status:   statusInt,
+        Status:   req.Status,
 		BankName: req.BankName,
 		AccountName: req.AccountName,
 		AccountNumber: req.AccountNumber,
@@ -85,7 +77,7 @@ func CreatePaymentService(ctx context.Context, req requests.PaymentCreateRequest
 	payment.SetCreatedNow()
 	payment.SetUpdateNow()
 
-	_, err = db.NewInsert().Model(payment).Exec(ctx)
+	_, err := db.NewInsert().Model(payment).Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -105,8 +97,6 @@ func UpdatePaymentService(ctx context.Context, id int64, req requests.PaymentUpd
 
 	payment := &model.Payments{}
 
-	statusInt, err := strconv.Atoi(req.Status)
-
 	err = db.NewSelect().Model(payment).Where("id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -114,7 +104,7 @@ func UpdatePaymentService(ctx context.Context, id int64, req requests.PaymentUpd
 	payment.Price = float64(req.Price)
 	payment.Amount = int(req.Amount)
 	payment.Slip = req.Slip
-	payment.Status = statusInt
+	payment.Status = req.Status
 	payment.BankName = req.BankName
 	payment.AccountName = req.AccountName
 	payment.AccountNumber = req.AccountNumber
