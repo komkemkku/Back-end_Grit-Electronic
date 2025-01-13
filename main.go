@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/cmd"
 	config "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
+	adminlogs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/admin_logs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/admins"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/auth"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/carts"
@@ -97,6 +98,9 @@ func main() {
 	r.DELETE("/admin/:id", admins.DeleteAdmin)
 	r.PATCH("/admin/:id", admins.UpdateAdmin)
 
+	// Admin_log
+	r.GET("/adminlog", adminlogs.AdminLogList)
+
 	// System bank
 	r.POST("/system/create", systembank.CreateSystembank)
 	r.GET("/system/:id", systembank.GetSystemBankByID)
@@ -131,7 +135,6 @@ func main() {
 	// r.GET("/orderdetails/:id", orederdetail.GetOrderDetailByID)
 	r.DELETE("/orderdetails/:id", orederdetail.DeleteOrderDetail)
 
-	//r.PATCH("/payment/:id", payments.UpdatePayment)
 
 	r.Run()
 
