@@ -23,6 +23,8 @@ type OrderDetailCreateRequest struct {
 type OrderDetailUpdateRequest struct {
 	Id         string  `json:"id"`
 	Quantity   int     `json:"quantity"`
+	PaymentID  int     `json:"payment_id"`
+	ShipmentID int     `json:"shipment_id"`
 	ProductID  int     `json:"product_id"`
 	OrderID    int     `json:"order_id"`
 	UnitPrice  float64 `json:"unit_price"`
