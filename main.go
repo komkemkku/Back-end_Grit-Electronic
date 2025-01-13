@@ -132,8 +132,9 @@ func main() {
 	// Order Details
 	r.POST("/orderdetails/create", orederdetail.CreateOrderDetail)
 	r.GET("/orderdetails", orederdetail.OrderDetailList)
-	// r.GET("/orderdetails/:id", orederdetail.GetOrderDetailByID)
+	r.GET("/orderdetails/:id", orederdetail.GetOrderDetailByID)
 	r.DELETE("/orderdetails/:id", orederdetail.DeleteOrderDetail)
+	r.PATCH("/orederdetails/:id", orederdetail.UpdateOrderDetaill)
 
 
 	r.Run()
