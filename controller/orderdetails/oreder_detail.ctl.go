@@ -61,3 +61,40 @@ func DeleteOrderDetail(c *gin.Context) {
 
 	response.Success(c, "delete successfully")
 }
+
+func GetOrderDetailByID(c *gin.Context) {
+	id := requests.OrderDetailIdRequest{}
+	if err := c.BindUri(&id); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	data, err := GetByOrderDetailService(c, int64(id.ID))
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+	response.Success(c, data)
+}
+
+func UpdateOrderDetaill(c *gin.Context) {
+	id := requests.OrderDetailIdRequest{}
+	if err := c.BindUri(&id); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	req := requests.OrderDetailUpdateRequest{}
+if err := c.ShouldBindJSON(&req); err != nil {
+    response.BadRequest(c, err.Error())
+    return
+}
+
+data, err := UpdateOrderDetailService(c, int64(id.ID), req)
+if err != nil {
+    response.InternalError(c, err.Error())
+    return
+}
+
+response.Success(c, data)
+}

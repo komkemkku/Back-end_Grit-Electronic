@@ -3,6 +3,7 @@ package orederdetail
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	// "strconv"
 
@@ -92,4 +93,64 @@ func DeleteOrderDetailService(ctx context.Context, id int64) error {
 
 	// สำเร็จ
 	return nil
+}
+
+func GetByOrderDetailService(ctx context.Context, id int64) (*response.OrderDetailResponses, error) {
+	exists, err := db.NewSelect().
+		TableExpr("order_details").
+		Where("id = ?", id).
+		Exists(ctx)
+
+	if err != nil {
+		return nil, errors.New("order details not found")
+	}
+
+	if !exists {
+		return nil, errors.New("order details not found")
+	}
+
+	orderdetail := &response.OrderDetailResponses{}
+
+	err = db.NewSelect().
+		TableExpr("order_details AS od").
+		Column("od.id", "od.order_id", "od.product_id", "od.payment_id", "od.shipment_id", "od.created_at", "od.updated_at", "od.quantity", "od.unit_price").
+		Where("od.id = ?", id).
+		Scan(ctx, orderdetail)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return orderdetail, nil
+}
+
+func UpdateOrderDetailService(ctx context.Context, id int64, req requests.OrderDetailUpdateRequest) (*model.Order_details, error) {
+	// ตรวจสอบว่า Order Detail มีอยู่ในระบบหรือไม่
+	var Order_details model.Order_details
+	err := db.NewSelect().
+		Model(&Order_details).
+		Where("id = ?", id).
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve order_detail: %v", err)
+	}
+
+	// อัปเดตข้อมูลใน OrderDetails
+	Order_details.ProductID = req.ProductID
+	Order_details.PaymentID = req.PaymentID
+	Order_details.ShipmentID = req.ShipmentID
+	Order_details.UnitPrice = req.UnitPrice
+	Order_details.Quantity = req.Quantity
+	Order_details.SetUpdateNow()
+
+	// บันทึกข้อมูลลงในฐานข้อมูล
+	_, err = db.NewUpdate().
+	Model(&Order_details).
+	Where("id = ?", id).
+	Exec(ctx)
+if err != nil {
+	return nil, fmt.Errorf("failed to update order_detail: %v", err)
+}
+
+return &Order_details, nil
 }
