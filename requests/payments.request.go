@@ -13,7 +13,7 @@ type PaymentIdRequest struct {
 type PaymentCreateRequest struct {
 	Price         int  `json:"price"`
 	Amount        int  `json:"amount"`
-	Status        string `json:"status"`
+	Status        int `json:"status"`
 	Slip          string `json:"slip"`
 	BankName      string `json:"bank_name"`
 	AccountName   string `json:"account_name"`
@@ -24,7 +24,7 @@ type PaymentUpdateRequest struct {
 	Id            int  `json:"id"`
 	Price         int  `json:"price"`
 	Amount        int  `json:"amount"`
-	Status        string `json:"status"`
+	Status        int `json:"status"`
 	Slip          string `json:"slip"`
 	BankName      string `json:"bank_name"`
 	AccountName   string `json:"account_name"`
