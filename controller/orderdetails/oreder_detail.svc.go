@@ -26,38 +26,32 @@ func ListOrderDetailService(ctx context.Context, req requests.OrderDetailRequest
 
 	// สร้าง query
 	query := db.NewSelect().
-    TableExpr("order_details AS od").
-    Column("od.id", "od.created_at", "od.updated_at", "od.quantity").
-
-    ColumnExpr("o.id AS order__id").
-    ColumnExpr("o.total_price AS total_price").
-    ColumnExpr("o.total_amount AS total_amount").
-    ColumnExpr("o.status AS status").
-
-	// ColumnExpr("pr.id AS product__id").
-	// ColumnExpr("pr.name AS product__name").
-	// ColumnExpr("pr.price AS product__price").	
-
-    ColumnExpr("pay.id AS payment__id").
-    ColumnExpr("pay.price AS payment__price").
-    ColumnExpr("pay.slip AS payment__slip").
-    ColumnExpr("pay.status AS payment__status").
-
-    // ColumnExpr("s.id AS shipment__id").
-    // ColumnExpr("s.firstname AS shipment__firstname").
-    // ColumnExpr("s.lastname AS shipment__lastname").
-    // ColumnExpr("s.address AS shipment__address").
-    // ColumnExpr("s.zip_code AS shipment__zipcode").
-    // ColumnExpr("s.sub_district AS shipment__subdistrict").
-    // ColumnExpr("s.district AS shipment__district").
-    // ColumnExpr("s.province AS shipment__province").
-    // ColumnExpr("s.status AS shipment__status").
-
-    Join("LEFT JOIN orders AS o ON o.id = od.order_id").
-    Join("LEFT JOIN payments AS pay ON pay.id = od.payment_id").
-    Join("LEFT JOIN shipments AS s ON s.id = od.shipment_id").
-	Join("LEFT JOIN products AS pr ON pr.id = od.product_id")
-
+		TableExpr("order_details AS od").
+		Column("od.id", "od.created_at", "od.updated_at").
+		ColumnExpr("o.id AS order__id").
+		ColumnExpr("o.total_price AS total_price").
+		ColumnExpr("o.total_amount AS total_amount").
+		ColumnExpr("o.status AS status").
+		ColumnExpr("pr.id AS product__id").
+		ColumnExpr("pr.name AS product__name").
+		ColumnExpr("pr.price AS product__price").
+		ColumnExpr("pay.id AS payment__id").
+		ColumnExpr("pay.price AS payment__price").
+		ColumnExpr("pay.slip AS payment__slip").
+		ColumnExpr("pay.status AS payment__status").
+		ColumnExpr("s.id AS shipment__id").
+		ColumnExpr("s.firstname AS shipment__firstname").
+		ColumnExpr("s.lastname AS shipment__lastname").
+		ColumnExpr("s.address AS shipment__address").
+		ColumnExpr("s.zip_code AS shipment__zip_code").
+		ColumnExpr("s.sub_district AS shipment__sub_district").
+		ColumnExpr("s.district AS shipment__district").
+		ColumnExpr("s.province AS shipment__province").
+		ColumnExpr("s.status AS shipment__status").
+		Join("LEFT JOIN orders AS o ON o.id = od.order_id").
+		Join("LEFT JOIN payments AS pay ON pay.id = od.payment_id").
+		Join("LEFT JOIN shipments AS s ON s.id = od.shipment_id").
+		Join("LEFT JOIN products AS pr ON pr.id = od.product_id")
 
 	// if req.Search != "" {
 	// 	query.Where("o.product_id::text ILIKE ?", "%"+req.Search+"%")
@@ -67,15 +61,15 @@ func ListOrderDetailService(ctx context.Context, req requests.OrderDetailRequest
 	if err != nil {
 		return response.OrderDetailResponses{}, 0, err
 	}
-	
+
 	// Execute query
 	err = query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
 	if err != nil {
 		return response.OrderDetailResponses{}, 0, err
 	}
-	
-    return resp, total, nil
-	
+
+	return resp, total, nil
+
 }
 
 func CreateOrderDetailService(ctx context.Context, req requests.OrderDetailCreateRequest) (*model.Order_details, error) {
@@ -85,8 +79,6 @@ func CreateOrderDetailService(ctx context.Context, req requests.OrderDetailCreat
 		ProductID:  req.ProductID,
 		PaymentID:  req.PaymentID,
 		ShipmentID: req.ShipmentID,
-		Quantity:   req.Quantity,
-		UnitPrice:  req.UnitPrice,
 	}
 
 	order_detail.SetCreatedNow()
@@ -144,13 +136,42 @@ func GetByOrderDetailService(ctx context.Context, id int64) (*response.OrderDeta
 
 	err = db.NewSelect().
 		TableExpr("order_details AS od").
-		Column("od.id", "od.order_id", "od.product_id", "od.payment_id", "od.shipment_id", "od.created_at", "od.updated_at", "od.quantity", "od.unit_price").
+		Column("od.id", "od.created_at", "od.updated_at").
+		ColumnExpr("o.id AS order__id").
+		ColumnExpr("o.total_price AS total_price").
+		ColumnExpr("o.total_amount AS total_amount").
+		ColumnExpr("o.status AS status").
+		ColumnExpr("pr.id AS product__id").
+		ColumnExpr("pr.name AS product__name").
+		ColumnExpr("pr.price AS product__price").
+		ColumnExpr("pay.id AS payment__id").
+		ColumnExpr("pay.price AS payment__price").
+		ColumnExpr("pay.slip AS payment__slip").
+		ColumnExpr("pay.status AS payment__status").
+		ColumnExpr("s.id AS shipment__id").
+		ColumnExpr("s.firstname AS shipment__firstname").
+		ColumnExpr("s.lastname AS shipment__lastname").
+		ColumnExpr("s.address AS shipment__address").
+		ColumnExpr("s.zip_code AS shipment__zip_code").
+		ColumnExpr("s.sub_district AS shipment__sub_district").
+		ColumnExpr("s.district AS shipment__district").
+		ColumnExpr("s.province AS shipment__province").
+		ColumnExpr("s.status AS shipment__status").
+		Join("LEFT JOIN orders AS o ON o.id = od.order_id").
+		Join("LEFT JOIN payments AS pay ON pay.id = od.payment_id").
+		Join("LEFT JOIN shipments AS s ON s.id = od.shipment_id").
+		Join("LEFT JOIN products AS pr ON pr.id = od.product_id").
 		Where("od.id = ?", id).
 		Scan(ctx, orderdetail)
 
 	if err != nil {
 		return nil, err
 	}
+
+	// ตรวจสอบ TotalPrice กับ Payment.Amount
+	// if orderdetail.TotalPrice != orderdetail.Payment.Price {
+	// 	return nil, fmt.Errorf("mismatch: total price (%.2f) does not match payment amount (%.2f)", orderdetail.TotalPrice, orderdetail.Payment.Price)
+	// }
 
 	return orderdetail, nil
 }
@@ -170,8 +191,6 @@ func UpdateOrderDetailService(ctx context.Context, id int64, req requests.OrderD
 	Order_details.ProductID = req.ProductID
 	Order_details.PaymentID = req.PaymentID
 	Order_details.ShipmentID = req.ShipmentID
-	Order_details.UnitPrice = req.UnitPrice
-	Order_details.Quantity = req.Quantity
 	Order_details.SetUpdateNow()
 
 	// บันทึกข้อมูลลงในฐานข้อมูล

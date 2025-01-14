@@ -11,22 +11,16 @@ type OrderDetailIdRequest struct {
 }
 
 type OrderDetailCreateRequest struct {
-	Quantity   int     `json:"quantity"`
-	ProductID  int     `json:"product_id"`
-	OrderID    int     `json:"order_id"`
-	PaymentID  int     `json:"payment_id"`
-	ShipmentID int     `json:"shipment_id"`
-	UnitPrice  float64 `json:"unit_price"`
-	//TotalPrice int     `json:"total_price"`
+	ProductID  int `json:"product_id"`
+	OrderID    int `json:"order_id"`
+	PaymentID  int `json:"payment_id"`
+	ShipmentID int `json:"shipment_id"`
 }
 
 type OrderDetailUpdateRequest struct {
-	Id         string  `json:"id"`
-	Quantity   int     `json:"quantity"`
-	PaymentID  int     `json:"payment_id"`
-	ShipmentID int     `json:"shipment_id"`
-	ProductID  int     `json:"product_id"`
-	OrderID    int     `json:"order_id"`
-	UnitPrice  float64 `json:"unit_price"`
-	// TotalPrice int     `json:"total_price"`
+	Id         string `json:"id"`
+	PaymentID  int    `json:"payment_id"`
+	ShipmentID int    `json:"shipment_id"`
+	ProductID  int    `json:"product_id"`
+	OrderID    int    `json:"order_id"`
 }
