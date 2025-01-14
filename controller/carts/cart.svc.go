@@ -29,6 +29,7 @@ func ListCartService(ctx context.Context, req requests.CartRequest) ([]response.
 		Column("c.id", "c.quantity", "c.created_at", "c.updated_at").
 		ColumnExpr("p.id AS product__id").
 		ColumnExpr("p.name AS product__name").
+		ColumnExpr("p.detail AS product__detail").
 		ColumnExpr("p.price AS product__price").
 		ColumnExpr("p.image AS product__image").
 		Join("LEFT JOIN products as p ON p.id = c.product_id")

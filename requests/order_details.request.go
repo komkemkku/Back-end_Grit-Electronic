@@ -11,16 +11,16 @@ type OrderDetailIdRequest struct {
 }
 
 type OrderDetailCreateRequest struct {
-	ProductID  int `json:"product_id"`
-	OrderID    int `json:"order_id"`
-	PaymentID  int `json:"payment_id"`
-	ShipmentID int `json:"shipment_id"`
+	ProductID  []int `json:"product_id"`
+	OrderID    int   `json:"order_id"`
+	PaymentID  int   `json:"payment_id"`
+	ShipmentID int   `json:"shipment_id"`
 }
 
 type OrderDetailUpdateRequest struct {
 	Id         string `json:"id"`
 	PaymentID  int    `json:"payment_id"`
 	ShipmentID int    `json:"shipment_id"`
-	ProductID  int    `json:"product_id"`
+	ProductID  []int  `json:"product_id"`
 	OrderID    int    `json:"order_id"`
 }

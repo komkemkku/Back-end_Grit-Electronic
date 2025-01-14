@@ -18,7 +18,7 @@ type ShipmentCreateRequest struct {
 	SubDistrict string `json:"sub_district"`
 	District    string `json:"district"`
 	Province    string `json:"province"`
-	Status      string `json:"status"`
+	Status      int `json:"status"`
 }
 
 type ShipmentUpdateRequest struct {
@@ -30,5 +30,5 @@ type ShipmentUpdateRequest struct {
 	SubDistrict string `json:"sub_district"`
 	District    string `json:"district"`
 	Province    string `json:"province"`
-	Status      string `json:"status"`
+	Status      int `json:"status"`
 }
