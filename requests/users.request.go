@@ -14,7 +14,7 @@ type UserCreateRequest struct {
 	Firstname string `json:"firstname"`
 	Lastname  string `json:"lastname"`
 	Username  string `json:"username"`
-	Password  string `json:"password"`
+	Password  string `json:"_"`
 	Email     string `json:"email"`
 	Phone     string `json:"phone"`
 	RoleID    int  `json:"role_id"`
