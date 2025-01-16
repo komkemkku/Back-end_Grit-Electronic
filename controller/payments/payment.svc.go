@@ -24,7 +24,11 @@ func ListPaymentService(ctx context.Context, req requests.PaymentRequest) ([]res
 	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("payments AS p").
-		Column("p.id", "p.price", "p.amount", "p.slip", "p.status", "p.bank_name", "p.account_name", "p.account_number", "p.created_at", "p.updated_at")
+		Column("p.id", "p.price", "p.payment_slip", "p.status", "p.updated_by", "p.bank_name", "p.account_name", "p.account_number", "p.created_at", "p.updated_at").
+		// ColumnExpr("a.id AS admin__id").
+		// ColumnExpr("a.name AS admin__name").
+		Join("LEFT JOIN admins AS a ON a.id = p.admin_id")
+
 
 	if req.Search != "" {
 		query.Where("p.status ILIKE ?", "%"+req.Search+"%")
@@ -66,12 +70,11 @@ func GetByIdPaymentService(ctx context.Context, id int64) (*response.PaymentResp
 func CreatePaymentService(ctx context.Context, req requests.PaymentCreateRequest) (*model.Payments, error) {
 
 	payment := &model.Payments{
-		Price:    float64(req.Price),
-        Amount:   int(req.Amount),
-        Slip:     req.Slip,
-        Status:   req.Status,
-		BankName: req.BankName,
-		AccountName: req.AccountName,
+		Price:         float64(req.Price),
+		UpdatedBy:     req.UpdatedBy,
+		AdminID:       req.AdminID,
+		BankName:      req.BankName,
+		AccountName:   req.AccountName,
 		AccountNumber: req.AccountNumber,
 	}
 	payment.SetCreatedNow()
@@ -102,9 +105,8 @@ func UpdatePaymentService(ctx context.Context, id int64, req requests.PaymentUpd
 		return nil, err
 	}
 	payment.Price = float64(req.Price)
-	payment.Amount = int(req.Amount)
-	payment.Slip = req.Slip
-	payment.Status = req.Status
+	payment.UpdatedBy = req.UpdatedBy
+	payment.AdminID = req.AdminID
 	payment.BankName = req.BankName
 	payment.AccountName = req.AccountName
 	payment.AccountNumber = req.AccountNumber

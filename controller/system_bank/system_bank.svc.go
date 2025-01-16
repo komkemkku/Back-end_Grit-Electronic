@@ -63,14 +63,13 @@ func GetByIdSystemBankService(ctx context.Context, id int64) (*response.SystemBa
 }
 
 // Add bank system
-func CreateSystemBankService(ctx context.Context, req requests.SystemBankCreateRequest) (*model.SystemBank, error) {
+func CreateSystemBankService(ctx context.Context, req requests.SystemBankCreateRequest) (*model.SystemBanks, error) {
 
 	// เพิ่มเลขบัญชีระบบ
-	systembank := &model.SystemBank{
+	systembank := &model.SystemBanks{
 		BankName:      req.BankName,
 		AccountName:   req.AccountName,
 		AccountNumber: req.AccountNumber,
-		Image:          req.Image,
 	}
 	systembank.SetCreatedNow()
 	systembank.SetUpdateNow()
@@ -84,7 +83,7 @@ func CreateSystemBankService(ctx context.Context, req requests.SystemBankCreateR
 
 }
 
-func UpdateSystembankService(ctx context.Context, id int64, req requests.SystemBankUpdateRequest) (*model.SystemBank, error) {
+func UpdateSystembankService(ctx context.Context, id int64, req requests.SystemBankUpdateRequest) (*model.SystemBanks, error) {
 	ex, err := db.NewSelect().TableExpr("system_bank").Where("id=?", id).Exists(ctx)
 	if err != nil {
 		return nil, err
@@ -93,7 +92,7 @@ func UpdateSystembankService(ctx context.Context, id int64, req requests.SystemB
 		return nil, errors.New("not found")
 	}
 
-	systembank := &model.SystemBank{}
+	systembank := &model.SystemBanks{}
 
 	err = db.NewSelect().Model(systembank).Where("id = ?", id).Scan(ctx)
 	if err != nil {
@@ -102,7 +101,6 @@ func UpdateSystembankService(ctx context.Context, id int64, req requests.SystemB
 	systembank.BankName = req.BankName
 	systembank.AccountName = req.AccountName
 	systembank.AccountNumber = req.AccountNumber
-	systembank.Image = req.Image
 	systembank.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(systembank).Where("id = ?", id).Exec(ctx)

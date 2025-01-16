@@ -87,7 +87,6 @@ func CreateShipmentService(ctx context.Context, req requests.ShipmentCreateReque
 		SubDistrict: req.SubDistrict,
 		District:    req.District,
 		Province:    req.Province,
-		Status:      req.Status,
 	}
 	shipment.SetCreatedNow()
 	shipment.SetUpdateNow()
@@ -132,7 +131,6 @@ func UpdateShipmentService(ctx context.Context, id int64, req requests.ShipmentU
 	shipment.SubDistrict = req.SubDistrict
 	shipment.District = req.District
 	shipment.Province = req.Province
-	shipment.Status = req.Status
 	shipment.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(shipment).Where("id = ?", id).Exec(ctx)

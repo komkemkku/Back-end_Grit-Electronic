@@ -63,7 +63,7 @@ func GetByIdCategoryService(ctx context.Context, id int64) (*response.CategoryRe
 	return category, nil
 }
 
-func CreateCategoryService(ctx context.Context, req requests.CategoryCreateRequest) (*model.Category, error) {
+func CreateCategoryService(ctx context.Context, req requests.CategoryCreateRequest) (*model.Categories, error) {
 
 	// ตรวจสอบชื่อซ้ำ
 	exists, err := db.NewSelect().
@@ -78,9 +78,8 @@ func CreateCategoryService(ctx context.Context, req requests.CategoryCreateReque
 	}
 
 	// เพิ่ม
-	category := &model.Category{
+	category := &model.Categories{
 		Name:  req.Name,
-		Image: req.Image,
 	}
 	category.SetCreatedNow()
 	category.SetUpdateNow()
@@ -94,7 +93,7 @@ func CreateCategoryService(ctx context.Context, req requests.CategoryCreateReque
 
 }
 
-func UpdateCategoryService(ctx context.Context, id int64, req requests.CategoryUpdateRequest) (*model.Category, error) {
+func UpdateCategoryService(ctx context.Context, id int64, req requests.CategoryUpdateRequest) (*model.Categories, error) {
 	ex, err := db.NewSelect().TableExpr("categories").Where("id=?", id).Exists(ctx)
 	if err != nil {
 		return nil, err
@@ -103,14 +102,13 @@ func UpdateCategoryService(ctx context.Context, id int64, req requests.CategoryU
 		return nil, errors.New("category not found")
 	}
 
-	category := &model.Category{}
+	category := &model.Categories{}
 
 	err = db.NewSelect().Model(category).Where("id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
 	category.Name = req.Name
-	category.Image = req.Image
 	category.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(category).Where("id = ?", id).Exec(ctx)
