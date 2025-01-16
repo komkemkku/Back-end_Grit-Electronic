@@ -42,8 +42,8 @@ func CreateUser(c *gin.Context) {
     return
   }
 
-  // ถ้าทำงานสำเร็จ
-  response.Success(c, http.StatusOK)
+	// ถ้าทำงานสำเร็จ
+	response.Success(c, http.StatusOK)
 }
 
 func Success(c *gin.Context) {
