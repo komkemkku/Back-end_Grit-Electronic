@@ -30,34 +30,33 @@ func GetUserByID(c *gin.Context) {
 	response.Success(c, data)
 }
 
-func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*model.Users, error) {
+func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) error {
+    // แฮชรหัสผ่าน
+    hashpassword, err := utils.HashPassword(req.Password)
+    if err != nil {
+        return errors.New("failed to hash password: " + err.Error())
+    }
 
-	// แฮชรหัสผ่าน
-	hashpassword, err := utils.HashPassword(req.Password)
-	if err != nil {
-		return errors.New("failed to hash password: " + err.Error())
-	}
+    // สร้างผู้ใช้ใหม่
+    user := &model.Users{
+        FirstName: req.Firstname,
+        LastName:  req.Lastname,
+        Username:  req.Username,
+        Password:  hashpassword,
+        Email:     req.Email,
+        Phone:     req.Phone,
+    }
+    user.SetCreatedNow()
+    user.SetUpdateNow()
 
-	// สร้างผู้ใช้ใหม่
-	user := &model.Users{
-		FirstName: req.Firstname,
-		LastName:  req.Lastname,
-		Username:  req.Username,
-		Password:  hashpassword, // แฮชแล้ว
-		Email:     req.Email,
-		Phone:     req.Phone,
-	}
-	user.SetCreatedNow()
-	user.SetUpdateNow()
+    // บันทึกผู้ใช้
+    if _, err := db.NewInsert().Model(user).Exec(ctx); err != nil {
+        return errors.New("failed to create user: " + err.Error())
+    }
 
-	// เพิ่มผู้ใช้ในฐานข้อมูล
-	if _, err := db.NewInsert().Model(user).Exec(ctx); err != nil {
-		return err
-	}
-
-	// ถ้าถึงตรงนี้แปลว่าสำเร็จ ไม่มี error
-	return nil
+    return nil
 }
+
 
 func CreateUserHandler(c *gin.Context) {
 	var req requests.UserCreateRequest
