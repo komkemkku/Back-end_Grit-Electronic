@@ -14,13 +14,15 @@ type SystemBankCreateRequest struct {
 	BankName      string `json:"bank_name"`
 	AccountName   string `json:"account_name"`
 	AccountNumber string `json:"account_number"`
-	Image         string `json:"image"`
+	Description   string `json:"description"`
+	IsActive      bool   `json:"is_active"`
 }
 
 type SystemBankUpdateRequest struct {
-	ID            int  `json:"id"`
+	ID            int    `json:"id"`
 	BankName      string `json:"bank_name"`
 	AccountName   string `json:"account_name"`
 	AccountNumber string `json:"account_number"`
-	Image         string `json:"image"`
+	Description   string `json:"description"`
+	IsActive      bool   `json:"is_active"`
 }

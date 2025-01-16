@@ -11,16 +11,18 @@ type AdminIdRequest struct {
 }
 
 type AdminCreateRequest struct {
-	Name     string  `json:"name"`
-	Password string `json:"password"`
+	RoleID   int    `json:"role_id"`
+	Name     string `json:"name"`
 	Email    string `json:"email"`
-	RoleID   int  `json:"role_id"`
+	Password string `json:"password"`
+	IsActive bool   `json:"is_active"`
 }
 
 type AdminUpdateRequest struct {
-	ID       int  `json:"id"`
-	Name     string  `json:"name"`
-	Password string `json:"password"`
+	ID       int    `json:"id"`
+	RoleID   int    `json:"role_id"`
+	Name     string `json:"name"`
 	Email    string `json:"email"`
-	RoleID   int  `json:"role_id"`
+	Password string `json:"password"`
+	IsActive bool   `json:"is_active"`
 }
