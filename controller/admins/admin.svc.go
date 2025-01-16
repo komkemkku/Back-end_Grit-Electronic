@@ -25,7 +25,7 @@ func ListAdminService(ctx context.Context, req requests.AdminRequest) ([]respons
 	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("admins AS a").
-		Column("a.id", "a.name", "a.email", "a.created_at", "a.updated_at").
+		Column("a.id", "a.name", "a.email", "a.is_active", "a.created_at", "a.updated_at").
 		ColumnExpr("r.id AS role__id").
 		ColumnExpr("r.name AS role__name").
 		Join("LEFT JOIN roles as r ON r.id = a.role_id")
@@ -59,10 +59,10 @@ func GetByIdAdminService(ctx context.Context, id int64) (*response.AdminResponse
 	admin := &response.AdminResponses{}
 
 	err = db.NewSelect().TableExpr("admins AS a").
-		Column("a.id", "a.name", "a.email", "a.created_at", "a.updated_at").
-		ColumnExpr("r.id AS role__id").
-		ColumnExpr("r.name AS role__name").
-		Join("LEFT JOIN roles as r ON r.id = a.role_id").Where("a.id = ?", id).Scan(ctx, admin)
+	Column("a.id", "a.name", "a.email", "a.is_active", "a.created_at", "a.updated_at").
+	ColumnExpr("r.id AS role__id").
+	ColumnExpr("r.name AS role__name").
+	Join("LEFT JOIN roles as r ON r.id = a.role_id").Where("a.id = ?", id).Scan(ctx, admin)
 	if err != nil {
 		return nil, err
 	}
@@ -83,10 +83,11 @@ func CreateAdminService(ctx context.Context, req requests.AdminCreateRequest) (*
 
 	// เพิ่มadmin
 	admin := &model.Admins{
-		Name:     req.Name,
-		Password: hashpassword,
-		Email:    req.Email,
 		RoleID:   int(req.RoleID),
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: hashpassword,
+		IsActive: req.IsActive,
 	}
 	admin.SetCreatedNow()
 	admin.SetUpdateNow()
@@ -111,14 +112,17 @@ func UpdateAdminService(ctx context.Context, id int64, req requests.AdminUpdateR
 
 	admin := &model.Admins{}
 
+	hashpassword, _ := utils.HashPassword(req.Password)
+
 	err = db.NewSelect().Model(admin).Where("id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
+	admin.RoleID = req.RoleID
 	admin.Name = req.Name
-	admin.Password = req.Password
 	admin.Email = req.Email
-	admin.RoleID = int(req.RoleID)
+	admin.Password = hashpassword
+	admin.IsActive = req.IsActive
 	admin.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(admin).Where("id = ?", id).Exec(ctx)

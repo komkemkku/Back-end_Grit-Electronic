@@ -52,12 +52,12 @@ func CreateAdmin(c *gin.Context) {
 		return
 	}
 
-	data, err := CreateAdminService(c, req)
+	_, err := CreateAdminService(c, req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
-	response.Success(c, data)
+	response.Success(c, "Admin Create successfully")
 }
 
 func DeleteAdmin(c *gin.Context) {
@@ -89,10 +89,12 @@ func UpdateAdmin(c *gin.Context) {
 		return
 	}
 
-	data, err := UpdateAdminService(c, int64(id.ID), req)
+	_, err := UpdateAdminService(c, int64(id.ID), req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
-	response.Success(c, data)
+
+	// ส่งข้อความ Success โดยไม่ต้องส่งข้อมูลกลับ
+	response.Success(c, "Admin updated successfully")
 }

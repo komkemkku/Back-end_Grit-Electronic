@@ -11,8 +11,9 @@ type PermissionIdRequest struct {
 }
 
 type PermissionUpdateRequest struct {
-	Id          int  `json:"id"`
+	Id          int    `json:"id"`
 	GroupName   string `json:"group_name"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	IsActive    bool   `json:"is_active"`
 }

@@ -11,14 +11,22 @@ type OrderIdRequest struct {
 }
 
 type OrderCreateRequest struct {
-	TotalPrice  int  `json:"total_price"`
-	TotalAmount int  `json:"total_amount"`
-	Status      int `json:"status"`
+	UserID      int    `json:"user_id"`
+	PaymentID   int    `json:"payment_id"`
+	ShipmentID  int    `json:"shipment_id"`
+	CartID      int    `json:"cart_id"`
+	TotalPrice  int    `json:"total_price"`
+	TotalAmount int    `json:"total_amount"`
+	Status      string `json:"status"`
 }
 
 type OrderUpdateRequest struct {
-	ID          int  `json:"id"`
-	TotalPrice  int  `json:"total_price"`
-	TotalAmount int  `json:"total_amount"`
-	Status      int `json:"status"`
+	ID          int    `json:"id"`
+	UserID      int    `json:"user_id"`
+	PaymentID   int    `json:"payment_id"`
+	ShipmentID  int    `json:"shipment_id"`
+	CartID      int    `json:"cart_id"`
+	TotalPrice  int    `json:"total_price"`
+	TotalAmount int    `json:"total_amount"`
+	Status      string `json:"status"`
 }
