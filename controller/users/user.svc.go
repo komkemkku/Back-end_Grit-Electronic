@@ -30,15 +30,7 @@ func GetUserByID(c *gin.Context) {
 	response.Success(c, data)
 }
 
-func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) error {
-	// ตรวจสอบว่า Role ID = 3 มีอยู่หรือไม่
-	ex, err := db.NewSelect().TableExpr("roles").Where("id = ?", 3).Exists(ctx)
-	if err != nil {
-		return err
-	}
-	if !ex {
-		return errors.New("default role not found (role_id = 3)")
-	}
+func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*model.Users, error) {
 
 	// แฮชรหัสผ่าน
 	hashpassword, err := utils.HashPassword(req.Password)
@@ -61,15 +53,6 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) err
 	// เพิ่มผู้ใช้ในฐานข้อมูล
 	if _, err := db.NewInsert().Model(user).Exec(ctx); err != nil {
 		return err
-	}
-
-	// กำหนด Role เป็น 3 โดยอัตโนมัติ
-	userRole := &model.UserRole{
-		UserID: user.ID,
-		RoleID: 3,
-	}
-	if _, err := db.NewInsert().Model(userRole).Exec(ctx); err != nil {
-		return errors.New("failed to assign role to user: " + err.Error())
 	}
 
 	// ถ้าถึงตรงนี้แปลว่าสำเร็จ ไม่มี error

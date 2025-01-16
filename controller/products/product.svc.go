@@ -92,10 +92,7 @@ func CreateProductService(ctx context.Context, req requests.ProductCreateRequest
 	product := &model.Products{
 		Name:       req.Name,
 		Price:      float64(req.Price),
-		Detail:     req.Detail,
 		Stock:      int(req.Stock),
-		Image:      req.Image,
-		Spec:       req.Spec,
 		CategoryID: int(req.CategoryID),
 	}
 	product.SetCreatedNow()
@@ -129,10 +126,7 @@ func UpdateProductService(ctx context.Context, id int64, req requests.ProductUpd
 
 	product.Name = req.Name
 	product.Price = float64(req.Price)
-	product.Detail = req.Detail
 	product.Stock += int(req.Stock)
-	product.Image = req.Image
-	product.Spec = req.Spec
 	product.CategoryID = int(req.CategoryID)
 	product.SetUpdateNow()
 

@@ -80,7 +80,7 @@ func CreateWishlistsService(ctx context.Context, req requests.WishlistsAddReques
 
 	// เพิ่มสินค้าใหม่
 	Wishlists := &model.Wishlists{
-		ProductID: int64(req.ProductID),
+
 	}
 	Wishlists.SetCreatedNow()
 	Wishlists.SetUpdateNow()
@@ -162,7 +162,6 @@ func UpdateWishlistsService(ctx context.Context, id int64, req requests.Wishlist
 	}
 
 	// อัปเดต Wishlist
-	wishlist.ProductID = int64(req.ProductID) // แปลงค่าเป็น int64
 	wishlist.SetUpdateNow()
 
 	_, err = db.NewUpdate().

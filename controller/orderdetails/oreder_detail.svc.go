@@ -72,13 +72,10 @@ func ListOrderDetailService(ctx context.Context, req requests.OrderDetailRequest
 
 }
 
-func CreateOrderDetailService(ctx context.Context, req requests.OrderDetailCreateRequest) (*model.Order_details, error) {
+func CreateOrderDetailService(ctx context.Context, req requests.OrderDetailCreateRequest) (*model.OrderDetails, error) {
 
-	order_detail := &model.Order_details{
+	order_detail := &model.OrderDetails{
 		OrderID:    req.OrderID,
-		ProductID:  req.ProductID,
-		PaymentID:  req.PaymentID,
-		ShipmentID: req.ShipmentID,
 	}
 
 	order_detail.SetCreatedNow()
@@ -176,9 +173,9 @@ func GetByOrderDetailService(ctx context.Context, id int64) (*response.OrderDeta
 	return orderdetail, nil
 }
 
-func UpdateOrderDetailService(ctx context.Context, id int64, req requests.OrderDetailUpdateRequest) (*model.Order_details, error) {
+func UpdateOrderDetailService(ctx context.Context, id int64, req requests.OrderDetailUpdateRequest) (*model.OrderDetails, error) {
 	// ตรวจสอบว่า Order Detail มีอยู่ในระบบหรือไม่
-	var Order_details model.Order_details
+	var Order_details model.OrderDetails
 	err := db.NewSelect().
 		Model(&Order_details).
 		Where("id = ?", id).
@@ -188,9 +185,6 @@ func UpdateOrderDetailService(ctx context.Context, id int64, req requests.OrderD
 	}
 
 	// อัปเดตข้อมูลใน OrderDetails
-	Order_details.ProductID = req.ProductID
-	Order_details.PaymentID = req.PaymentID
-	Order_details.ShipmentID = req.ShipmentID
 	Order_details.SetUpdateNow()
 
 	// บันทึกข้อมูลลงในฐานข้อมูล

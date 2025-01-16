@@ -105,7 +105,6 @@ func CreateCartService(ctx context.Context, req requests.CartAddItemRequest) (*m
 	// เพิ่มสินค้าใหม่ลงในตะกร้า
 	cart := &model.Carts{
 		ProductID: int(req.ProductID),
-		Quantity:  req.Quantity,
 	}
 	cart.SetCreatedNow()
 	cart.SetUpdateNow()
@@ -134,7 +133,6 @@ func UpdateCartService(ctx context.Context, id int64, req requests.CartUpdateIte
 	if err != nil {
 		return nil, err
 	}
-	cart.Quantity = req.Quantity
 	cart.ProductID = int(req.ProductID)
 	cart.SetUpdateNow()
 

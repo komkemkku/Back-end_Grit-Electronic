@@ -13,7 +13,7 @@ type Shipments struct {
 	SubDistrict string `bun:"sub_district"`
 	District    string `bun:"district"`
 	Province    string `bun:"province"`
-	Status      int    `bun:"status"`
+	Status      string `bun:"status"`
 
 	CreateUnixTimestamp
 	UpdateUnixTimestamp

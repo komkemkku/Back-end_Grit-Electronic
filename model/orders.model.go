@@ -6,11 +6,14 @@ type Orders struct {
 	bun.BaseModel `bun:"table:orders"`
 
 	ID          int     `bun:",type:serial,autoincrement,pk"`
+	UserID      int     `bun:"user_id"`
+	PaymentID   int     `bun:"payment_id"`
+	ShipmentID  int     `bun:"shipment_id"`
+	CartID      int     `bun:"cart_id"`
 	TotalPrice  float64 `bun:"total_price"`
 	TotalAmount int     `bun:"total_amount"`
-	Status      int     `bun:"status"`
+	Status      string  `bun:"status"`
 
 	CreateUnixTimestamp
 	UpdateUnixTimestamp
-	SoftDelete
 }
