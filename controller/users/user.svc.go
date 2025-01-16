@@ -3,7 +3,7 @@ package users
 import (
 	"context"
 	"errors"
-	//"net/http"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	config "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
@@ -11,7 +11,6 @@ import (
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/utils"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var db = config.Database()
@@ -31,78 +30,82 @@ func GetUserByID(c *gin.Context) {
 	response.Success(c, data)
 }
 
-func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*model.Users, error) {
-	// ตรวจสอบ Role ID = 3
+func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) error {
+	// ตรวจสอบว่า Role ID = 3 มีอยู่หรือไม่
 	ex, err := db.NewSelect().TableExpr("roles").Where("id = ?", 3).Exists(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if !ex {
-		return nil, errors.New("default role not found (role_id = 3)")
+		return errors.New("default role not found (role_id = 3)")
 	}
 
 	// แฮชรหัสผ่าน
-	hashedPassword, err := utils.HashPassword(req.Password)
+	hashpassword, err := utils.HashPassword(req.Password)
 	if err != nil {
-		return nil, errors.New("failed to hash password: " + err.Error())
+		return errors.New("failed to hash password: " + err.Error())
 	}
 
-	// สร้างผู้ใช้
+	// สร้างผู้ใช้ใหม่
 	user := &model.Users{
 		FirstName: req.Firstname,
 		LastName:  req.Lastname,
 		Username:  req.Username,
-		Password:  hashedPassword, // เก็บ Password ที่ถูกแฮช
+		Password:  hashpassword, // แฮชแล้ว
 		Email:     req.Email,
 		Phone:     req.Phone,
 	}
 	user.SetCreatedNow()
 	user.SetUpdateNow()
 
-	_, err = db.NewInsert().Model(user).Exec(ctx)
-	if err != nil {
-		return nil, err
+	// เพิ่มผู้ใช้ในฐานข้อมูล
+	if _, err := db.NewInsert().Model(user).Exec(ctx); err != nil {
+		return err
 	}
 
-	// กำหนด Role ID = 3
+	// กำหนด Role เป็น 3 โดยอัตโนมัติ
 	userRole := &model.UserRole{
 		UserID: user.ID,
 		RoleID: 3,
 	}
-
-	_, err = db.NewInsert().Model(userRole).Exec(ctx)
-	if err != nil {
-		return nil, errors.New("failed to assign role to user: " + err.Error())
+	if _, err := db.NewInsert().Model(userRole).Exec(ctx); err != nil {
+		return errors.New("failed to assign role to user: " + err.Error())
 	}
 
-	return user, nil
+	// ถ้าถึงตรงนี้แปลว่าสำเร็จ ไม่มี error
+	return nil
 }
 
-// func RegisterUser(c *gin.Context) {
-// 	var req requests.UserCreateRequest
-// 	if err := c.ShouldBindJSON(&req); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	user, err := CreateUsersService(c.Request.Context(), req)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"message": "User registered successfully",
-// 		"user":    user, // Password จะถูกข้ามเพราะมี json:"-" ใน Model
-// 	})
-// }
-
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
+func CreateUserHandler(c *gin.Context) {
+	var req requests.UserCreateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": gin.H{
+				"code":    400,
+				"message": err.Error(),
+			},
+		})
+		return
 	}
-	return string(bytes), nil
+
+	// เรียก Service ที่แก้ไขแล้ว (ไม่ return user แล้ว)
+	if err := CreateUsersService(c.Request.Context(), req); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status": gin.H{
+				"code":    500,
+				"message": err.Error(),
+			},
+		})
+		return
+	}
+
+	// ตรงนี้ส่งกลับเฉพาะ status ตามต้องการ
+	c.JSON(http.StatusOK, gin.H{
+		"status": gin.H{
+			"code":    200,
+			"message": "Success",
+		},
+	})
 }
 
 func UpdateUserService(ctx context.Context, id int64, req requests.UserUpdateRequest) (*model.Users, error) {

@@ -3,6 +3,7 @@ package users
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
@@ -28,20 +29,30 @@ func GetByIdUserService(ctx context.Context, id int64) (*model.Users, error) {
 }
 
 func CreateUser(c *gin.Context) {
-	req := requests.UserCreateRequest{}
-
+	var req requests.UserCreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
 
-	data, err := CreateUsersService(c, req)
+	// เรียกใช้ service โดยรับค่า return แค่ error
+	err := CreateUsersService(c, req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
 
-	response.Success(c, data)
+	// ถ้าทำงานสำเร็จ
+	response.Success(c, http.StatusOK, )
+}
+
+func Success(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"status": gin.H{
+			"code":    http.StatusOK,
+			"message": "Success",
+		},
+	})
 }
 
 func UpdateUser(c *gin.Context) {

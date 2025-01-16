@@ -21,11 +21,12 @@ type UserCreateRequest struct {
 }
 
 type UserUpdateRequest struct {
-	Id        int  `json:"id"`
+	Id        int    `json:"id"`
 	Firstname string `json:"firstname"`
 	Lastname  string `json:"lastname"`
 	Username  string `json:"username"`
 	Email     string `json:"email"`
 	Phone     string `json:"phone"`
-	RoleID    int  `json:"role_id"`
+	RoleID    int    `json:"role_id"`
 }
+

@@ -136,7 +136,6 @@ func main() {
 	r.DELETE("/orderdetail/:id", orederdetail.DeleteOrderDetail)
 	r.PATCH("/orderdetail/:id", orederdetail.UpdateOrderDetaill)
 
-
 	r.Run()
 
 }
