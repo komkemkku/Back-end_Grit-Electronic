@@ -14,41 +14,52 @@ var db = configs.Database()
 
 func ListProductService(ctx context.Context, req requests.ProductRequest) ([]response.ProductResponses, int, error) {
 
-    var Offset int64
-    if req.Page > 0 {
-        Offset = (req.Page - 1) * req.Size
-    }
+	var Offset int64
+	if req.Page > 0 {
+		Offset = (req.Page - 1) * req.Size
+	}
 
-    resp := []response.ProductResponses{}
+	resp := []response.ProductResponses{}
 
-    // สร้าง query
-    query := db.NewSelect().
-    TableExpr("products AS p").
-    Column("p.id", "p.name", "p.price", "p.detail", "p.stock", "p.image", "p.spec", "p.created_at", "p.updated_at").
-    ColumnExpr("c.id AS category__id").
-    ColumnExpr("c.name AS category__name").
-    ColumnExpr("json_agg(json_build_object('id', r.id, 'text_review', r.text_review, 'rating', r.rating, 'username', u.username)) AS reviews").
-    Join("LEFT JOIN categories AS c ON c.id = p.category_id").
-    Join("LEFT JOIN reviews AS r ON r.product_id = p.id").
-    Join("LEFT JOIN users as u ON u.id = r.user_id").
-    GroupExpr("p.id, c.id")
+	// สร้าง query
+	// query := db.NewSelect().
+	// TableExpr("products AS p").
+	// Column("p.id", "p.name", "p.price", "p.description", "p.created_at", "p.updated_at").
+	// ColumnExpr("c.id AS category__id").
+	// ColumnExpr("c.name AS category__name").
+	// ColumnExpr("json_agg(json_build_object('id', r.id, 'text_review', r.text_review, 'rating', r.rating, 'username', u.username)) AS reviews").
+	// Join("LEFT JOIN categories AS c ON c.id = p.category_id").
+	// Join("LEFT JOIN reviews AS r ON r.product_id = p.id").
+	// Join("LEFT JOIN users as u ON u.id = r.user_id").
+	// GroupExpr("p.id, c.id")
 
-    if req.Search != "" {
-        query.Where("p.name ILIKE ?", "%"+req.Search+"%")
-    }
+	query := db.NewSelect().
+		TableExpr("products AS p").
+		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.is_active", "p.created_at", "p.updated_at").
+		ColumnExpr("c.id AS category__id").
+		ColumnExpr("c.name AS category__name").
+		// ColumnExpr("c.is_active AS is___active").
+		Join("LEFT JOIN categories AS c ON c.id = p.category_id")
 
-    total, err := query.Count(ctx)
-    if err != nil {
-        return nil, 0, err
-    }
+	// query.Where("p.is_active = ?", true)
+	query.Order("p.id ASC")
 
-    // Execute query
-    err = query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
-    if err != nil {
-        return nil, 0, err
-    }
-    
-    return resp, total, nil
+	if req.Search != "" {
+		query.Where("p.name ILIKE ?", "%"+req.Search+"%")
+	}
+
+	total, err := query.Count(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Execute query
+	err = query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return resp, total, nil
 }
 
 func GetByIdProductService(ctx context.Context, id int64) (*response.ProductResponses, error) {
@@ -62,14 +73,14 @@ func GetByIdProductService(ctx context.Context, id int64) (*response.ProductResp
 	product := &response.ProductResponses{}
 
 	err = db.NewSelect().TableExpr("products AS p").
-    Column("p.id", "p.name", "p.price", "p.detail", "p.stock", "p.image", "p.spec", "p.created_at", "p.updated_at").
-    ColumnExpr("c.id AS category__id").
-    ColumnExpr("c.name AS category__name").
-    ColumnExpr("json_agg(json_build_object('id', r.id, 'text_review', r.text_review, 'rating', r.rating, 'username', u.username)) AS reviews").
-    Join("LEFT JOIN categories AS c ON c.id = p.category_id").
-    Join("LEFT JOIN reviews AS r ON r.product_id = p.id").
-    Join("LEFT JOIN users as u ON u.id = r.user_id").
-    GroupExpr("p.id, c.id").Where("p.id = ?", id).Scan(ctx, product)
+		Column("p.id", "p.name", "p.price", "p.detail", "p.stock", "p.image", "p.spec", "p.created_at", "p.updated_at").
+		ColumnExpr("c.id AS category__id").
+		ColumnExpr("c.name AS category__name").
+		ColumnExpr("json_agg(json_build_object('id', r.id, 'text_review', r.text_review, 'rating', r.rating, 'username', u.username)) AS reviews").
+		Join("LEFT JOIN categories AS c ON c.id = p.category_id").
+		Join("LEFT JOIN reviews AS r ON r.product_id = p.id").
+		Join("LEFT JOIN users as u ON u.id = r.user_id").
+		GroupExpr("p.id, c.id").Where("p.id = ?", id).Scan(ctx, product)
 	if err != nil {
 		return nil, err
 	}
@@ -90,10 +101,12 @@ func CreateProductService(ctx context.Context, req requests.ProductCreateRequest
 
 	// เพิ่มสินค้าใหม่
 	product := &model.Products{
-		Name:       req.Name,
-		Price:      float64(req.Price),
-		Stock:      int(req.Stock),
-		CategoryID: int(req.CategoryID),
+		Name:        req.Name,
+		Price:       float64(req.Price),
+		Description: req.Description,
+		Stock:       int(req.Stock),
+		CategoryID:  int(req.CategoryID),
+		IsActive:    req.IsActive,
 	}
 	product.SetCreatedNow()
 	product.SetUpdateNow()
@@ -127,6 +140,8 @@ func UpdateProductService(ctx context.Context, id int64, req requests.ProductUpd
 	product.Name = req.Name
 	product.Price = float64(req.Price)
 	product.Stock += int(req.Stock)
+	product.Description = req.Description
+	product.IsActive = req.IsActive
 	product.CategoryID = int(req.CategoryID)
 	product.SetUpdateNow()
 

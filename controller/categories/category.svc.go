@@ -24,7 +24,9 @@ func ListCategoryService(ctx context.Context, req requests.CategoryRequest) ([]r
 	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("categories AS c").
-		Column("c.id", "c.name", "c.image", "c.created_at", "c.updated_at")
+		Column("c.id", "c.name", "c.is_active", "c.created_at", "c.updated_at")
+
+	// query.Where("c.is_active = ?", true)
 
 	if req.Search != "" {
 		query.Where("c.name ILIKE ?", "%"+req.Search+"%")
@@ -55,7 +57,7 @@ func GetByIdCategoryService(ctx context.Context, id int64) (*response.CategoryRe
 	category := &response.CategoryResponses{}
 
 	err = db.NewSelect().TableExpr("categories AS c").
-		Column("c.id", "c.name", "c.image", "c.created_at", "c.updated_at").
+		Column("c.id", "c.name", "c.is_active", "c.created_at", "c.updated_at").
 		Where("c.id = ?", id).Scan(ctx, category)
 	if err != nil {
 		return nil, err
@@ -79,7 +81,8 @@ func CreateCategoryService(ctx context.Context, req requests.CategoryCreateReque
 
 	// เพิ่ม
 	category := &model.Categories{
-		Name:  req.Name,
+		Name:     req.Name,
+		IsActive: req.IsActive,
 	}
 	category.SetCreatedNow()
 	category.SetUpdateNow()
@@ -109,6 +112,7 @@ func UpdateCategoryService(ctx context.Context, id int64, req requests.CategoryU
 		return nil, err
 	}
 	category.Name = req.Name
+	category.IsActive = req.IsActive
 	category.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(category).Where("id = ?", id).Exec(ctx)

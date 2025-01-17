@@ -16,7 +16,7 @@ type ProductCreateRequest struct {
 	Price       float64 `json:"price"`
 	Description string  `json:"description"`
 	Stock       int     `json:"stock"`
-	IsActive    int     `json:"is_active"`
+	IsActive    bool    `json:"is_active"`
 }
 
 type ProductUpdateRequest struct {
@@ -26,5 +26,5 @@ type ProductUpdateRequest struct {
 	Price       float64 `json:"price"`
 	Description string  `json:"description"`
 	Stock       int     `json:"stock"`
-	IsActive    int     `json:"is_active"`
+	IsActive    bool    `json:"is_active"`
 }
