@@ -11,10 +11,16 @@ type WishlistsIdRequest struct {
 }
 
 type WishlistsAddRequest struct {
+	UserID int `json:"user_id"`
 	ProductID int `json:"product_id"`
+	PricePerProduct  float64 `json:"price_per_product"`
+	AmountPerProduct int `json:"amount_per_product"`
 }
 
 type WishlistsUpdateRequest struct {
 	ID        int `json:"id"`
+	UserID int `json:"user_id"`
 	ProductID int `json:"product_id"`
+	PricePerProduct  float64 `json:"price_per_product"`
+	AmountPerProduct int `json:"amount_per_product"`
 }

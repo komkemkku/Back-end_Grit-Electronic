@@ -8,6 +8,10 @@ type Paginate struct {
 	Total int64
 }
 
+// model/paginate.go หรือไฟล์ที่คุณประกาศ struct Paginate
+
+
+
 type CreateUpdateUnixTimestamp struct {
 	CreateUnixTimestamp
 	UpdateUnixTimestamp

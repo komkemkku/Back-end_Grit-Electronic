@@ -8,41 +8,50 @@ import (
 )
 
 func Wishlist(c *gin.Context) {
-	req := requests.WishlistsRequest{}
+	var req requests.WishlistsRequest
+
+
+	// ตรวจสอบ Query Parameters
 	if err := c.BindQuery(&req); err != nil {
-		response.BadRequest(c, err.Error())
+		response.BadRequest(c, "Invalid query parameters: "+err.Error())
 		return
 	}
-
-	data, total, err := ListWishlistsService(c.Request.Context(), req)
+	
+	// เรียกใช้ Service
+	data, total, err := ListWishlistsService(c.Request.Context(), requests.WishlistsRequest{})
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.InternalError(c, "Failed to fetch wishlists: "+err.Error())
 		return
 	}
 
+	// จัดการ Pagination
 	paginate := model.Paginate{
 		Page:  req.Page,
 		Size:  req.Size,
 		Total: int64(total),
 	}
 
+	// ส่ง Response กลับ
 	response.SuccessWithPaginate(c, data, paginate)
 }
 
 func CreateWishlist(c *gin.Context) {
-	req := requests.WishlistsAddRequest{}
+	var req requests.WishlistsAddRequest
 
+	// ตรวจสอบ JSON Input
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, err.Error())
+		response.BadRequest(c, "Invalid input: "+err.Error())
 		return
 	}
 
-	data, err := CreateWishlistsService(c, req)
-	if err != nil {
-		response.InternalError(c, err.Error())
+	// เรียกใช้ Service
+	if err := CreateWishlistsService(c.Request.Context(), req); err != nil {
+		response.InternalError(c, "Failed to create wishlist: "+err.Error())
 		return
 	}
-	response.Success(c, data)
+
+	// ส่ง Response กลับ
+	response.Success(c, "Wishlist created successfully")
 }
 
 func GetWishlistByID(c *gin.Context) {

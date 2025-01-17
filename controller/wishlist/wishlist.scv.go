@@ -21,21 +21,21 @@ func ListWishlistsService(ctx context.Context, req requests.WishlistsRequest) ([
 	}
 
 	resp := []response.WishlistResponses{}
-
 	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("wishlists AS w").
 		Column("w.id", "w.created_at", "w.updated_at").
-		ColumnExpr("p.id AS product__id").
-		ColumnExpr("p.name AS product__name").
-		ColumnExpr("p.detail AS product__detail").
-		ColumnExpr("p.price AS product__price").
-		ColumnExpr("p.image AS product__image").
-		Join("LEFT JOIN products AS p ON p.id = w.product_id")
+		ColumnExpr("u.id AS username__id").
+		ColumnExpr("u.username AS username__id").
+		// ColumnExpr("p.id AS product__id").
+		// ColumnExpr("p.name AS product__name").
+		// ColumnExpr("p.price AS product__price").
+		Join("LEFT JOIN products AS p ON p.id = w.product_id").
+		Join("LEFT JOIN users AS u ON u.id = w.user_id")
 
-	// if req.Search != "" {
-	//   query.Where("p.name ILIKE ?", "%"+req.Search+"%")
-	// }
+	if req.Search != "" {
+		query.Where("p.name ILIKE ?", "%"+req.Search+"%")
+	}
 
 	total, err := query.Count(ctx)
 	if err != nil {
@@ -68,7 +68,6 @@ func GetByIdWishlistsService(ctx context.Context, id int64) (*response.WishlistR
 		ColumnExpr("p.name AS product__name").
 		ColumnExpr("p.detail AS product__detail").
 		ColumnExpr("p.price AS product__price").
-		ColumnExpr("p.image AS product__image").
 		Join("LEFT JOIN products AS p ON p.id = w.product_id").Where("w.id = ?", id).Scan(ctx, wish)
 	if err != nil {
 		return nil, err
@@ -76,22 +75,22 @@ func GetByIdWishlistsService(ctx context.Context, id int64) (*response.WishlistR
 	return wish, nil
 }
 
-func CreateWishlistsService(ctx context.Context, req requests.WishlistsAddRequest) (*model.Wishlists, error) {
-
-	// เพิ่มสินค้าใหม่
-	Wishlists := &model.Wishlists{
-
+func CreateWishlistsService(ctx context.Context, req requests.WishlistsAddRequest) error {
+	wishlist := &model.Wishlists{
+		UserID: req.UserID,
+		ProductID: req.ProductID,
+        PricePerProduct: req.PricePerProduct,
+        AmountPerProduct: req.AmountPerProduct,
 	}
-	Wishlists.SetCreatedNow()
-	Wishlists.SetUpdateNow()
+	wishlist.SetCreatedNow()
+	wishlist.SetUpdateNow()
 
-	_, err := db.NewInsert().Model(Wishlists).Exec(ctx)
-	if err != nil {
-		return nil, err
+	// บันทึกข้อมูลลงฐานข้อมูล
+	if _, err := db.NewInsert().Model(wishlist).Exec(ctx); err != nil {
+		return errors.New("failed to create wishlist: " + err.Error())
 	}
 
-	return Wishlists, nil
-
+	return nil
 }
 
 func DeleteWishlistsService(ctx context.Context, id int64) error {
@@ -119,8 +118,7 @@ func DeleteWishlistsService(ctx context.Context, id int64) error {
 	return nil
 }
 
-// The UpdateWishlistsService function checks and updates a wishlist with a specified ID and product ID
-// in the database.
+
 func UpdateWishlistsService(ctx context.Context, id int64, req requests.WishlistsUpdateRequest) (*model.Wishlists, error) {
 	// ตรวจสอบว่า Wishlist มีอยู่ในระบบหรือไม่
 	exists, err := db.NewSelect().
