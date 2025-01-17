@@ -18,3 +18,7 @@ type UserRespReview struct {
 	Username string `json:"name"`
 }
 
+type UserRespWistlist struct {
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+}

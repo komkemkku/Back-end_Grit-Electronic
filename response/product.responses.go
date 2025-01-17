@@ -17,9 +17,7 @@ type ProductResponses struct {
 type ProductRespCart struct {
 	ID     int      `json:"id"`
 	Name   string   `json:"name"`
-	Detail string   `json:"detail"`
 	Price  float64  `json:"price"`
-	Image  []string `json:"image"`
 }
 
 type ProductRespReview struct {
