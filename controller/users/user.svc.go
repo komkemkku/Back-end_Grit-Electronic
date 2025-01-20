@@ -3,9 +3,7 @@ package users
 import (
 	"context"
 	"errors"
-	"net/http"
 
-	"github.com/gin-gonic/gin"
 	config "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
@@ -15,30 +13,39 @@ import (
 var db = config.Database()
 
 func GetByIdUserService(ctx context.Context, id int64) (*model.Users, error) {
-	ex, err := db.NewSelect().TableExpr("users").Where("id=?", id).Exists(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if !ex {
-		return nil, errors.New("user not found")
-	}
-	user := &model.Users{}
+  ex, err := db.NewSelect().TableExpr("users").Where("id=?", id).Exists(ctx)
+  if err != nil {
+    return nil, err
+  }
+  if !ex {
+    return nil, errors.New("user not found")
+  }
+  user := &model.Users{}
 
-	err = db.NewSelect().Model(user).Where("id = ?", id).Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return user, nil
+  err = db.NewSelect().Model(user).Where("id = ?", id).Scan(ctx)
+  if err != nil {
+    return nil, err
+  }
+  return user, nil
 }
 
-func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) error {
-	// แฮชรหัสผ่าน
-	hashpassword, err := utils.HashPassword(req.Password)
+func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*model.Users, error) {
+
+	// ตรวจสอบว่า email ซ้ำหรือไม่
+	exists, err := db.NewSelect().
+		TableExpr("users").
+		Where("email = ?", req.Email).
+		Exists(ctx)
+
 	if err != nil {
-		return errors.New("failed to hash password: " + err.Error())
+		return nil, err
 	}
 
-	// สร้างผู้ใช้ใหม่
+	if exists {
+		return nil, errors.New("email already exists")
+	}
+
+	hashpassword, _ := utils.HashPassword(req.Password)
 	user := &model.Users{
 		FirstName: req.Firstname,
 		LastName:  req.Lastname,
@@ -50,45 +57,72 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) err
 	user.SetCreatedNow()
 	user.SetUpdateNow()
 
-	// บันทึกผู้ใช้
-	if _, err := db.NewInsert().Model(user).Exec(ctx); err != nil {
-		return errors.New("failed to create user: " + err.Error())
+	_, err = db.NewInsert().Model(user).Exec(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	return user, nil
 }
 
-func CreateUserHandler(c *gin.Context) {
-	var req requests.UserCreateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status": gin.H{
-				"code":    400,
-				"message": err.Error(),
-			},
-		})
-		return
-	}
+// func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) error {
+//     // แฮชรหัสผ่าน
+//     hashpassword, err := utils.HashPassword(req.Password)
+//     if err != nil {
+//         return errors.New("failed to hash password: " + err.Error())
+//     }
 
-	// เรียก Service ที่แก้ไขแล้ว (ไม่ return user แล้ว)
-	if err := CreateUsersService(c.Request.Context(), req); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status": gin.H{
-				"code":    500,
-				"message": err.Error(),
-			},
-		})
-		return
-	}
+//     // สร้างผู้ใช้ใหม่
+//     user := &model.Users{
+//         FirstName: req.Firstname,
+//         LastName:  req.Lastname,
+//         Username:  req.Username,
+//         Password:  hashpassword,
+//         Email:     req.Email,
+//         Phone:     req.Phone,
+//     }
+//     user.SetCreatedNow()
+//     user.SetUpdateNow()
 
-	// ตรงนี้ส่งกลับเฉพาะ status ตามต้องการ
-	c.JSON(http.StatusOK, gin.H{
-		"status": gin.H{
-			"code":    200,
-			"message": "Success",
-		},
-	})
-}
+//     // บันทึกผู้ใช้
+//     if _, err := db.NewInsert().Model(user).Exec(ctx); err != nil {
+//         return errors.New("failed to create user: " + err.Error())
+//     }
+
+//     return nil
+// }
+
+// func CreateUserHandler(c *gin.Context) {
+//   var req requests.UserCreateRequest
+//   if err := c.ShouldBindJSON(&req); err != nil {
+//     c.JSON(http.StatusBadRequest, gin.H{
+//       "status": gin.H{
+//         "code":    400,
+//         "message": err.Error(),
+//       },
+//     })
+//     return
+//   }
+
+//   // เรียก Service ที่แก้ไขแล้ว (ไม่ return user แล้ว)
+//   if err := CreateUsersService(c.Request.Context(), req); err != nil {
+//     c.JSON(http.StatusInternalServerError, gin.H{
+//       "status": gin.H{
+//         "code":    500,
+//         "message": err.Error(),
+//       },
+//     })
+//     return
+//   }
+
+//   // ตรงนี้ส่งกลับเฉพาะ status ตามต้องการ
+//   c.JSON(http.StatusOK, gin.H{
+//     "status": gin.H{
+//       "code":    200,
+//       "message": "Success",
+//     },
+//   })
+// }
 
 func UpdateUserService(ctx context.Context, id int64, req requests.UserUpdateRequest) (*model.Users, error) {
 
