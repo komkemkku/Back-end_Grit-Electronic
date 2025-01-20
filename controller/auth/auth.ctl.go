@@ -51,4 +51,3 @@ func LoginAdmin(c *gin.Context) {
 	}
 	response.Success(c, token)
 }
-

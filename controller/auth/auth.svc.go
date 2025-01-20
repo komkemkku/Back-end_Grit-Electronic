@@ -38,7 +38,6 @@ func LoginUserService(ctx context.Context, req requests.LoginRequest) (*model.Us
 
 	return user, nil
 }
-
 func LoginAdminService(ctx context.Context, req requests.LoginRequest) (*model.Admins, error) {
 	ex, err := db.NewSelect().TableExpr("admins").Where("email = ?", req.Email).Exists(ctx)
 	if err != nil {
@@ -64,6 +63,3 @@ func LoginAdminService(ctx context.Context, req requests.LoginRequest) (*model.A
 
 	return admin, nil
 }
-
-
-
