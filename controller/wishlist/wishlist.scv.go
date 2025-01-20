@@ -51,6 +51,7 @@ func ListWishlistsService(ctx context.Context, req requests.WishlistsRequest) ([
 	return resp, total, nil
 }
 
+
 func GetByIdWishlistsService(ctx context.Context, id int64) (*response.WishlistResponses, error) {
 
 	ex, err := db.NewSelect().TableExpr("wishlists").Where("id = ?", id).Exists(ctx)
