@@ -23,17 +23,17 @@ func ListSystemBankService(ctx context.Context, req requests.SystemBankRequest) 
 
 	// สร้าง query
 	query := db.NewSelect().
-		TableExpr("system_bank AS sb").
-		Column("sb.id", "sb.bank_name", "sb.account_name", "sb.account_number", "sb.image", "sb.created_at", "sb.updated_at")
+		TableExpr("system_banks AS sb").
+		Column("sb.id", "sb.bank_name", "sb.account_name", "sb.account_number", "sb.description", "sb.is_active", "sb.created_at", "sb.updated_at")
 
-		if req.Search != "" {
-			query.Where("sb.bank_name ILIKE ?", "%"+req.Search+"%")
-		}
-	
-		total, err := query.Count(ctx)
-		if err != nil {
-			return nil, 0, err
-		}
+	if req.Search != "" {
+		query.Where("sb.bank_name ILIKE ?", "%"+req.Search+"%")
+	}
+
+	total, err := query.Count(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
 	// Execute query
 	err = query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
 	if err != nil {
@@ -44,7 +44,7 @@ func ListSystemBankService(ctx context.Context, req requests.SystemBankRequest) 
 }
 
 func GetByIdSystemBankService(ctx context.Context, id int64) (*response.SystemBankResponses, error) {
-	ex, err := db.NewSelect().TableExpr("system_bank").Where("id = ?", id).Exists(ctx)
+	ex, err := db.NewSelect().TableExpr("system_banks").Where("id = ?", id).Exists(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -53,9 +53,9 @@ func GetByIdSystemBankService(ctx context.Context, id int64) (*response.SystemBa
 	}
 	systembank := &response.SystemBankResponses{}
 
-	err = db.NewSelect().TableExpr("system_bank AS sb").
-	Column("sb.id", "sb.bank_name", "sb.account_name", "sb.account_number", "sb.image", "sb.created_at", "sb.updated_at").
-	Where("sb.id = ?", id).Scan(ctx, systembank)
+	err = db.NewSelect().TableExpr("system_banks AS sb").
+		Column("sb.id", "sb.bank_name", "sb.account_name", "sb.account_number", "sb.description", "sb.is_active", "sb.created_at", "sb.updated_at").
+		Where("sb.id = ?", id).Scan(ctx, systembank)
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +70,8 @@ func CreateSystemBankService(ctx context.Context, req requests.SystemBankCreateR
 		BankName:      req.BankName,
 		AccountName:   req.AccountName,
 		AccountNumber: req.AccountNumber,
+		Description:   req.Description,
+		IsActive:      req.IsActive,
 	}
 	systembank.SetCreatedNow()
 	systembank.SetUpdateNow()
@@ -84,7 +86,7 @@ func CreateSystemBankService(ctx context.Context, req requests.SystemBankCreateR
 }
 
 func UpdateSystembankService(ctx context.Context, id int64, req requests.SystemBankUpdateRequest) (*model.SystemBanks, error) {
-	ex, err := db.NewSelect().TableExpr("system_bank").Where("id=?", id).Exists(ctx)
+	ex, err := db.NewSelect().TableExpr("system_banks").Where("id=?", id).Exists(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -101,6 +103,8 @@ func UpdateSystembankService(ctx context.Context, id int64, req requests.SystemB
 	systembank.BankName = req.BankName
 	systembank.AccountName = req.AccountName
 	systembank.AccountNumber = req.AccountNumber
+	systembank.Description = req.Description
+	systembank.IsActive = req.IsActive
 	systembank.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(systembank).Where("id = ?", id).Exec(ctx)
@@ -112,7 +116,7 @@ func UpdateSystembankService(ctx context.Context, id int64, req requests.SystemB
 }
 
 func DeleteSystemBankService(ctx context.Context, id int64) error {
-	ex, err := db.NewSelect().TableExpr("system_bank").Where("id=?", id).Exists(ctx)
+	ex, err := db.NewSelect().TableExpr("system_banks").Where("id=?", id).Exists(ctx)
 
 	if err != nil {
 		return err
@@ -122,7 +126,7 @@ func DeleteSystemBankService(ctx context.Context, id int64) error {
 		return errors.New("SysBank not found")
 	}
 
-	_, err = db.NewDelete().TableExpr("system_bank").Where("id =?", id).Exec(ctx)
+	_, err = db.NewDelete().TableExpr("system_banks").Where("id =?", id).Exec(ctx)
 	if err != nil {
 		return err
 	}

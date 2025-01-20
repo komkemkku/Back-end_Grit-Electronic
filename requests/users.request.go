@@ -17,7 +17,6 @@ type UserCreateRequest struct {
 	Password  string `json:"_"`
 	Email     string `json:"email"`
 	Phone     string `json:"phone"`
-	RoleID    int  `json:"role_id"`
 }
 
 type UserUpdateRequest struct {
@@ -27,6 +26,5 @@ type UserUpdateRequest struct {
 	Username  string `json:"username"`
 	Email     string `json:"email"`
 	Phone     string `json:"phone"`
-	RoleID    int    `json:"role_id"`
 }
 

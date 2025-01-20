@@ -93,12 +93,12 @@ func CreateUserHandler(c *gin.Context) {
 
 func UpdateUserService(ctx context.Context, id int64, req requests.UserUpdateRequest) (*model.Users, error) {
 
-  ex, err := db.NewSelect().TableExpr("roles").Where("id = ?", 3).Exists(ctx)
+  ex, err := db.NewSelect().TableExpr("users").Where("id = ?", 3).Exists(ctx)
   if err != nil {
     return nil, err
   }
   if !ex {
-    return nil, errors.New("default role not found (role_id = 3)")
+    return nil, errors.New("user not found")
   }
 
   user := &model.Users{}

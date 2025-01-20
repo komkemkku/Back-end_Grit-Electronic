@@ -16,6 +16,7 @@ type ProductCreateRequest struct {
 	Price       float64 `json:"price"`
 	Description string  `json:"description"`
 	Stock       int     `json:"stock"`
+	Image string `json:"image"`
 	IsActive    bool    `json:"is_active"`
 }
 

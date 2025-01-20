@@ -15,12 +15,12 @@ func CreateSystembank(c *gin.Context) {
 		return
 	}
 
-	data, err := CreateSystemBankService(c, req)
+	_, err := CreateSystemBankService(c, req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
-	response.Success(c, data)
+	response.Success(c, "system bank created successfully")
 }
 
 func DeleteSystemBank(c *gin.Context) {

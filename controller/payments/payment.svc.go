@@ -24,11 +24,15 @@ func ListPaymentService(ctx context.Context, req requests.PaymentRequest) ([]res
 	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("payments AS p").
-		Column("p.id", "p.price", "p.payment_slip", "p.status", "p.updated_by", "p.bank_name", "p.account_name", "p.account_number", "p.created_at", "p.updated_at").
-		// ColumnExpr("a.id AS admin__id").
-		// ColumnExpr("a.name AS admin__name").
+		Column("p.id", "p.price", "p.status", "p.updated_by", "p.bank_name", "p.account_name", "p.account_number", "p.created_at", "p.updated_at").
+		ColumnExpr("a.id AS admin__id").
+		ColumnExpr("a.name AS admin__name").
+		ColumnExpr("sb.bank_name AS systembank__bank_name").
+		ColumnExpr("sb.account_name AS systembank__account_name").
+		ColumnExpr("sb.account_number AS systembank__account_number").
+		ColumnExpr("sb.description AS systembank__description").
+		Join("LEFT JOIN system_banks AS sb ON sb.id = p.system_bank_id").
 		Join("LEFT JOIN admins AS a ON a.id = p.admin_id")
-
 
 	if req.Search != "" {
 		query.Where("p.status ILIKE ?", "%"+req.Search+"%")
@@ -59,7 +63,15 @@ func GetByIdPaymentService(ctx context.Context, id int64) (*response.PaymentResp
 	payment := &response.PaymentResponses{}
 
 	err = db.NewSelect().TableExpr("payments AS p").
-		Column("p.id", "p.price", "p.amount", "p.slip", "p.status", "p.bank_name", "p.account_name", "p.account_number", "p.created_at", "p.updated_at").
+		Column("p.id", "p.price", "p.status", "p.updated_by", "p.bank_name", "p.account_name", "p.account_number", "p.created_at", "p.updated_at").
+		ColumnExpr("a.id AS admin__id").
+		ColumnExpr("a.name AS admin__name").
+		ColumnExpr("sb.bank_name AS admin__bank_name").
+		ColumnExpr("sb.account_name AS admin__account_name").
+		ColumnExpr("sb.account_number AS admin__account_number").
+		ColumnExpr("sb.description AS admin__description").
+		Join("LEFT JOIN system_banks AS sb ON sb.id = p.system_bank_id").
+		Join("LEFT JOIN admins AS a ON a.id = p.admin_id").
 		Where("p.id = ?", id).Scan(ctx, payment)
 	if err != nil {
 		return nil, err
@@ -73,6 +85,8 @@ func CreatePaymentService(ctx context.Context, req requests.PaymentCreateRequest
 		Price:         float64(req.Price),
 		UpdatedBy:     req.UpdatedBy,
 		AdminID:       req.AdminID,
+		SystemBankID:  req.SystemBankID,
+		Status:        req.Status,
 		BankName:      req.BankName,
 		AccountName:   req.AccountName,
 		AccountNumber: req.AccountNumber,
@@ -107,6 +121,8 @@ func UpdatePaymentService(ctx context.Context, id int64, req requests.PaymentUpd
 	payment.Price = float64(req.Price)
 	payment.UpdatedBy = req.UpdatedBy
 	payment.AdminID = req.AdminID
+	payment.SystemBankID = req.SystemBankID
+	payment.Status = req.Status
 	payment.BankName = req.BankName
 	payment.AccountName = req.AccountName
 	payment.AccountNumber = req.AccountNumber

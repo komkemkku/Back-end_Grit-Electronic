@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/image"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
@@ -38,8 +39,10 @@ func ListProductService(ctx context.Context, req requests.ProductRequest) ([]res
 		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.is_active", "p.created_at", "p.updated_at").
 		ColumnExpr("c.id AS category__id").
 		ColumnExpr("c.name AS category__name").
+		ColumnExpr("i.description AS image").
 		// ColumnExpr("c.is_active AS is___active").
-		Join("LEFT JOIN categories AS c ON c.id = p.category_id")
+		Join("LEFT JOIN categories AS c ON c.id = p.category_id").
+		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'")
 
 	// query.Where("p.is_active = ?", true)
 	query.Order("p.id ASC")
@@ -115,6 +118,17 @@ func CreateProductService(ctx context.Context, req requests.ProductCreateRequest
 	if err != nil {
 		return nil, err
 	}
+
+	img := requests.ImageCreateRequest{
+		RefID:       product.ID,
+		Type:        "product_main",
+		Description: req.Image,
+	}
+
+	_, err = image.CreatemageService(ctx, img)
+	if err!= nil {
+        return nil, err
+    }
 
 	return product, nil
 
