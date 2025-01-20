@@ -11,7 +11,7 @@ import (
 
 var db = configs.Database()
 
-func CreatemageService(ctx context.Context, req requests.ImageCreateRequest) (*model.Images, error) {
+func CreateImageService(ctx context.Context, req requests.ImageCreateRequest) (*model.Images, error) {
 
 	image := &model.Images{
 		RefID:       req.RefID,

@@ -9,7 +9,7 @@ type ShipmentResponses struct {
 	SubDistrict string `json:"sub_district"`
 	District    string `json:"district"`
 	Province    string `json:"province"`
-	Status      int    `json:"status"`
+	Status      string `json:"status"`
 	Created_at  int64  `json:"created_at"`
 	Updated_at  int64  `json:"updated_at"`
 }
@@ -23,5 +23,5 @@ type ShipmentRespOrderDetail struct {
 	SubDistrict string `json:"sub_district"`
 	District    string `json:"district"`
 	Province    string `json:"province"`
-	Status      int    `json:"status"`
+	Status      string `json:"status"`
 }

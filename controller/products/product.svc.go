@@ -40,7 +40,7 @@ func ListProductService(ctx context.Context, req requests.ProductRequest) ([]res
 		ColumnExpr("c.id AS category__id").
 		ColumnExpr("c.name AS category__name").
 		ColumnExpr("i.description AS image").
-		// ColumnExpr("c.is_active AS is___active").
+		ColumnExpr("c.is_active AS is_active").
 		Join("LEFT JOIN categories AS c ON c.id = p.category_id").
 		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'")
 
@@ -76,14 +76,15 @@ func GetByIdProductService(ctx context.Context, id int64) (*response.ProductResp
 	product := &response.ProductResponses{}
 
 	err = db.NewSelect().TableExpr("products AS p").
-		Column("p.id", "p.name", "p.price", "p.detail", "p.stock", "p.image", "p.spec", "p.created_at", "p.updated_at").
+		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.is_active", "p.created_at", "p.updated_at").
 		ColumnExpr("c.id AS category__id").
 		ColumnExpr("c.name AS category__name").
-		ColumnExpr("json_agg(json_build_object('id', r.id, 'text_review', r.text_review, 'rating', r.rating, 'username', u.username)) AS reviews").
+		ColumnExpr("i.description AS image").
+		ColumnExpr("c.is_active AS is_active").
+		
 		Join("LEFT JOIN categories AS c ON c.id = p.category_id").
-		Join("LEFT JOIN reviews AS r ON r.product_id = p.id").
-		Join("LEFT JOIN users as u ON u.id = r.user_id").
-		GroupExpr("p.id, c.id").Where("p.id = ?", id).Scan(ctx, product)
+		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'").
+		Where("p.id = ?", id).Scan(ctx, product)
 	if err != nil {
 		return nil, err
 	}
@@ -122,13 +123,13 @@ func CreateProductService(ctx context.Context, req requests.ProductCreateRequest
 	img := requests.ImageCreateRequest{
 		RefID:       product.ID,
 		Type:        "product_main",
-		Description: req.Image,
+		Description: req.ImageProduct,
 	}
 
-	_, err = image.CreatemageService(ctx, img)
-	if err!= nil {
-        return nil, err
-    }
+	_, err = image.CreateImageService(ctx, img)
+	if err != nil {
+		return nil, err
+	}
 
 	return product, nil
 
@@ -161,6 +162,17 @@ func UpdateProductService(ctx context.Context, id int64, req requests.ProductUpd
 
 	// อัปเดตข้อมูลสินค้าในฐานข้อมูล
 	_, err = db.NewUpdate().Model(product).Where("id = ?", id).Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	img := requests.ImageCreateRequest{
+		RefID:       product.ID,
+		Type:        "product_main",
+		Description: req.ImageProduct,
+	}
+
+	_, err = image.CreateImageService(ctx, img)
 	if err != nil {
 		return nil, err
 	}

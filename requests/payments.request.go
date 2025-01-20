@@ -18,6 +18,7 @@ type PaymentCreateRequest struct {
 	BankName      string `json:"bank_name"`
 	AccountName   string `json:"account_name"`
 	AccountNumber string `json:"account_number"`
+	PaymentSlip   string `json:"payment_slip"`
 	Status        string `json:"status"`
 }
 
@@ -30,5 +31,6 @@ type PaymentUpdateRequest struct {
 	BankName      string `json:"bank_name"`
 	AccountName   string `json:"account_name"`
 	AccountNumber string `json:"account_number"`
+	PaymentSlip   string `json:"payment_slip"`
 	Status        string `json:"status"`
 }

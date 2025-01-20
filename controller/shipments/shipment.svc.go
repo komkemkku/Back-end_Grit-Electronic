@@ -69,10 +69,6 @@ func GetByIdShipmentService(ctx context.Context, id int64) (*response.ShipmentRe
 
 func CreateShipmentService(ctx context.Context, req requests.ShipmentCreateRequest) (*model.Shipments, error) {
 
-	// statusInt, err := strconv.Atoi(req.Status)
-	// if err != nil {
-    //     return nil, fmt.Errorf("invalid status value: %v", err) // จัดการข้อผิดพลาด
-    // }
 	zipcodeInt, err := strconv.Atoi(req.ZipCode)
 	if err != nil {
         return nil, fmt.Errorf("invalid zipcode value: %v", err) // จัดการข้อผิดพลาด
@@ -87,6 +83,7 @@ func CreateShipmentService(ctx context.Context, req requests.ShipmentCreateReque
 		SubDistrict: req.SubDistrict,
 		District:    req.District,
 		Province:    req.Province,
+		Status:      req.Status,
 	}
 	shipment.SetCreatedNow()
 	shipment.SetUpdateNow()
@@ -111,10 +108,6 @@ func UpdateShipmentService(ctx context.Context, id int64, req requests.ShipmentU
 
 	shipment := &model.Shipments{}
 
-	// statusInt, err := strconv.Atoi(req.Status)
-	// if err!= nil {
-    //     return nil, fmt.Errorf("invalid status value: %v", err)
-    // }
 	zipcodeInt, err := strconv.Atoi(req.ZipCode)
 	if err!= nil {
         return nil, fmt.Errorf("invalid status value: %v", err)
@@ -131,6 +124,7 @@ func UpdateShipmentService(ctx context.Context, id int64, req requests.ShipmentU
 	shipment.SubDistrict = req.SubDistrict
 	shipment.District = req.District
 	shipment.Province = req.Province
+	shipment.Status = req.Status
 	shipment.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(shipment).Where("id = ?", id).Exec(ctx)

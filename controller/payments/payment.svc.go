@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/image"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
@@ -27,12 +28,15 @@ func ListPaymentService(ctx context.Context, req requests.PaymentRequest) ([]res
 		Column("p.id", "p.price", "p.status", "p.updated_by", "p.bank_name", "p.account_name", "p.account_number", "p.created_at", "p.updated_at").
 		ColumnExpr("a.id AS admin__id").
 		ColumnExpr("a.name AS admin__name").
+		ColumnExpr("sb.id AS systembank__id").
 		ColumnExpr("sb.bank_name AS systembank__bank_name").
 		ColumnExpr("sb.account_name AS systembank__account_name").
 		ColumnExpr("sb.account_number AS systembank__account_number").
 		ColumnExpr("sb.description AS systembank__description").
+		ColumnExpr("i.description AS image").
 		Join("LEFT JOIN system_banks AS sb ON sb.id = p.system_bank_id").
-		Join("LEFT JOIN admins AS a ON a.id = p.admin_id")
+		Join("LEFT JOIN admins AS a ON a.id = p.admin_id").
+		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'payment_slip'")
 
 	if req.Search != "" {
 		query.Where("p.status ILIKE ?", "%"+req.Search+"%")
@@ -66,12 +70,15 @@ func GetByIdPaymentService(ctx context.Context, id int64) (*response.PaymentResp
 		Column("p.id", "p.price", "p.status", "p.updated_by", "p.bank_name", "p.account_name", "p.account_number", "p.created_at", "p.updated_at").
 		ColumnExpr("a.id AS admin__id").
 		ColumnExpr("a.name AS admin__name").
-		ColumnExpr("sb.bank_name AS admin__bank_name").
-		ColumnExpr("sb.account_name AS admin__account_name").
-		ColumnExpr("sb.account_number AS admin__account_number").
-		ColumnExpr("sb.description AS admin__description").
+		ColumnExpr("sb.id AS systembank__id").
+		ColumnExpr("sb.bank_name AS systembank__bank_name").
+		ColumnExpr("sb.account_name AS systembank__account_name").
+		ColumnExpr("sb.account_number AS systembank__account_number").
+		ColumnExpr("sb.description AS systembank__description").
+		ColumnExpr("i.description AS image").
 		Join("LEFT JOIN system_banks AS sb ON sb.id = p.system_bank_id").
 		Join("LEFT JOIN admins AS a ON a.id = p.admin_id").
+		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'payment_slip'").
 		Where("p.id = ?", id).Scan(ctx, payment)
 	if err != nil {
 		return nil, err
@@ -95,6 +102,17 @@ func CreatePaymentService(ctx context.Context, req requests.PaymentCreateRequest
 	payment.SetUpdateNow()
 
 	_, err := db.NewInsert().Model(payment).Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	img := requests.ImageCreateRequest{
+		RefID:       payment.ID,
+		Type:        "payment_slip",
+		Description: req.PaymentSlip,
+	}
+
+	_, err = image.CreateImageService(ctx, img)
 	if err != nil {
 		return nil, err
 	}
@@ -129,6 +147,17 @@ func UpdatePaymentService(ctx context.Context, id int64, req requests.PaymentUpd
 	payment.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(payment).Where("id = ?", id).Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	img := requests.ImageCreateRequest{
+		RefID:       payment.ID,
+		Type:        "payment_slip",
+		Description: req.PaymentSlip,
+	}
+
+	_, err = image.CreateImageService(ctx, img)
 	if err != nil {
 		return nil, err
 	}
