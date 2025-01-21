@@ -120,9 +120,10 @@ func UpdateReviewService(ctx context.Context, id int64, req requests.ReviewUpdat
 	if err != nil {
 		return nil, err
 	}
-	review.Rating = int64(req.Rating)
-	review.ProductID = int64(req.ProductID)
-	review.UserID = int64(req.UserID)
+	review.ProductID = req.ProductID
+	review.UserID = req.UserID
+	review.Description = req.Description
+	review.Rating = req.Rating
 	review.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(review).Where("id = ?", id).Exec(ctx)

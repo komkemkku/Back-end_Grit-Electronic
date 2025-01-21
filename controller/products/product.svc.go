@@ -79,12 +79,19 @@ func GetByIdProductService(ctx context.Context, id int64) (*response.ProductResp
 		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.is_active", "p.created_at", "p.updated_at").
 		ColumnExpr("c.id AS category__id").
 		ColumnExpr("c.name AS category__name").
+		ColumnExpr("r.id AS review__id").
+		ColumnExpr("r.description AS review__description").
+		ColumnExpr("r.rating AS review__rating").
+		// ColumnExpr("u.id AS user__id").
+		// ColumnExpr("u.username AS user__username").
 		ColumnExpr("i.description AS image").
 		ColumnExpr("c.is_active AS is_active").
-		
 		Join("LEFT JOIN categories AS c ON c.id = p.category_id").
+		Join("LEFT JOIN reviews AS r ON p.id = r.product_id").
+		Join("LEFT JOIN users as u ON u.id = r.user_id").
 		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'").
 		Where("p.id = ?", id).Scan(ctx, product)
+		
 	if err != nil {
 		return nil, err
 	}

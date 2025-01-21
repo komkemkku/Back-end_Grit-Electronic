@@ -3,7 +3,6 @@ package carts
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
@@ -46,12 +45,6 @@ func ListCartService(ctx context.Context, req requests.CartRequest) ([]response.
 		return nil, 0, 0, err
 	}
 
-	// คำนวณ TotalPrice สำหรับแต่ละรายการ และ GrandTotal
-	for i := range resp {
-		resp[i].TotalPrice = float64(resp[i].Quantity) * resp[i].Product.Price
-		grandTotal += resp[i].TotalPrice
-	}
-
 	return resp, total, grandTotal, nil
 }
 
@@ -81,35 +74,14 @@ func GetByIdCartService(ctx context.Context, id int64) (*response.CartResponses,
 
 func CreateCartService(ctx context.Context, req requests.CartAddItemRequest) (*model.Carts, error) {
 
-	// ตรวจสอบว่าสินค้ามีอยู่หรือไม่ และดึงจำนวน stock
-	var stock int
-	err := db.NewSelect().
-		TableExpr("products").
-		Column("stock").
-		Where("id = ?", req.ProductID).
-		Scan(ctx, &stock)
-	if err != nil {
-		return nil, err
-	}
-
-	// หากสินค้าไม่มีในฐานข้อมูล
-	if stock == 0 {
-		return nil, errors.New("product not found")
-	}
-
-	// ตรวจสอบว่าสต็อกเพียงพอหรือไม่
-	if req.Quantity > stock {
-		return nil, fmt.Errorf("not enough stock")
-	}
-
 	// เพิ่มสินค้าใหม่ลงในตะกร้า
 	cart := &model.Carts{
-		ProductID: int(req.ProductID),
+		
 	}
 	cart.SetCreatedNow()
 	cart.SetUpdateNow()
 
-	_, err = db.NewInsert().Model(cart).Exec(ctx)
+	_, err := db.NewInsert().Model(cart).Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +105,7 @@ func UpdateCartService(ctx context.Context, id int64, req requests.CartUpdateIte
 	if err != nil {
 		return nil, err
 	}
-	cart.ProductID = int(req.ProductID)
+	
 	cart.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(cart).Where("id = ?", id).Exec(ctx)

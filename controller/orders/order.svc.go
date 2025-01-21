@@ -67,8 +67,7 @@ func GetByIdOrderService(ctx context.Context, id int64) (*response.OrderResponse
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
 
 	order := &model.Orders{
-		TotalPrice:  float64(req.TotalPrice),
-		TotalAmount: int(req.TotalAmount),
+
 	}
 	order.SetCreatedNow()
 	order.SetUpdateNow()
@@ -97,8 +96,7 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 	if err != nil {
 		return nil, err
 	}
-	order.TotalPrice = float64(req.TotalPrice)
-	order.TotalAmount = int(req.TotalAmount)
+
 	order.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(order).Where("id = ?", id).Exec(ctx)

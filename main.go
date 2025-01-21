@@ -12,7 +12,6 @@ import (
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/auth"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/carts"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/categories"
-	orederdetail "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/orderdetails"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/orders"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/payments"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/products"
@@ -129,12 +128,6 @@ func main() {
 	r.DELETE("/payment/:id", payments.DeletePayment)
 	r.PATCH("/payment/:id", payments.UpdatePayment)
 
-	// Order Details
-	r.POST("/orderdetail/create", orederdetail.CreateOrderDetail)
-	r.GET("/orderdetail", orederdetail.OrderDetailList)
-	r.GET("/orderdetail/:id", orederdetail.GetOrderDetailByID)
-	r.DELETE("/orderdetail/:id", orederdetail.DeleteOrderDetail)
-	r.PATCH("/orderdetail/:id", orederdetail.UpdateOrderDetaill)
 
 	r.Run()
 

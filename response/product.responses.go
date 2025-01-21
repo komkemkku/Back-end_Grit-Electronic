@@ -6,12 +6,12 @@ type ProductResponses struct {
 	Price       float64             `json:"price"`
 	Stock       int                 `json:"stock"`
 	Description string              `json:"description"`
-	Category    CategoryProductResp `json:"category"`
 	Image       string              `json:"image"`
-	// Reviews    []ReviewProductResp `json:"reviews"`
-	IsActive   bool  `json:"is_active"`
-	Created_at int64 `json:"created_at"`
-	Updated_at int64 `json:"updated_at"`
+	Category    CategoryProductResp `json:"category"`
+	Review      ReviewProductResp   `json:"review"`
+	IsActive    bool                `json:"is_active"`
+	Created_at  int64               `json:"created_at"`
+	Updated_at  int64               `json:"updated_at"`
 }
 
 type ProductRespCart struct {

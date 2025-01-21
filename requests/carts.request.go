@@ -11,12 +11,16 @@ type CartIdRequest struct {
 }
 
 type CartAddItemRequest struct {
-	ProductID int `json:"product_id"`
-	Quantity  int `json:"quantity"`
+	UserID          int     `json:"user_id"`
+	TotalCartAmount int     `json:"total_cart_amount"`
+	TotalCartPrice  float32 `json:"total_cart_price"`
+	Status          string  `json:"status"`
 }
 
 type CartUpdateItemRequest struct {
-	ID        int `json:"id"`
-	ProductID int `json:"product"`
-	Quantity  int `json:"quantity"`
+	ID              int     `json:"id"`
+	UserID          int     `json:"user_id"`
+	TotalCartAmount int     `json:"total_cart_amount"`
+	TotalCartPrice  float32 `json:"total_cart_price"`
+	Status          string  `json:"status"`
 }
