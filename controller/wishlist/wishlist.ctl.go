@@ -9,16 +9,14 @@ import (
 
 func Wishlist(c *gin.Context) {
 	var req requests.WishlistsRequest
-
-
 	// ตรวจสอบ Query Parameters
 	if err := c.BindQuery(&req); err != nil {
 		response.BadRequest(c, "Invalid query parameters: "+err.Error())
 		return
 	}
-	
+
 	// เรียกใช้ Service
-	data, total, err := ListWishlistsService(c.Request.Context(), requests.WishlistsRequest{})
+	data, total, err := ListWishlistsService(c.Request.Context(), req)
 	if err != nil {
 		response.InternalError(c, "Failed to fetch wishlists: "+err.Error())
 		return
