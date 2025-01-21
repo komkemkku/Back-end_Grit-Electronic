@@ -15,8 +15,6 @@ type OrderCreateRequest struct {
 	PaymentID   int    `json:"payment_id"`
 	ShipmentID  int    `json:"shipment_id"`
 	CartID      int    `json:"cart_id"`
-	TotalPrice  int    `json:"total_price"`
-	TotalAmount int    `json:"total_amount"`
 	Status      string `json:"status"`
 }
 
@@ -26,7 +24,5 @@ type OrderUpdateRequest struct {
 	PaymentID   int    `json:"payment_id"`
 	ShipmentID  int    `json:"shipment_id"`
 	CartID      int    `json:"cart_id"`
-	TotalPrice  int    `json:"total_price"`
-	TotalAmount int    `json:"total_amount"`
 	Status      string `json:"status"`
 }

@@ -4,16 +4,15 @@ type ReviewResponses struct {
 	ID          int               `json:"id"`
 	User        UserRespReview    `json:"user"`
 	Product     ProductRespReview `json:"product"`
+	Description string            `json:"description"`
 	Rating      int               `json:"rating"`
-	TextReview  string            `json:"text_review"`
-	ImageReview []string          `json:"image_review"`
 	Created_at  int64             `json:"created_at"`
 	Updated_at  int64             `json:"updated_at"`
 }
 
 type ReviewProductResp struct {
-	ID        int    `json:"id"`
-	Username  string `json:"username"`
-	Rating    int    `json:"rating"`
-	Text      string `json:"text_review"`
+	ID          int    `json:"id"`
+	Username    string `json:"username"`
+	Description string `json:"description"`
+	Rating      int    `json:"rating"`
 }
