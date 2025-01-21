@@ -12,10 +12,15 @@ package response
 // }
 
 type ReviewProductResp struct {
-	ID       int    `json:"id"`
-	Username string `json:"username"`
-	Rating   int    `json:"rating"`
-	Text     string `json:"text_review"`
+	ID          int    `json:"id"`
+	Rating      int    `json:"rating"`
+}
+
+type ReviewProductDetailResp struct {
+	ID          int    `json:"id"`
+	Username    string `json:"username"`
+	Rating      int    `json:"rating"`
+	Description string `json:"description"`
 }
 
 type ReviewResponses struct {

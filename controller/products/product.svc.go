@@ -22,27 +22,18 @@ func ListProductService(ctx context.Context, req requests.ProductRequest) ([]res
 
 	resp := []response.ProductResponses{}
 
-	// สร้าง query
-	// query := db.NewSelect().
-	// TableExpr("products AS p").
-	// Column("p.id", "p.name", "p.price", "p.description", "p.created_at", "p.updated_at").
-	// ColumnExpr("c.id AS category__id").
-	// ColumnExpr("c.name AS category__name").
-	// ColumnExpr("json_agg(json_build_object('id', r.id, 'text_review', r.text_review, 'rating', r.rating, 'username', u.username)) AS reviews").
-	// Join("LEFT JOIN categories AS c ON c.id = p.category_id").
-	// Join("LEFT JOIN reviews AS r ON r.product_id = p.id").
-	// Join("LEFT JOIN users as u ON u.id = r.user_id").
-	// GroupExpr("p.id, c.id")
-
 	query := db.NewSelect().
-		TableExpr("products AS p").
-		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.is_active", "p.created_at", "p.updated_at").
-		ColumnExpr("c.id AS category__id").
-		ColumnExpr("c.name AS category__name").
-		ColumnExpr("i.description AS image").
-		ColumnExpr("c.is_active AS is_active").
-		Join("LEFT JOIN categories AS c ON c.id = p.category_id").
-		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'")
+	TableExpr("products AS p").
+	Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.is_active", "p.created_at", "p.updated_at").
+	ColumnExpr("c.id AS category__id").
+	ColumnExpr("c.name AS category__name").
+	ColumnExpr("json_agg(json_build_object('id', r.id, 'description', r.description, 'rating', r.rating, 'username', u.username)) AS reviews").
+	ColumnExpr("json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description) AS image").
+	Join("LEFT JOIN categories AS c ON c.id = p.category_id").
+	Join("LEFT JOIN reviews AS r ON r.product_id = p.id").
+	Join("LEFT JOIN users AS u ON u.id = r.user_id").
+	Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'").
+	GroupExpr("p.id, c.id, i.id, i.ref_id, i.type, i.description")
 
 	// query.Where("p.is_active = ?", true)
 	query.Order("p.id ASC")
@@ -65,7 +56,7 @@ func ListProductService(ctx context.Context, req requests.ProductRequest) ([]res
 	return resp, total, nil
 }
 
-func GetByIdProductService(ctx context.Context, id int64) (*response.ProductResponses, error) {
+func GetByIdProductService(ctx context.Context, id int64) (*response.ProductDetailResponses, error) {
 	ex, err := db.NewSelect().TableExpr("products").Where("id = ?", id).Exists(ctx)
 	if err != nil {
 		return nil, err
@@ -73,25 +64,23 @@ func GetByIdProductService(ctx context.Context, id int64) (*response.ProductResp
 	if !ex {
 		return nil, errors.New("product not found")
 	}
-	product := &response.ProductResponses{}
+	product := &response.ProductDetailResponses{}
 
+	// แบบที่ 1
 	err = db.NewSelect().TableExpr("products AS p").
 		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.is_active", "p.created_at", "p.updated_at").
 		ColumnExpr("c.id AS category__id").
 		ColumnExpr("c.name AS category__name").
-		ColumnExpr("r.id AS review__id").
-		ColumnExpr("r.description AS review__description").
-		ColumnExpr("r.rating AS review__rating").
-		// ColumnExpr("u.id AS user__id").
-		// ColumnExpr("u.username AS user__username").
-		ColumnExpr("i.description AS image").
-		ColumnExpr("c.is_active AS is_active").
+		ColumnExpr("json_agg(json_build_object('id', r.id, 'description', r.description, 'rating', r.rating, 'username', u.username)) AS reviews").
+		ColumnExpr("json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description) AS image").
 		Join("LEFT JOIN categories AS c ON c.id = p.category_id").
-		Join("LEFT JOIN reviews AS r ON p.id = r.product_id").
-		Join("LEFT JOIN users as u ON u.id = r.user_id").
+		Join("LEFT JOIN reviews AS r ON r.product_id = p.id").
+		Join("LEFT JOIN users AS u ON u.id = r.user_id").
 		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'").
-		Where("p.id = ?", id).Scan(ctx, product)
-		
+		GroupExpr("p.id, c.id, i.id, i.ref_id, i.type, i.description").
+		Where("p.id = ?", id).
+		Scan(ctx, product)
+
 	if err != nil {
 		return nil, err
 	}

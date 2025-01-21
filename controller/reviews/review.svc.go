@@ -89,9 +89,9 @@ func CreateReviewService(ctx context.Context, req requests.ReviewCreateRequest) 
 
 	// เพิ่มรีวิวใหม่
 	review := &model.Reviews{
-		Rating:    int64(req.Rating),
-		ProductID: int64(req.ProductID),
-		UserID:    int64(req.UserID),
+		Rating:    req.Rating,
+		ProductID: req.ProductID,
+		UserID:    req.UserID,
 	}
 
 	review.SetCreatedNow()
