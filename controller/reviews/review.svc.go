@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/image"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
@@ -14,32 +15,46 @@ import (
 var db = configs.Database()
 
 func ListReviewService(ctx context.Context, req requests.ReviewRequest) ([]response.ReviewResponses, int, error) {
-    var reviews []response.ReviewResponses
-    query := db.NewSelect().
-    TableExpr("reviews r").
-    Join("LEFT JOIN products p ON r.product_id = p.id").
-    Join("LEFT JOIN users u ON r.user_id = u.id").
-    Column("r.id", "r.rating", "r.description", "r.created_at", "r.updated_at", "u.email AS user_name", "p.name AS product_name")
+	var Offset int64
+	if req.Page > 0 {
+		Offset = (req.Page - 1) * req.Size
+	}
 
+	resp := []response.ReviewResponses{}
 
+	query := db.NewSelect().
+		TableExpr("reviews AS r").
+		ColumnExpr("r.id AS id").
+		ColumnExpr("u.username AS \"user\"").
+		ColumnExpr("p.name AS product").
+		ColumnExpr("r.rating AS rating").
+		ColumnExpr("r.description AS text_review").
+		ColumnExpr("r.description AS description").
+		ColumnExpr("r.created_at AS created_at").
+		ColumnExpr("r.updated_at AS updated_at").
+		Join("LEFT JOIN products AS p ON p.id = r.product_id").
+		Join("LEFT JOIN users AS u ON u.id = r.user_id")
 
-    if req.Search != "" {
-        query.Where("p.name LIKE ?", "%"+req.Search+"%")
-    }
+	if req.Search != "" {
+		query.Where("p.name ILIKE ?", "%"+req.Search+"%")
+	}
 
-    err := query.Scan(ctx, &reviews)
-    if err != nil {
-        return nil, 0, err
-    }
+	total, err := query.Count(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
 
-    total, err := query.Count(ctx)
-    if err != nil {
-        return nil, 0, err
-    }
+	err = query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
+	if err != nil {
+		return nil, 0, err
+	}
 
-    return reviews, total, nil
+	for i := range resp {
+		resp[i].ImageReview = []string{}
+	}
+
+	return resp, total, nil
 }
-
 
 func GetByIdReviewService(ctx context.Context, id int64) (*response.ReviewResponses, error) {
 	ex, err := db.NewSelect().TableExpr("reviews").Where("id = ?", id).Exists(ctx)
@@ -51,14 +66,16 @@ func GetByIdReviewService(ctx context.Context, id int64) (*response.ReviewRespon
 	}
 	review := &response.ReviewResponses{}
 
-	err = db.NewSelect().TableExpr("reviews AS r").
-		Column("r.id", "r.text_review", "r.rating", "r.image_review", "r.created_at", "r.updated_at").
-		ColumnExpr("p.id AS product__id").
-		ColumnExpr("p.name AS product__name").
-		ColumnExpr("u.id AS user__id").
-		ColumnExpr("u.username AS user__name").
-		Join("LEFT JOIN products as p ON p.id = r.product_id").
-		Join("LEFT JOIN users as u ON u.id = r.user_id").Where("r.id = ?", id).Scan(ctx, review)
+	err = db.NewSelect().	TableExpr("reviews AS r").
+	ColumnExpr("r.id AS id").
+	ColumnExpr("u.username AS \"user\"").
+	ColumnExpr("p.name AS product").
+	ColumnExpr("r.rating AS rating").
+	ColumnExpr("r.description AS description").
+	ColumnExpr("r.created_at AS created_at").
+	ColumnExpr("r.updated_at AS updated_at").
+	Join("LEFT JOIN products AS p ON p.id = r.product_id").
+	Join("LEFT JOIN users AS u ON u.id = r.user_id").Where("r.id = ?", id).Scan(ctx, review)
 	if err != nil {
 		return nil, err
 	}
@@ -89,9 +106,10 @@ func CreateReviewService(ctx context.Context, req requests.ReviewCreateRequest) 
 
 	// เพิ่มรีวิวใหม่
 	review := &model.Reviews{
-		Rating:    int64(req.Rating),
-		ProductID: int64(req.ProductID),
-		UserID:    int64(req.UserID),
+		Rating:      req.Rating,
+		ProductID:   req.ProductID,
+		UserID:      req.UserID,
+		Description: req.Description,
 	}
 
 	review.SetCreatedNow()
@@ -100,6 +118,17 @@ func CreateReviewService(ctx context.Context, req requests.ReviewCreateRequest) 
 	_, err = db.NewInsert().Model(review).Exec(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create review: %w", err)
+	}
+
+	img := requests.ImageCreateRequest{
+		RefID:       review.ID,
+		Type:        "review_image",
+		Description: req.ImageReview,
+	}
+
+	_, err = image.CreateImageService(ctx, img)
+	if err != nil {
+		return nil, err
 	}
 
 	return review, nil

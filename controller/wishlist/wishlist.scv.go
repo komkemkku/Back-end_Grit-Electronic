@@ -21,16 +21,25 @@ func ListWishlistsService(ctx context.Context, req requests.WishlistsRequest) ([
 		Offset = (req.Page - 1) * req.Size
 	}
 
-	
-	// สร้าง query
 	query := db.NewSelect().
-    TableExpr("wishlists w").
-    Join("LEFT JOIN users u ON u.id = w.user_id").
-    Join("LEFT JOIN products p ON p.id = w.product_id").
-    Column("w.id", "w.created_at", "w.updated_at", "w.user_id", "w.product_id", "w.price_per_product", "w.amount_per_product").
-    ColumnExpr("u.username AS username").  // ตรวจสอบชื่อคอลัมน์
-    ColumnExpr("p.name AS product_name")
-
+		TableExpr("wishlists w").
+		// Join("LEFT JOIN users u ON u.id = w.user_id").
+		// Join("LEFT JOIN products p ON p.id = w.product_id").
+		Column(
+			"w.id",
+			"w.price_per_product",
+			"w.amount_per_product",
+			"w.created_at",
+			"w.updated_at",
+		).
+		ColumnExpr("u.id AS user__id").
+		ColumnExpr("u.username AS user__username").
+		ColumnExpr("p.id AS product__id").
+		ColumnExpr("p.name AS product__name").
+		ColumnExpr("p.description AS product__description").
+		ColumnExpr("p.price AS product__price").
+		Join("LEFT JOIN users u ON u.id = w.user_id").
+		Join("LEFT JOIN products p ON p.id = w.product_id")
 
 	if req.Search != "" {
 		query.Where("p.name ILIKE ?", "%"+req.Search+"%")
@@ -41,7 +50,6 @@ func ListWishlistsService(ctx context.Context, req requests.WishlistsRequest) ([
 		return nil, 0, err
 	}
 
-	// Execute query
 	err = query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
 	if err != nil {
 		return nil, 0, err
@@ -49,6 +57,8 @@ func ListWishlistsService(ctx context.Context, req requests.WishlistsRequest) ([
 
 	return resp, total, nil
 }
+
+
 
 func GetByIdWishlistsService(ctx context.Context, id int64) (*response.WishlistResponses, error) {
 

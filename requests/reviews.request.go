@@ -15,10 +15,11 @@ type ReviewCreateRequest struct {
 	UserID      int    `json:"user_id"`
 	Description string `json:"description"`
 	Rating      int    `json:"rating"`
+	ImageReview string `json:"image_review"`
 }
 
 type ReviewUpdateRequest struct {
-	ID          int      `json:"id"`
+	ID          int    `json:"id"`
 	ProductID   int    `json:"product_id"`
 	UserID      int    `json:"user_id"`
 	Description string `json:"description"`

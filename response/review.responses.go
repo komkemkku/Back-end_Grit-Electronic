@@ -18,13 +18,25 @@ type ReviewProductResp struct {
 	Text     string `json:"text_review"`
 }
 
+// type ReviewResponses struct {
+// 	ID          int64    `json:"id"`
+// 	User        string   `json:"user"`    // จาก username
+// 	Product     string   `json:"product"` // จาก product_name
+// 	Rating      int      `json:"rating"`
+// 	TextReview  string   `json:"text_review"` // จาก description
+// 	Description string   `json:"description"`
+// 	ImageReview []string `json:"image_review"`
+// 	CreatedAt   string   `json:"created_at"`
+// 	UpdatedAt   string   `json:"updated_at"`
+// }
+
 type ReviewResponses struct {
-	ID          int64    `json:"id"`
-	User        string   `json:"user"`    // จาก username
-	Product     string   `json:"product"` // จาก product_name
-	Rating      int      `json:"rating"`
-	TextReview  string   `json:"text_review"` // จาก description
+	ID          int64  `bun:"id" json:"id"`
+	User        string `bun:"user" json:"user"`
+	Product     string `bun:"product" json:"product"`
+	Rating      int    `bun:"rating" json:"rating"`
+	Description string `bun:"description" json:"description"`
 	ImageReview []string `json:"image_review"`
-	CreatedAt   string   `json:"created_at"`
-	UpdatedAt   string   `json:"updated_at"`
+	CreatedAt   string `bun:"created_at" json:"created_at"`
+	UpdatedAt   string `bun:"updated_at" json:"updated_at"`
 }
