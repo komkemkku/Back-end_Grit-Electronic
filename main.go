@@ -10,6 +10,7 @@ import (
 	adminlogs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/admin_logs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/admins"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/auth"
+	cartitems "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/cart_items"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/carts"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/categories"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/orders"
@@ -83,6 +84,13 @@ func main() {
 	r.DELETE("/cart/:id", carts.DeleteCart)
 	r.PATCH("/cart/:id", carts.UpdateCart)
 
+	// CartItem
+	r.POST("/cartitem/create", cartitems.CreateCartItem)
+	r.GET("/cartitem/:id", cartitems.GetCartItemByID)
+	r.GET("/cartitem", cartitems.CartItemList)
+	r.DELETE("/cartitem/:id", cartitems.DeleteCartItem)
+	r.PATCH("/cartitem/:id", cartitems.UpdateCartItem)
+
 	// Review
 	r.POST("/review/create", reviews.CreateReview)
 	r.GET("/review/:id", reviews.GetReviewByID)
@@ -127,7 +135,6 @@ func main() {
 	r.GET("/payment", payments.PaymentList)
 	r.DELETE("/payment/:id", payments.DeletePayment)
 	r.PATCH("/payment/:id", payments.UpdatePayment)
-
 
 	r.Run()
 
