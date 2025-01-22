@@ -13,20 +13,20 @@ import (
 var db = config.Database()
 
 func GetByIdUserService(ctx context.Context, id int64) (*model.Users, error) {
-  ex, err := db.NewSelect().TableExpr("users").Where("id=?", id).Exists(ctx)
-  if err != nil {
-    return nil, err
-  }
-  if !ex {
-    return nil, errors.New("user not found")
-  }
-  user := &model.Users{}
+	ex, err := db.NewSelect().TableExpr("users").Where("id=?", id).Exists(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !ex {
+		return nil, errors.New("user not found")
+	}
+	user := &model.Users{}
 
-  err = db.NewSelect().Model(user).Where("id = ?", id).Scan(ctx)
-  if err != nil {
-    return nil, err
-  }
-  return user, nil
+	err = db.NewSelect().Model(user).Where("id = ?", id).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*model.Users, error) {

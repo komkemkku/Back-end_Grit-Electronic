@@ -24,7 +24,7 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("orders AS o").
-		Column("o.id", "o.total_price", "o.total_amount", "o.status", "o.created_at", "o.updated_at")
+		Column("o.id", "o.user_id","o.payment_id","o.shipment_id","o.cart_id","status","o.created_at", "o.updated_at")
 
 	if req.Search != "" {
 		query.Where("o.status ILIKE ?", "%"+req.Search+"%")
