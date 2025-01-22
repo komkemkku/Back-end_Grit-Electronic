@@ -66,16 +66,16 @@ func GetByIdReviewService(ctx context.Context, id int64) (*response.ReviewRespon
 	}
 	review := &response.ReviewResponses{}
 
-	err = db.NewSelect().	TableExpr("reviews AS r").
-	ColumnExpr("r.id AS id").
-	ColumnExpr("u.username AS \"user\"").
-	ColumnExpr("p.name AS product").
-	ColumnExpr("r.rating AS rating").
-	ColumnExpr("r.description AS description").
-	ColumnExpr("r.created_at AS created_at").
-	ColumnExpr("r.updated_at AS updated_at").
-	Join("LEFT JOIN products AS p ON p.id = r.product_id").
-	Join("LEFT JOIN users AS u ON u.id = r.user_id").Where("r.id = ?", id).Scan(ctx, review)
+	err = db.NewSelect().TableExpr("reviews AS r").
+		ColumnExpr("r.id AS id").
+		ColumnExpr("u.username AS \"user\"").
+		ColumnExpr("p.name AS product").
+		ColumnExpr("r.rating AS rating").
+		ColumnExpr("r.description AS description").
+		ColumnExpr("r.created_at AS created_at").
+		ColumnExpr("r.updated_at AS updated_at").
+		Join("LEFT JOIN products AS p ON p.id = r.product_id").
+		Join("LEFT JOIN users AS u ON u.id = r.user_id").Where("r.id = ?", id).Scan(ctx, review)
 	if err != nil {
 		return nil, err
 	}
