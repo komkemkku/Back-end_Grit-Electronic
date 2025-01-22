@@ -13,3 +13,10 @@ type ImageProductResp struct {
 	Type        string `json:"type"`
 	Description string `json:"description"`
 }
+
+type ImageSystemBankResp struct {
+	ID          int    `json:"id"`
+	RefID       int    `json:"ref_id"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+}

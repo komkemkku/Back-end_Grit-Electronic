@@ -7,13 +7,46 @@ import (
 	config "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/utils"
 )
 
 var db = config.Database()
 
-func GetByIdUserService(ctx context.Context, id int64) (*model.Users, error) {
-  ex, err := db.NewSelect().TableExpr("users").Where("id=?", id).Exists(ctx)
+func ListUserService(ctx context.Context, req requests.UserRequest) ([]response.UserResponses, int, error) {
+
+	var Offset int64
+	if req.Page > 0 {
+		Offset = (req.Page - 1) * req.Size
+	}
+
+	resp := []response.UserResponses{}
+
+	// สร้าง query
+	query := db.NewSelect().
+		TableExpr("users AS u ").
+		Column("u.id", "u.firstname", "u.lastname", "u.username", "u.email", "u.phone", "u.created_at", "u.updated_at")
+
+	if req.Search != "" {
+		query.Where("u.name ILIKE ?", "%"+req.Search+"%")
+	}
+
+	total, err := query.Count(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Execute query
+	err = query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return resp, total, nil
+}
+
+func GetByIdUserService(ctx context.Context, ID int64) (*model.Users, error) {
+  ex, err := db.NewSelect().TableExpr("users").Where("id=?", ID).Exists(ctx)
   if err != nil {
     return nil, err
   }
@@ -22,7 +55,7 @@ func GetByIdUserService(ctx context.Context, id int64) (*model.Users, error) {
   }
   user := &model.Users{}
 
-  err = db.NewSelect().Model(user).Where("id = ?", id).Scan(ctx)
+  err = db.NewSelect().Model(user).Where("id = ?", ID).Scan(ctx)
   if err != nil {
     return nil, err
   }
@@ -124,9 +157,8 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*m
 //   })
 // }
 
-func UpdateUserService(ctx context.Context, id int64, req requests.UserUpdateRequest) (*model.Users, error) {
-
-	ex, err := db.NewSelect().TableExpr("users").Where("id = ?", 3).Exists(ctx)
+func UpdateUserService(ctx context.Context, ID int, req requests.UserUpdateRequest) (*model.Users, error) {
+	ex, err := db.NewSelect().TableExpr("users").Where("id=?", ID).Exists(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -136,18 +168,21 @@ func UpdateUserService(ctx context.Context, id int64, req requests.UserUpdateReq
 
 	user := &model.Users{}
 
-	err = db.NewSelect().Model(user).Where("id = ?", id).Scan(ctx)
+	hashpassword, _ := utils.HashPassword(req.Password)
+
+	err = db.NewSelect().Model(user).Where("id = ?", ID).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
 	user.FirstName = req.Firstname
 	user.LastName = req.Lastname
 	user.Username = req.Username
+	user.Password = hashpassword
 	user.Email = req.Email
 	user.Phone = req.Phone
 	user.SetUpdateNow()
 
-	_, err = db.NewUpdate().Model(user).Where("id = ?", id).Exec(ctx)
+	_, err = db.NewUpdate().Model(user).Where("id = ?", ID).Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -155,8 +190,8 @@ func UpdateUserService(ctx context.Context, id int64, req requests.UserUpdateReq
 	return user, nil
 }
 
-func DeleteUserService(ctx context.Context, id int64) error {
-	ex, err := db.NewSelect().TableExpr("users").Where("id=?", id).Exists(ctx)
+func DeleteUserService(ctx context.Context, ID int64) error {
+	ex, err := db.NewSelect().TableExpr("users").Where("id=?", ID).Exists(ctx)
 
 	if err != nil {
 		return err
@@ -166,7 +201,7 @@ func DeleteUserService(ctx context.Context, id int64) error {
 		return errors.New("user not found")
 	}
 
-	_, err = db.NewDelete().TableExpr("users").Where("id =?", id).Exec(ctx)
+	_, err = db.NewDelete().TableExpr("users").Where("id =?", ID).Exec(ctx)
 	if err != nil {
 		return err
 	}

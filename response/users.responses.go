@@ -5,11 +5,10 @@ type UserResponses struct {
 	Firstname string        `json:"firstname"`
 	Lastname  string        `json:"lastname"`
 	Username  string        `json:"username"`
-	Password  string        `json:"password"`
 	Email     string        `json:"email"`
 	Phone     string        `json:"phone"`
-	Create_at int64         `json:"create_at"`
-	UpdatedAt string        `json:"updated_at"`
+	Created_at int64         `json:"create_at"`
+	Updated_at string        `json:"updated_at"`
 }
 
 type UserRespReview struct {

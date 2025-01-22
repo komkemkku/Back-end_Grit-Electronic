@@ -48,6 +48,7 @@ func main() {
 
 	// User
 	r.POST("/user/create", users.CreateUser)
+	r.GET("/user", users.UserList)
 	r.GET("/user/:id", users.GetUserByID)
 	r.DELETE("/user/:id", users.DeleteUser)
 	r.PATCH("/user/:id", users.UpdateUser)

@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	config "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/image"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
@@ -24,7 +25,9 @@ func ListSystemBankService(ctx context.Context, req requests.SystemBankRequest) 
 	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("system_banks AS sb").
-		Column("sb.id", "sb.bank_name", "sb.account_name", "sb.account_number", "sb.description", "sb.is_active", "sb.created_at", "sb.updated_at")
+		Column("sb.id", "sb.bank_name", "sb.account_name", "sb.account_number", "sb.description", "sb.is_active", "sb.created_at", "sb.updated_at").
+		ColumnExpr("json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description) AS image").
+		Join("LEFT JOIN images AS i ON i.ref_id = sb.id AND i.type = 'systembank_image'")
 
 	if req.Search != "" {
 		query.Where("sb.bank_name ILIKE ?", "%"+req.Search+"%")
@@ -55,6 +58,8 @@ func GetByIdSystemBankService(ctx context.Context, id int64) (*response.SystemBa
 
 	err = db.NewSelect().TableExpr("system_banks AS sb").
 		Column("sb.id", "sb.bank_name", "sb.account_name", "sb.account_number", "sb.description", "sb.is_active", "sb.created_at", "sb.updated_at").
+		ColumnExpr("json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description) AS image").
+		Join("LEFT JOIN images AS i ON i.ref_id = sb.id AND i.type = 'systembank_image'").
 		Where("sb.id = ?", id).Scan(ctx, systembank)
 	if err != nil {
 		return nil, err
@@ -77,6 +82,17 @@ func CreateSystemBankService(ctx context.Context, req requests.SystemBankCreateR
 	systembank.SetUpdateNow()
 
 	_, err := db.NewInsert().Model(systembank).Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	img := requests.ImageCreateRequest{
+		RefID:       systembank.ID,
+		Type:        "systembank_image",
+		Description: req.ImageSystemBank,
+	}
+
+	_, err = image.CreateImageService(ctx, img)
 	if err != nil {
 		return nil, err
 	}
@@ -108,6 +124,17 @@ func UpdateSystembankService(ctx context.Context, id int64, req requests.SystemB
 	systembank.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(systembank).Where("id = ?", id).Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	img := requests.ImageCreateRequest{
+		RefID:       systembank.ID,
+		Type:        "systembank_image",
+		Description: req.ImageSystemBank,
+	}
+
+	_, err = image.CreateImageService(ctx, img)
 	if err != nil {
 		return nil, err
 	}

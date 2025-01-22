@@ -150,7 +150,7 @@ func UpdateProductService(ctx context.Context, id int64, req requests.ProductUpd
 
 	product.Name = req.Name
 	product.Price = float64(req.Price)
-	product.Stock += int(req.Stock)
+	product.Stock = int(req.Stock)
 	product.Description = req.Description
 	product.IsActive = req.IsActive
 	product.CategoryID = int(req.CategoryID)
