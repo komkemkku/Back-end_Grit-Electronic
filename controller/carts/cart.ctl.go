@@ -1,7 +1,6 @@
 package carts
 
 import (
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
@@ -63,13 +62,11 @@ func CartList(c *gin.Context) {
 	}
 
 	// เพิ่มตัวแปรเพื่อรับ grandTotal
-	data, total, grandTotal, err := ListCartService(c.Request.Context(), req)
+	data, total, err := ListCartService(c.Request.Context(), req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
-
-	fmt.Printf("Grand Total for Cart: %.2f\n", grandTotal)
 
 
 	// เพิ่ม grandTotal เข้าไปใน Response หากต้องการ
