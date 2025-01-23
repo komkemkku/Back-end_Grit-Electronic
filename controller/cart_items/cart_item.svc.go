@@ -3,6 +3,7 @@ package cartitems
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/image"
@@ -176,33 +177,50 @@ func UpdateCartItemService(ctx context.Context, id int64, req requests.CartItemU
 	return cartItem, nil
 }
 
-func DeleteCartItemService(ctx context.Context, id int64) error {
-	cartItem := &model.CartItem{}
-	err := db.NewSelect().Model(cartItem).Where("id = ?", id).Scan(ctx)
-	if err != nil {
-		return errors.New("cart_item not found")
-	}
+func DeleteCartItemService(ctx context.Context, cartID, userID, cartItemID int) error {
+    cartItem := &model.CartItem{}
+    
+    // ตรวจสอบว่า cart_item มีอยู่จริง
+    err := db.NewSelect().
+        Model(cartItem).
+        Where("id = ? AND cart_id = ? AND EXISTS (SELECT 1 FROM carts WHERE id = ? AND user_id = ?)", cartItemID, cartID, cartID, userID).
+        Scan(ctx)
+    if err != nil {
+        return errors.New("cart_item not found")
+    }
 
-	// ลบสินค้าใน cart_items
-	_, err = db.NewDelete().Model(cartItem).Where("id = ?", id).Exec(ctx)
-	if err != nil {
-		return err
-	}
+    // ลบ cart_item
+    _, err = db.NewDelete().
+        Model(cartItem).
+        Where("id = ?", cartItemID).
+        Exec(ctx)
+    if err != nil {
+        return fmt.Errorf("failed to delete cart_item: %v", err)
+    }
 
-	// ตรวจสอบว่าตะกร้ามีสินค้าเหลือหรือไม่
-	count, err := db.NewSelect().TableExpr("cart_items").Where("cart_id = ?", cartItem.CartID).Count(ctx)
-	if err != nil {
-		return err
-	}
+    // ตรวจสอบจำนวนสินค้าที่เหลือใน cart_item
+    var itemCount int
+    err = db.NewSelect().
+        TableExpr("cart_items").
+        ColumnExpr("COUNT(*)").
+        Where("cart_id = ?", cartID).
+        Scan(ctx, &itemCount)
+    if err != nil {
+        return fmt.Errorf("failed to check remaining cart_items: %v", err)
+    }
 
-	if count == 0 {
-		// ลบ cart หากไม่มีสินค้าเหลือ
-		_, err = db.NewDelete().TableExpr("carts").Where("id = ?", cartItem.CartID).Exec(ctx)
-		if err != nil {
-			return err
-		}
-	}
+    // หากไม่มีสินค้าเหลือใน cart ให้ลบ cart อัตโนมัติ
+    if itemCount == 0 {
+        _, err = db.NewDelete().
+            TableExpr("carts").
+            Where("id = ?", cartID).
+            Exec(ctx)
+        if err != nil {
+            return fmt.Errorf("failed to delete empty cart: %v", err)
+        }
+    }
 
-	return nil
+    return nil
 }
+
 

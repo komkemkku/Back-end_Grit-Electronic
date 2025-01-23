@@ -89,7 +89,7 @@ func main() {
 	r.POST("/cartitem/create", cartitems.CreateCartItem)
 	r.GET("/cartitem/:id", cartitems.GetCartItemByID)
 	r.GET("/cartitem", cartitems.CartItemList)
-	r.DELETE("/cartitem/:id", cartitems.DeleteCartItem)
+	r.DELETE("/cartitem", cartitems.DeleteCartItem)
 	r.PATCH("/cartitem/:id", cartitems.UpdateCartItem)
 
 	// Review

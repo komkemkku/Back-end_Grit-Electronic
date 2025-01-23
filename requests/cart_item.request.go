@@ -30,3 +30,9 @@ type CartItemUpdateRequest struct {
 	TotalProductAmount int     `json:"total_product_amount"`
 	Status             string  `json:"status"`
 }
+
+type CartItemDeleteRequest struct {
+	CartID     int `json:"cart_id"`
+	UserID     int `json:"user_id"`
+	CartItemID int `json:"cart_item_id"`
+}
