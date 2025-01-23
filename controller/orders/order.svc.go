@@ -24,7 +24,7 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("orders AS o").
-		Column("o.id", "o.user_id","o.payment_id","o.shipment_id","o.cart_id","status","o.created_at", "o.updated_at")
+		Column("o.id", "o.user_id", "o.payment_id", "o.shipment_id", "o.cart_id", "status", "o.created_at", "o.updated_at")
 
 	if req.Search != "" {
 		query.Where("o.status ILIKE ?", "%"+req.Search+"%")
@@ -65,40 +65,48 @@ func GetByIdOrderService(ctx context.Context, id int64) (*response.OrderResponse
 }
 
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
+	statusStr := req.Status
 
 	order := &model.Orders{
-
+		UserID:     int64(req.UserID),
+		PaymentID:  int64(req.PaymentID),
+		ShipmentID: int64(req.ShipmentID),
+		CartID:     int64(req.CartID),
+		Status:     statusStr,
 	}
-	order.SetCreatedNow()
-	order.SetUpdateNow()
 
-	_, err := db.NewInsert().Model(order).Exec(ctx)
-	if err != nil {
+	order.SetCreatedNow()
+	order.SetUpdatedNow()
+
+	if _, err := db.NewInsert().Model(order).Exec(ctx); err != nil {
 		return nil, err
 	}
 
 	return order, nil
-
 }
 
 func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateRequest) (*model.Orders, error) {
-	ex, err := db.NewSelect().TableExpr("orders").Where("id=?", id).Exists(ctx)
+	// ตรวจสอบว่า order มีอยู่ในฐานข้อมูลหรือไม่
+	exists, err := db.NewSelect().TableExpr("orders").Where("id = ?", id).Exists(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if !ex {
+	if !exists {
 		return nil, errors.New("order not found")
 	}
 
+	// ดึงข้อมูล order
 	order := &model.Orders{}
-
 	err = db.NewSelect().Model(order).Where("id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	order.SetUpdateNow()
+	// อัปเดตข้อมูล
+	order.Status = req.Status
+	order.SetUpdateNow() // ตั้งค่า UpdatedAt
 
+	// บันทึกข้อมูลกลับไปยังฐานข้อมูล
 	_, err = db.NewUpdate().Model(order).Where("id = ?", id).Exec(ctx)
 	if err != nil {
 		return nil, err

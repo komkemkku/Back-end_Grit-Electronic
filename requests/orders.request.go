@@ -7,22 +7,22 @@ type OrderRequest struct {
 }
 
 type OrderIdRequest struct {
-	ID int `uri:"id"`
+	ID int `uri:"id"`	
 }
 
 type OrderCreateRequest struct {
-	UserID      int    `json:"user_id"`
-	PaymentID   int    `json:"payment_id"`
-	ShipmentID  int    `json:"shipment_id"`
-	CartID      int    `json:"cart_id"`
-	Status      string `json:"status"`
+	UserID     int `json:"user_id"`
+	PaymentID  int `json:"payment_id"`
+	ShipmentID int `json:"shipment_id"`
+	CartID     int `json:"cart_id"`
+	Status     string `json:"status"`
 }
 
 type OrderUpdateRequest struct {
-	ID          int    `json:"id"`
-	UserID      int    `json:"user_id"`
-	PaymentID   int    `json:"payment_id"`
-	ShipmentID  int    `json:"shipment_id"`
-	CartID      int    `json:"cart_id"`
-	Status      string `json:"status"`
+	ID         int    `json:"id"`
+	UserID     int    `json:"user_id"`
+	PaymentID  int    `json:"payment_id"`
+	ShipmentID int    `json:"shipment_id"`
+	CartID     int    `json:"cart_id"`
+	Status     string `json:"status"`
 }

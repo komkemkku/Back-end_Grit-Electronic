@@ -46,20 +46,20 @@ func ListUserService(ctx context.Context, req requests.UserRequest) ([]response.
 }
 
 func GetByIdUserService(ctx context.Context, ID int64) (*model.Users, error) {
-  ex, err := db.NewSelect().TableExpr("users").Where("id=?", ID).Exists(ctx)
-  if err != nil {
-    return nil, err
-  }
-  if !ex {
-    return nil, errors.New("user not found")
-  }
-  user := &model.Users{}
+	ex, err := db.NewSelect().TableExpr("users").Where("id=?", ID).Exists(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !ex {
+		return nil, errors.New("user not found")
+	}
+	user := &model.Users{}
 
-  err = db.NewSelect().Model(user).Where("id = ?", ID).Scan(ctx)
-  if err != nil {
-    return nil, err
-  }
-  return user, nil
+	err = db.NewSelect().Model(user).Where("id = ?", ID).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*model.Users, error) {
