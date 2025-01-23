@@ -65,18 +65,17 @@ func GetByIdOrderService(ctx context.Context, id int64) (*response.OrderResponse
 }
 
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
-	statusStr := req.Status
 
 	order := &model.Orders{
-		UserID:     int64(req.UserID),
-		PaymentID:  int64(req.PaymentID),
-		ShipmentID: int64(req.ShipmentID),
-		CartID:     int64(req.CartID),
-		Status:     statusStr,
+		UserID:     req.UserID,
+		PaymentID:  req.PaymentID,
+		ShipmentID: req.ShipmentID,
+		CartID:     req.CartID,
+		Status:     req.Status,
 	}
 
 	order.SetCreatedNow()
-	order.SetUpdatedNow()
+	order.SetUpdateNow()
 
 	if _, err := db.NewInsert().Model(order).Exec(ctx); err != nil {
 		return nil, err
