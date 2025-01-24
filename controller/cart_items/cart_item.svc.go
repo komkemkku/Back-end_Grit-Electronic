@@ -79,13 +79,18 @@ func GetByIdCartItemService(ctx context.Context, id int64) (*response.CartItemRe
 
 func CreateCartItemService(ctx context.Context, req requests.CartItemCreateRequest) (*model.CartItem, error) {
 	// ตรวจสอบว่ามี cart ที่เกี่ยวข้องหรือไม่
-	cartExists, err := db.NewSelect().TableExpr("carts").Where("id = ?", req.CartID).Exists(ctx)
+	// whare user and pending
+	cartExists, err := db.NewSelect().TableExpr("carts").Where("id = ?", req.CartID).Exists(ctx) 
 	if err != nil {
 		return nil, err
 	}
+
+	// เพิ่มสร้างตะกร้า ตรงนี้
 	if !cartExists {
 		return nil, errors.New("cart not found")
 	}
+
+	// ถ้ามีอยู่แล้วให้เอาตะกร้านั้นมาใช้
 
 	// ตรวจสอบว่าสินค้ามีอยู่ใน cart_items หรือไม่
 	cartItem := &model.CartItem{}

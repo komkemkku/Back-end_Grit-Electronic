@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"net/http"
+
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/utils/jwt"
@@ -27,7 +29,10 @@ func LoginUser(c *gin.Context) {
 		response.InternalError(c, err.Error())
 		return
 	}
-	response.Success(c, token)
+	c.JSON(http.StatusOK, gin.H{
+		"status": http.StatusOK,
+		"token":  token,
+	})
 }
 
 func LoginAdmin(c *gin.Context) {
@@ -49,5 +54,8 @@ func LoginAdmin(c *gin.Context) {
 		response.InternalError(c, err.Error())
 		return
 	}
-	response.Success(c, token)
+	c.JSON(http.StatusOK, gin.H{
+		"status": http.StatusOK,
+		"token":  token,
+	})
 }
