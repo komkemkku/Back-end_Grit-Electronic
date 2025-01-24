@@ -83,7 +83,6 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 
 	return order, nil
 }
-
 func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateRequest) (*model.Orders, error) {
 	// ตรวจสอบว่า order มีอยู่ในฐานข้อมูลหรือไม่
 	exists, err := db.NewSelect().TableExpr("orders").Where("id = ?", id).Exists(ctx)
