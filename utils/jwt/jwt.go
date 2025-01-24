@@ -19,7 +19,7 @@ func VerifyToken(raw string) (map[string]any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("invalid token singing method")
 		}
-		secret := []byte(os.Getenv("TOKEN_SECRET_USER"))
+		secret := []byte(os.Getenv("TOKEN_SECRET"))
 		return secret, nil
 	})
 	if err != nil {
@@ -37,7 +37,7 @@ func VerifyToken(raw string) (map[string]any, error) {
 
 func GenerateTokenUser(ctx context.Context, user *model.Users) (string, error) {
 	godotenv.Load()
-	tokenDurationStr := os.Getenv("TOKEN_DURATION_USER")
+	tokenDurationStr := os.Getenv("TOKEN_DURATION")
 	tokenDuration, err := time.ParseDuration(tokenDurationStr)
 	if err != nil {
 		log.Printf("[error]: %v", err)
@@ -56,7 +56,7 @@ func GenerateTokenUser(ctx context.Context, user *model.Users) (string, error) {
 		"exp": time.Now().Add(tokenDuration).Unix(),
 	})
 
-	secret := []byte(os.Getenv("TOKEN_SECRET_USER"))
+	secret := []byte(os.Getenv("TOKEN_SECRET"))
 	tokenString, err := token.SignedString(secret)
 	if err != nil {
 		log.Printf("[error]: %v", err)
@@ -67,7 +67,7 @@ func GenerateTokenUser(ctx context.Context, user *model.Users) (string, error) {
 
 func GenerateTokenAdmin(ctx context.Context, admin *model.Admins) (string, error) {
 	godotenv.Load()
-	tokenDurationStr := os.Getenv("TOKEN_DURATION_ADMIN")
+	tokenDurationStr := os.Getenv("TOKEN_DURATION")
 	tokenDuration, err := time.ParseDuration(tokenDurationStr)
 	if err != nil {
 		log.Printf("[error]: %v", err)
@@ -85,7 +85,7 @@ func GenerateTokenAdmin(ctx context.Context, admin *model.Admins) (string, error
 		"exp": time.Now().Add(tokenDuration).Unix(),
 	})
 
-	secret := []byte(os.Getenv("TOKEN_DURATION_ADMIN"))
+	secret := []byte(os.Getenv("TOKEN_SECRET"))
 	tokenString, err := token.SignedString(secret)
 	if err != nil {
 		log.Printf("[error]: %v", err)
