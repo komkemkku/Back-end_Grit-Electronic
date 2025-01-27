@@ -12,35 +12,35 @@ import (
 
 var db = configs.Database()
 
-func ListCartService(ctx context.Context, req requests.CartRequest) ([]response.CartResponses, int, error) {
-	var Offset int64
-	if req.Page > 0 {
-		Offset = (req.Page - 1) * req.Size
-	}
+// func ListCartService(ctx context.Context, req requests.CartRequest) ([]response.CartResponses, int, error) {
+// 	var Offset int64
+// 	if req.Page > 0 {
+// 		Offset = (req.Page - 1) * req.Size
+// 	}
 
-	resp := []response.CartResponses{}
+// 	resp := []response.CartResponses{}
 
-	// สร้าง query พร้อมเชื่อมโยงกับ cart_items
-	query := db.NewSelect().
-		TableExpr("carts AS c").
-		Column("c.id", "c.user_id", "c.total_cart_amount", "c.total_cart_price", "c.status", "c.created_at", "c.updated_at").
-		ColumnExpr("json_agg(json_build_object('id', ci.id, 'product_id', ci.product_id, 'product_name', ci.product_name, 'product_image_main', ci.product_image_main, 'total_product_price', ci.total_product_price, 'total_product_amount', ci.total_product_amount)) AS cart_items").
-		Join("LEFT JOIN cart_items AS ci ON ci.cart_id = c.id").
-		GroupExpr("c.id")
+// 	// สร้าง query พร้อมเชื่อมโยงกับ cart_items
+// 	query := db.NewSelect().
+// 		TableExpr("carts AS c").
+// 		Column("c.id", "c.user_id", "c.total_cart_amount", "c.total_cart_price", "c.status", "c.created_at", "c.updated_at").
+// 		ColumnExpr("json_agg(json_build_object('id', ci.id, 'product_id', ci.product_id, 'product_name', ci.product_name, 'product_image_main', ci.product_image_main, 'total_product_price', ci.total_product_price, 'total_product_amount', ci.total_product_amount)) AS cart_items").
+// 		Join("LEFT JOIN cart_items AS ci ON ci.cart_id = c.id").
+// 		GroupExpr("c.id")
 
-	total, err := query.Count(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
+// 	total, err := query.Count(ctx)
+// 	if err != nil {
+// 		return nil, 0, err
+// 	}
 
-	// Execute query
-	err = query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
-	if err != nil {
-		return nil, 0, err
-	}
+// 	// Execute query
+// 	err = query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
+// 	if err != nil {
+// 		return nil, 0, err
+// 	}
 
-	return resp, total, nil
-}
+// 	return resp, total, nil
+// }
 
 func GetByIdCartService(ctx context.Context, id int64) (*response.CartResponses, error) {
 	// ตรวจสอบว่ามีตะกร้าอยู่หรือไม่
