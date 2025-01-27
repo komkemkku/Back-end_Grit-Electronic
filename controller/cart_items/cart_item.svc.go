@@ -2,6 +2,7 @@ package cartitems
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -78,24 +79,40 @@ func GetByIdCartItemService(ctx context.Context, id int64) (*response.CartItemRe
 }
 
 func CreateCartItemService(ctx context.Context, req requests.CartItemCreateRequest) (*model.CartItem, error) {
-	// ตรวจสอบว่ามี cart ที่เกี่ยวข้องหรือไม่
-	// whare user and pending
-	cartExists, err := db.NewSelect().TableExpr("carts").Where("id = ?", req.CartID).Exists(ctx) 
+	// ตรวจสอบว่ามีตะกร้าของผู้ใช้อยู่หรือไม่
+	cart := &model.Carts{}
+	err := db.NewSelect().
+		Model(cart).
+		Where("user_id = ?", req.UserID).
+		Where("status = ?", "pending").
+		Scan(ctx)
+
 	if err != nil {
-		return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			// ถ้าไม่มีกระร้า ให้สร้างใหม่
+			cart = &model.Carts{
+				UserID:          req.UserID,
+				TotalCartAmount: 0,
+				TotalCartPrice:  0,
+				Status:          "pending",
+			}
+			cart.SetCreatedNow()
+			cart.SetUpdateNow()
+
+			_, err = db.NewInsert().Model(cart).Exec(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create cart: %v", err)
+			}
+		} else {
+			// กรณี error อื่นๆ
+			return nil, fmt.Errorf("failed to check cart: %v", err)
+		}
 	}
 
-	// เพิ่มสร้างตะกร้า ตรงนี้
-	if !cartExists {
-		return nil, errors.New("cart not found")
-	}
-
-	// ถ้ามีอยู่แล้วให้เอาตะกร้านั้นมาใช้
-
-	// ตรวจสอบว่าสินค้ามีอยู่ใน cart_items หรือไม่
+	// ตรวจสอบว่าสินค้าอยู่ใน `cart_items` หรือไม่
 	cartItem := &model.CartItem{}
 	exists, err := db.NewSelect().Model(cartItem).
-		Where("cart_id = ?", req.CartID).
+		Where("cart_id = ?", cart.ID).
 		Where("product_id = ?", req.ProductID).
 		Exists(ctx)
 	if err != nil {
@@ -103,7 +120,7 @@ func CreateCartItemService(ctx context.Context, req requests.CartItemCreateReque
 	}
 
 	if exists {
-		// ถ้ามีสินค้าอยู่แล้ว เพิ่มจำนวนสินค้า
+		// ถ้ามีสินค้าอยู่แล้ว เพิ่มจำนวน
 		cartItem.TotalProductAamount += req.TotalProductAmount
 		cartItem.TotalProductPrice += req.TotalProductPrice
 		cartItem.SetUpdateNow()
@@ -112,41 +129,38 @@ func CreateCartItemService(ctx context.Context, req requests.CartItemCreateReque
 		if err != nil {
 			return nil, err
 		}
-		return cartItem, nil
+	} else {
+		// ถ้าไม่มีสินค้า ให้เพิ่มใหม่
+		cartItem = &model.CartItem{
+			CartID:              cart.ID,
+			ProductID:           req.ProductID,
+			ProductName:         req.ProductName,
+			ProductImageMain:    req.ProductImageMain,
+			TotalProductPrice:   req.TotalProductPrice,
+			TotalProductAamount: req.TotalProductAmount,
+			Status:              req.Status,
+		}
+		cartItem.SetCreatedNow()
+		cartItem.SetUpdateNow()
+
+		_, err = db.NewInsert().Model(cartItem).Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to insert cart item: %v", err)
+		}
 	}
 
-	// เพิ่มสินค้าใหม่ลงในตะกร้า
-	cartItem = &model.CartItem{
-		CartID:              req.CartID,
-		ProductID:           req.ProductID,
-		ProductName:         req.ProductName,
-		ProductImageMain:    req.ProductImageMain,
-		TotalProductPrice:   req.TotalProductPrice,
-		TotalProductAamount: req.TotalProductAmount,
-		Status:              req.Status,
-	}
-	cartItem.SetCreatedNow()
-	cartItem.SetUpdateNow()
+	// อัปเดต `cart` ตามจำนวนและราคาของสินค้าที่เพิ่มเข้ามา
+	cart.TotalCartAmount += req.TotalProductAmount
+	cart.TotalCartPrice += req.TotalProductPrice
+	cart.SetUpdateNow()
 
-	_, err = db.NewInsert().Model(cartItem).Exec(ctx)
+	_, err = db.NewUpdate().Model(cart).Where("id = ?", cart.ID).Exec(ctx)
 	if err != nil {
-		return nil, err
-	}
-
-	img := requests.ImageCreateRequest{
-		RefID:       cartItem.ID,
-		Type:        "product_cart_item",
-		Description: req.ProductImageMain,
-	}
-
-	_, err = image.CreateImageService(ctx, img)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to update cart: %v", err)
 	}
 
 	return cartItem, nil
 }
-
 
 func UpdateCartItemService(ctx context.Context, id int64, req requests.CartItemUpdateRequest) (*model.CartItem, error) {
 	cartItem := &model.CartItem{}
@@ -167,7 +181,6 @@ func UpdateCartItemService(ctx context.Context, id int64, req requests.CartItemU
 		return nil, err
 	}
 
-
 	img := requests.ImageCreateRequest{
 		RefID:       cartItem.ID,
 		Type:        "product_cart_item",
@@ -183,49 +196,47 @@ func UpdateCartItemService(ctx context.Context, id int64, req requests.CartItemU
 }
 
 func DeleteCartItemService(ctx context.Context, cartID, userID, cartItemID int) error {
-    cartItem := &model.CartItem{}
-    
-    // ตรวจสอบว่า cart_item มีอยู่จริง
-    err := db.NewSelect().
-        Model(cartItem).
-        Where("id = ? AND cart_id = ? AND EXISTS (SELECT 1 FROM carts WHERE id = ? AND user_id = ?)", cartItemID, cartID, cartID, userID).
-        Scan(ctx)
-    if err != nil {
-        return errors.New("cart_item not found")
-    }
+	cartItem := &model.CartItem{}
 
-    // ลบ cart_item
-    _, err = db.NewDelete().
-        Model(cartItem).
-        Where("id = ?", cartItemID).
-        Exec(ctx)
-    if err != nil {
-        return fmt.Errorf("failed to delete cart_item: %v", err)
-    }
+	// ตรวจสอบว่า cart_item มีอยู่จริง
+	err := db.NewSelect().
+		Model(cartItem).
+		Where("id = ? AND cart_id = ? AND EXISTS (SELECT 1 FROM carts WHERE id = ? AND user_id = ?)", cartItemID, cartID, cartID, userID).
+		Scan(ctx)
+	if err != nil {
+		return errors.New("cart_item not found")
+	}
 
-    // ตรวจสอบจำนวนสินค้าที่เหลือใน cart_item
-    var itemCount int
-    err = db.NewSelect().
-        TableExpr("cart_items").
-        ColumnExpr("COUNT(*)").
-        Where("cart_id = ?", cartID).
-        Scan(ctx, &itemCount)
-    if err != nil {
-        return fmt.Errorf("failed to check remaining cart_items: %v", err)
-    }
+	// ลบ cart_item
+	_, err = db.NewDelete().
+		Model(cartItem).
+		Where("id = ?", cartItemID).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to delete cart_item: %v", err)
+	}
 
-    // หากไม่มีสินค้าเหลือใน cart ให้ลบ cart อัตโนมัติ
-    if itemCount == 0 {
-        _, err = db.NewDelete().
-            TableExpr("carts").
-            Where("id = ?", cartID).
-            Exec(ctx)
-        if err != nil {
-            return fmt.Errorf("failed to delete empty cart: %v", err)
-        }
-    }
+	// ตรวจสอบจำนวนสินค้าที่เหลือใน cart_item
+	var itemCount int
+	err = db.NewSelect().
+		TableExpr("cart_items").
+		ColumnExpr("COUNT(*)").
+		Where("cart_id = ?", cartID).
+		Scan(ctx, &itemCount)
+	if err != nil {
+		return fmt.Errorf("failed to check remaining cart_items: %v", err)
+	}
 
-    return nil
+	// หากไม่มีสินค้าเหลือใน cart ให้ลบ cart อัตโนมัติ
+	if itemCount == 0 {
+		_, err = db.NewDelete().
+			TableExpr("carts").
+			Where("id = ?", cartID).
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to delete empty cart: %v", err)
+		}
+	}
+
+	return nil
 }
-
-

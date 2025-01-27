@@ -3,7 +3,6 @@ package carts
 import (
 
 	"github.com/gin-gonic/gin"
-	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
 )
@@ -54,30 +53,30 @@ func GetCartByID(c *gin.Context) {
 	response.Success(c, data)
 }
 
-func CartList(c *gin.Context) {
-	req := requests.CartRequest{}
-	if err := c.BindQuery(&req); err != nil {
-		response.BadRequest(c, err.Error())
-		return
-	}
+// func CartList(c *gin.Context) {
+// 	req := requests.CartRequest{}
+// 	if err := c.BindQuery(&req); err != nil {
+// 		response.BadRequest(c, err.Error())
+// 		return
+// 	}
 
-	// เพิ่มตัวแปรเพื่อรับ grandTotal
-	data, total, err := ListCartService(c.Request.Context(), req)
-	if err != nil {
-		response.InternalError(c, err.Error())
-		return
-	}
+// 	// เพิ่มตัวแปรเพื่อรับ grandTotal
+// 	data, total, err := ListCartService(c.Request.Context(), req)
+// 	if err != nil {
+// 		response.InternalError(c, err.Error())
+// 		return
+// 	}
 
 
-	// เพิ่ม grandTotal เข้าไปใน Response หากต้องการ
-	paginate := model.Paginate{
-		Page:       req.Page,
-		Size:       req.Size,
-		Total:      int64(total),
-	}
+// 	// เพิ่ม grandTotal เข้าไปใน Response หากต้องการ
+// 	paginate := model.Paginate{
+// 		Page:       req.Page,
+// 		Size:       req.Size,
+// 		Total:      int64(total),
+// 	}
 
-	response.SuccessWithPaginate(c, data, paginate)
-}
+// 	response.SuccessWithPaginate(c, data, paginate)
+// }
 
 
 func UpdateCart(c *gin.Context) {
