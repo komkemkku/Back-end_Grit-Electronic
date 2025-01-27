@@ -3,6 +3,7 @@ package orders
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
@@ -64,8 +65,39 @@ func GetByIdOrderService(ctx context.Context, id int64) (*response.OrderResponse
 	return order, nil
 }
 
-func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
+func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (map[string]interface{}, error) {
+	// ตรวจสอบ user_id
+	user := struct {
+		ID       int64  `json:"id"`
+		Username string `json:"name"`
+	}{}
+	err := db.NewSelect().TableExpr("users").Column("id", "username").Where("id = ?", req.UserID).Scan(ctx, &user)
+	if err != nil {
+		return nil, fmt.Errorf("user not found: %v", err)
+	}
 
+	// ตรวจสอบ payment_id
+	payments := []model.Payments{}
+	err = db.NewSelect().Model(&payments).Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch payments: %v", err)
+	}
+
+	// ตรวจสอบ shipment_id
+	shipments := []model.Shipments{}
+	err = db.NewSelect().Model(&shipments).Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch shipments: %v", err)
+	}
+
+	// ตรวจสอบ cart_id
+	carts := []model.Carts{}
+	err = db.NewSelect().Model(&carts).Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch carts: %v", err)
+	}
+
+	// สร้างคำสั่งซื้อใหม่
 	order := &model.Orders{
 		UserID:     req.UserID,
 		PaymentID:  req.PaymentID,
@@ -73,16 +105,34 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 		CartID:     req.CartID,
 		Status:     req.Status,
 	}
-
 	order.SetCreatedNow()
 	order.SetUpdateNow()
 
-	if _, err := db.NewInsert().Model(order).Exec(ctx); err != nil {
-		return nil, err
+	// บันทึกคำสั่งซื้อในฐานข้อมูล
+	_, err = db.NewInsert().Model(order).Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error creating order: %v", err)
 	}
 
-	return order, nil
+	// เตรียมข้อมูลสำหรับการตอบกลับ
+	response := map[string]interface{}{
+		"user": user, // นำ "user" ไว้ด้านบนสุดของ Response
+		"order": map[string]interface{}{
+			"id":          order.ID,
+			"user_id":     order.UserID,
+			"payment_id":  order.PaymentID,
+			"shipment_id": order.ShipmentID,
+			"cart_id":     order.CartID,
+			"status":      order.Status,
+		},
+		"payments":  payments,
+		"shipments": shipments,
+		"carts":     carts,
+	}
+
+	return response, nil
 }
+
 func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateRequest) (*model.Orders, error) {
 	// ตรวจสอบว่า order มีอยู่ในฐานข้อมูลหรือไม่
 	exists, err := db.NewSelect().TableExpr("orders").Where("id = ?", id).Exists(ctx)
