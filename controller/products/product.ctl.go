@@ -89,7 +89,7 @@ func UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	data, err := UpdateProductService(c, int64(id.ID), req)
+	data, err := UpdateProductService(c, int(id.ID), req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return

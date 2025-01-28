@@ -11,9 +11,7 @@ type PaymentIdRequest struct {
 }
 
 type PaymentCreateRequest struct {
-	AdminID       int    `json:"admin_id"`
 	Price         int    `json:"price"`
-	UpdatedBy     int    `json:"updated_by"`
 	SystemBankID  int    `json:"system_bank_id"`
 	BankName      string `json:"bank_name"`
 	AccountName   string `json:"account_name"`
@@ -24,7 +22,6 @@ type PaymentCreateRequest struct {
 
 type PaymentUpdateRequest struct {
 	Id            int    `json:"id"`
-	AdminID       int    `json:"admin_id"`
 	Price         int    `json:"price"`
 	UpdatedBy     int    `json:"updated_by"`
 	SystemBankID  int    `json:"system_bank_id"`

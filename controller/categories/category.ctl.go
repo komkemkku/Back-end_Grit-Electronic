@@ -29,7 +29,7 @@ func DeleteCeategory(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	err := DeleteCetegoryService(c, int64(id.ID))
+	err := DeleteCategoryService(c, int64(id.ID))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return

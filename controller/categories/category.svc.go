@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/image"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
@@ -24,7 +25,10 @@ func ListCategoryService(ctx context.Context, req requests.CategoryRequest) ([]r
 	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("categories AS c").
-		Column("c.id", "c.name", "c.is_active", "c.created_at", "c.updated_at")
+		Column("c.id", "c.name", "c.is_active", "c.created_at", "c.updated_at").
+		ColumnExpr("json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description) AS image").
+		Join("LEFT JOIN images AS i ON i.ref_id = c.id AND i.type = 'categories'").
+		GroupExpr("c.id, i.id, i.ref_id, i.type, i.description")
 
 	// query.Where("c.is_active = ?", true)
 
@@ -58,6 +62,9 @@ func GetByIdCategoryService(ctx context.Context, id int64) (*response.CategoryRe
 
 	err = db.NewSelect().TableExpr("categories AS c").
 		Column("c.id", "c.name", "c.is_active", "c.created_at", "c.updated_at").
+		ColumnExpr("json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description) AS image").
+		Join("LEFT JOIN images AS i ON i.ref_id = c.id AND i.type = 'categories'").
+		GroupExpr("c.id, i.id, i.ref_id, i.type, i.description").
 		Where("c.id = ?", id).Scan(ctx, category)
 	if err != nil {
 		return nil, err
@@ -92,6 +99,17 @@ func CreateCategoryService(ctx context.Context, req requests.CategoryCreateReque
 		return nil, err
 	}
 
+	img := requests.ImageCreateRequest{
+		RefID:       category.ID,
+		Type:        "categories",
+		Description: req.ImageCategories,
+	}
+
+	_, err = image.CreateImageService(ctx, img)
+	if err != nil {
+		return nil, err
+	}
+
 	return category, nil
 
 }
@@ -120,23 +138,51 @@ func UpdateCategoryService(ctx context.Context, id int64, req requests.CategoryU
 		return nil, err
 	}
 
+	img := requests.ImageCreateRequest{
+		RefID:       category.ID,
+		Type:        "categories",
+		Description: req.ImageCategories,
+	}
+
+	_, err = image.CreateImageService(ctx, img)
+	if err != nil {
+		return nil, err
+	}
+
 	return category, nil
 }
 
-func DeleteCetegoryService(ctx context.Context, id int64) error {
-	ex, err := db.NewSelect().TableExpr("categories").Where("id=?", id).Exists(ctx)
+func DeleteCategoryService(ctx context.Context, categoryID int64) error {
+	exists, err := db.NewSelect().
+		TableExpr("categories").
+		Where("id = ?", categoryID).
+		Exists(ctx)
 
 	if err != nil {
 		return err
 	}
 
-	if !ex {
+	if !exists {
 		return errors.New("category not found")
 	}
 
-	_, err = db.NewDelete().TableExpr("categories").Where("id =?", id).Exec(ctx)
+	// ลบรูปภาพที่เกี่ยวข้องกับหมวดหมู่
+	_, err = db.NewDelete().
+		TableExpr("images").
+		Where("ref_id = ? AND type = 'categories'", categoryID).
+		Exec(ctx)
 	if err != nil {
-		return err
+		return errors.New("failed to delete category images")
 	}
+
+	// ลบหมวดหมู่จากฐานข้อมูล
+	_, err = db.NewDelete().
+		TableExpr("categories").
+		Where("id = ?", categoryID).
+		Exec(ctx)
+	if err != nil {
+		return errors.New("failed to delete category")
+	}
+
 	return nil
 }

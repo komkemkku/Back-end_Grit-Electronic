@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -29,7 +30,19 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		ctx.Set("user_id", claims["id"])
+		type user struct {
+			ID       int    `json:"id"`
+			Username string `json:"username"`
+			Password string `json:"password"`
+			Email    string `json:"email"`
+			Phone    string `json:"phone"`
+		}
+
+		tt, _ := json.Marshal(claims["sub"])
+		var usr *user
+		_ = json.Unmarshal(tt, &usr)
+		ctx.Set("user_id", usr.ID)
+
 		ctx.Next()
 	}
 }

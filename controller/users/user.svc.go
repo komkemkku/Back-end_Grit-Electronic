@@ -45,7 +45,7 @@ func ListUserService(ctx context.Context, req requests.UserRequest) ([]response.
 	return resp, total, nil
 }
 
-func GetByIdUserService(ctx context.Context, ID int64) (*model.Users, error) {
+func GetByIdUserService(ctx context.Context, ID int) (*model.Users, error) {
 	ex, err := db.NewSelect().TableExpr("users").Where("id=?", ID).Exists(ctx)
 	if err != nil {
 		return nil, err

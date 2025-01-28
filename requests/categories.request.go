@@ -11,12 +11,14 @@ type CategoryIdRequest struct {
 }
 
 type CategoryCreateRequest struct {
-	Name     string `json:"name"`
-	IsActive bool   `json:"is_active"`
+	Name            string `json:"name"`
+	IsActive        bool   `json:"is_active"`
+	ImageCategories string `json:"image_categories"`
 }
 
 type CategoryUpdateRequest struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name"`
-	IsActive bool   `json:"is_active"`
+	ID              int    `json:"id"`
+	Name            string `json:"name"`
+	IsActive        bool   `json:"is_active"`
+	ImageCategories string `json:"image_categories"`
 }

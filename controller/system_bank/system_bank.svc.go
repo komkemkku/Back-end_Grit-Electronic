@@ -102,20 +102,23 @@ func CreateSystemBankService(ctx context.Context, req requests.SystemBankCreateR
 }
 
 func UpdateSystembankService(ctx context.Context, id int64, req requests.SystemBankUpdateRequest) (*model.SystemBanks, error) {
-	ex, err := db.NewSelect().TableExpr("system_banks").Where("id=?", id).Exists(ctx)
+	// ตรวจสอบว่ามี systembank อยู่หรือไม่
+	exists, err := db.NewSelect().TableExpr("system_banks").Where("id=?", id).Exists(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if !ex {
-		return nil, errors.New("not found")
+	if !exists {
+		return nil, errors.New("system bank not found")
 	}
 
+	// ดึงข้อมูล systembank ที่เกี่ยวข้อง
 	systembank := &model.SystemBanks{}
-
 	err = db.NewSelect().Model(systembank).Where("id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
+
+	// อัปเดตข้อมูล systembank
 	systembank.BankName = req.BankName
 	systembank.AccountName = req.AccountName
 	systembank.AccountNumber = req.AccountNumber
@@ -128,6 +131,16 @@ func UpdateSystembankService(ctx context.Context, id int64, req requests.SystemB
 		return nil, err
 	}
 
+	// ลบรูปภาพเดิมที่เกี่ยวข้องกับ systembank
+	_, err = db.NewDelete().
+		TableExpr("images").
+		Where("ref_id = ? AND type = 'systembank_image'", id).
+		Exec(ctx)
+	if err != nil {
+		return nil, errors.New("failed to delete image")
+	}
+
+	// เพิ่มรูปภาพใหม่
 	img := requests.ImageCreateRequest{
 		RefID:       systembank.ID,
 		Type:        "systembank_image",
@@ -136,26 +149,39 @@ func UpdateSystembankService(ctx context.Context, id int64, req requests.SystemB
 
 	_, err = image.CreateImageService(ctx, img)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("failed to create image service")
 	}
 
 	return systembank, nil
 }
 
+
 func DeleteSystemBankService(ctx context.Context, id int64) error {
-	ex, err := db.NewSelect().TableExpr("system_banks").Where("id=?", id).Exists(ctx)
-
+	// ตรวจสอบว่ามี system_banks อยู่หรือไม่
+	exists, err := db.NewSelect().TableExpr("system_banks").Where("id=?", id).Exists(ctx)
 	if err != nil {
 		return err
 	}
 
-	if !ex {
-		return errors.New("SysBank not found")
+	if !exists {
+		return errors.New("SystemBank not found")
 	}
 
-	_, err = db.NewDelete().TableExpr("system_banks").Where("id =?", id).Exec(ctx)
+	// ลบรูปภาพที่เกี่ยวข้องกับ SystemBank
+	_, err = db.NewDelete().
+		TableExpr("images").
+		Where("ref_id = ? AND type = 'systembank_image'", id).
+		Exec(ctx)
 	if err != nil {
-		return err
+		return errors.New("failed to delete image")
 	}
+
+	// ลบ SystemBank
+	_, err = db.NewDelete().TableExpr("system_banks").Where("id = ?", id).Exec(ctx)
+	if err != nil {
+		return errors.New("failed to delete system bank")
+	}
+
 	return nil
 }
+

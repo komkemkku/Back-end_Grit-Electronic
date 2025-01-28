@@ -162,9 +162,10 @@ func CreateCartItemService(ctx context.Context, req requests.CartItemCreateReque
 	return cartItem, nil
 }
 
-func UpdateCartItemService(ctx context.Context, id int64, req requests.CartItemUpdateRequest) (*model.CartItem, error) {
+func UpdateCartItemService(ctx context.Context, cart_id int64, req requests.CartItemUpdateRequest) (*model.CartItem, error) {
 	cartItem := &model.CartItem{}
-	err := db.NewSelect().Model(cartItem).Where("id = ?", id).Scan(ctx)
+	// exist ในการค้นหาแทน
+	err := db.NewSelect().Model(cartItem).Where("id = ?", cart_id).Scan(ctx)
 	if err != nil {
 		return nil, errors.New("cart_item not found")
 	}
@@ -176,7 +177,7 @@ func UpdateCartItemService(ctx context.Context, id int64, req requests.CartItemU
 	cartItem.ProductImageMain = req.ProductImageMain
 	cartItem.SetUpdateNow()
 
-	_, err = db.NewUpdate().Model(cartItem).Where("id = ?", id).Exec(ctx)
+	_, err = db.NewUpdate().Model(cartItem).Where("cart_id = ?", cart_id).Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -199,6 +200,8 @@ func DeleteCartItemService(ctx context.Context, cartID, userID, cartItemID int) 
 	cartItem := &model.CartItem{}
 
 	// ตรวจสอบว่า cart_item มีอยู่จริง
+	// exist ในการค้นหาแทน
+
 	err := db.NewSelect().
 		Model(cartItem).
 		Where("id = ? AND cart_id = ? AND EXISTS (SELECT 1 FROM carts WHERE id = ? AND user_id = ?)", cartItemID, cartID, cartID, userID).
@@ -217,6 +220,8 @@ func DeleteCartItemService(ctx context.Context, cartID, userID, cartItemID int) 
 	}
 
 	// ตรวจสอบจำนวนสินค้าที่เหลือใน cart_item
+	// 	query.count ในการนับแทน
+
 	var itemCount int
 	err = db.NewSelect().
 		TableExpr("cart_items").

@@ -42,6 +42,7 @@ type ProductRespCartItem struct {
 }
 
 type ProductRespReview struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+    ID   int    `json:"id"`
+    Name string `json:"name"`
 }
+

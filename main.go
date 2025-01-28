@@ -21,6 +21,7 @@ import (
 	systembank "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/system_bank"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/users"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/wishlist"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/middlewares"
 
 	// "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/middlewares"
 	"github.com/spf13/cobra"
@@ -44,7 +45,7 @@ func main() {
 		AllowFiles:             false,
 	}))
 
-	// md := middlewares.AuthMiddleware()
+	md := middlewares.AuthMiddleware()
 
 	// User
 	r.POST("/user/create", users.CreateUser)
@@ -86,7 +87,9 @@ func main() {
 	r.PATCH("/cart/:id", carts.UpdateCart)
 
 	// CartItem
-	r.POST("/cartitem/create", cartitems.CreateCartItem)
+	r.POST("/cartitem/create", md, cartitems.CreateCartItem)
+	// r.POST("/cartitem/create", md)
+
 	r.GET("/cartitem/:id", cartitems.GetCartItemByID)
 	r.GET("/cartitem", cartitems.CartItemList)
 	r.DELETE("/cartitem", cartitems.DeleteCartItem)

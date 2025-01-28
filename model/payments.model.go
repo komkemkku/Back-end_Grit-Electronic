@@ -6,7 +6,6 @@ type Payments struct {
 	bun.BaseModel `bun:"table:payments"`
 
 	ID            int     `bun:",type:serial,autoincrement,pk"`
-	AdminID       int     `bun:"admin_id"`
 	SystemBankID  int     `bun:"system_bank_id"`
 	Price         float64 `bun:"price"`
 	UpdatedBy     int     `bun:"updated_by"`

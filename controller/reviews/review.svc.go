@@ -28,7 +28,6 @@ func ListReviewService(ctx context.Context, req requests.ReviewRequest) ([]respo
 		ColumnExpr("u.username AS \"user\"").
 		ColumnExpr("p.name AS product").
 		ColumnExpr("r.rating AS rating").
-		ColumnExpr("r.description AS text_review").
 		ColumnExpr("r.description AS description").
 		ColumnExpr("r.created_at AS created_at").
 		ColumnExpr("r.updated_at AS updated_at").

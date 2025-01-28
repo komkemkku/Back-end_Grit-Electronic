@@ -26,17 +26,20 @@ func ListPaymentService(ctx context.Context, req requests.PaymentRequest) ([]res
 	query := db.NewSelect().
 		TableExpr("payments AS p").
 		Column("p.id", "p.price", "p.status", "p.updated_by", "p.bank_name", "p.account_name", "p.account_number", "p.created_at", "p.updated_at").
-		ColumnExpr("a.id AS admin__id").
-		ColumnExpr("a.name AS admin__name").
 		ColumnExpr("sb.id AS systembank__id").
 		ColumnExpr("sb.bank_name AS systembank__bank_name").
 		ColumnExpr("sb.account_name AS systembank__account_name").
 		ColumnExpr("sb.account_number AS systembank__account_number").
 		ColumnExpr("sb.description AS systembank__description").
-		ColumnExpr("i.description AS image").
+		ColumnExpr("json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description) AS image").
+		ColumnExpr("i2.id AS imagesystembank__id").
+		ColumnExpr("i2.ref_id AS imagesystembank__ref_id").
+		ColumnExpr("i2.type AS imagesystembank__type").
+		ColumnExpr("i2.description AS imagesystembank__description").
 		Join("LEFT JOIN system_banks AS sb ON sb.id = p.system_bank_id").
-		Join("LEFT JOIN admins AS a ON a.id = p.admin_id").
-		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'payment_slip'")
+		Join("LEFT JOIN Images AS i2 ON i2.ref_id = sb.id AND i2.type = 'systembank_image'").
+		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'payment_slip'").
+		GroupExpr("p.id, sb.id,  i.id, i.ref_id, i.type, i.description, i2.id")
 
 	if req.Search != "" {
 		query.Where("p.status ILIKE ?", "%"+req.Search+"%")
@@ -68,17 +71,20 @@ func GetByIdPaymentService(ctx context.Context, id int64) (*response.PaymentResp
 
 	err = db.NewSelect().TableExpr("payments AS p").
 		Column("p.id", "p.price", "p.status", "p.updated_by", "p.bank_name", "p.account_name", "p.account_number", "p.created_at", "p.updated_at").
-		ColumnExpr("a.id AS admin__id").
-		ColumnExpr("a.name AS admin__name").
 		ColumnExpr("sb.id AS systembank__id").
 		ColumnExpr("sb.bank_name AS systembank__bank_name").
 		ColumnExpr("sb.account_name AS systembank__account_name").
 		ColumnExpr("sb.account_number AS systembank__account_number").
 		ColumnExpr("sb.description AS systembank__description").
-		ColumnExpr("i.description AS image").
+		ColumnExpr("json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description) AS image").
+		ColumnExpr("i2.id AS imagesystembank__id").
+		ColumnExpr("i2.ref_id AS imagesystembank__ref_id").
+		ColumnExpr("i2.type AS imagesystembank__type").
+		ColumnExpr("i2.description AS imagesystembank__description").
 		Join("LEFT JOIN system_banks AS sb ON sb.id = p.system_bank_id").
-		Join("LEFT JOIN admins AS a ON a.id = p.admin_id").
+		Join("LEFT JOIN Images AS i2 ON i2.ref_id = sb.id AND i2.type = 'systembank_image'").
 		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'payment_slip'").
+		GroupExpr("p.id, sb.id,  i.id, i.ref_id, i.type, i.description, i2.id").
 		Where("p.id = ?", id).Scan(ctx, payment)
 	if err != nil {
 		return nil, err
@@ -90,8 +96,6 @@ func CreatePaymentService(ctx context.Context, req requests.PaymentCreateRequest
 
 	payment := &model.Payments{
 		Price:         float64(req.Price),
-		UpdatedBy:     req.UpdatedBy,
-		AdminID:       req.AdminID,
 		SystemBankID:  req.SystemBankID,
 		Status:        req.Status,
 		BankName:      req.BankName,
@@ -122,6 +126,7 @@ func CreatePaymentService(ctx context.Context, req requests.PaymentCreateRequest
 }
 
 func UpdatePaymentService(ctx context.Context, id int64, req requests.PaymentUpdateRequest) (*model.Payments, error) {
+	// ตรวจสอบว่ามี Payment อยู่ในระบบหรือไม่
 	ex, err := db.NewSelect().TableExpr("payments").Where("id=?", id).Exists(ctx)
 	if err != nil {
 		return nil, err
@@ -136,9 +141,10 @@ func UpdatePaymentService(ctx context.Context, id int64, req requests.PaymentUpd
 	if err != nil {
 		return nil, err
 	}
+
+	// อัปเดตข้อมูลใน Payment
 	payment.Price = float64(req.Price)
 	payment.UpdatedBy = req.UpdatedBy
-	payment.AdminID = req.AdminID
 	payment.SystemBankID = req.SystemBankID
 	payment.Status = req.Status
 	payment.BankName = req.BankName
@@ -151,34 +157,69 @@ func UpdatePaymentService(ctx context.Context, id int64, req requests.PaymentUpd
 		return nil, err
 	}
 
-	img := requests.ImageCreateRequest{
-		RefID:       payment.ID,
-		Type:        "payment_slip",
-		Description: req.PaymentSlip,
-	}
-
-	_, err = image.CreateImageService(ctx, img)
+	// ตรวจสอบว่ารูปภาพที่เกี่ยวข้องมีอยู่หรือไม่
+	exists, err := db.NewSelect().
+		TableExpr("images").
+		Where("ref_id = ? AND type = 'payment_slip'", payment.ID).
+		Exists(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	if exists {
+		// ถ้ามีรูปภาพอยู่แล้ว ให้อัปเดตข้อมูลเดิม
+		_, err = db.NewUpdate().
+			TableExpr("images").
+			Set("description = ?", req.PaymentSlip).
+			Where("ref_id = ? AND type = 'payment_slip'", payment.ID).
+			Exec(ctx)
+		if err != nil {
+			return nil, errors.New("failed to update payment slip")
+		}
+	} else {
+		// ถ้าไม่มีรูปภาพ ให้สร้างใหม่
+		img := requests.ImageCreateRequest{
+			RefID:       payment.ID,
+			Type:        "payment_slip",
+			Description: req.PaymentSlip,
+		}
+
+		_, err = image.CreateImageService(ctx, img)
+		if err != nil {
+			return nil, errors.New("failed to create payment slip")
+		}
 	}
 
 	return payment, nil
 }
 
-func DeletePaymentService(ctx context.Context, id int64) error {
-	ex, err := db.NewSelect().TableExpr("payments").Where("id=?", id).Exists(ctx)
 
+func DeletePaymentService(ctx context.Context, id int64) error {
+	// ตรวจสอบว่ามี Payment อยู่หรือไม่
+	exists, err := db.NewSelect().TableExpr("payments").Where("id=?", id).Exists(ctx)
 	if err != nil {
 		return err
 	}
 
-	if !ex {
+	if !exists {
 		return errors.New("payment not found")
 	}
 
-	_, err = db.NewDelete().TableExpr("payments").Where("id =?", id).Exec(ctx)
+	// ลบรูปภาพที่เกี่ยวข้อง
+	_, err = db.NewDelete().
+		TableExpr("images").
+		Where("ref_id = ? AND type = 'payment_slip'", id).
+		Exec(ctx)
 	if err != nil {
-		return err
+		return errors.New("failed to delete")
 	}
+
+	// ลบ Payment
+	_, err = db.NewDelete().TableExpr("payments").Where("id = ?", id).Exec(ctx)
+	if err != nil {
+		return errors.New("failed to delete payment slip")
+	}
+
 	return nil
 }
+

@@ -29,6 +29,18 @@ func UserList(c *gin.Context) {
 	response.SuccessWithPaginate(c, data, paginate)
 }
 
+func GetInto(c *gin.Context) {
+	user := c.GetInt("user_id")
+
+	data, err := GetByIdUserService(c, user)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+	response.Success(c, data)
+
+}
+
 func GetUserByID(c *gin.Context) {
 	id := requests.UserIdRequest{}
 	if err := c.BindUri(&id); err != nil {
@@ -36,7 +48,7 @@ func GetUserByID(c *gin.Context) {
 		return
 	}
 
-	data, err := GetByIdUserService(c, int64(id.ID))
+	data, err := GetByIdUserService(c, id.ID)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return

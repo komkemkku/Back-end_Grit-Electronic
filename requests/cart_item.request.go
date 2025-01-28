@@ -22,7 +22,6 @@ type CartItemCreateRequest struct {
 
 type CartItemUpdateRequest struct {
 	ID                 int     `json:"id"`
-	CartID             int     `json:"cart_id"`
 	ProductID          int     `json:"product_id"`
 	ProductName        string  `json:"product_name"`
 	ProductImageMain   string  `json:"product_image_main"`

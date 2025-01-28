@@ -8,7 +8,12 @@ import (
 )
 
 func CreateCartItem(c *gin.Context) {
+
+	user := c.GetInt("user_id")
+
 	req := requests.CartItemCreateRequest{}
+
+	req.UserID = user
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
@@ -24,32 +29,30 @@ func CreateCartItem(c *gin.Context) {
 }
 
 func DeleteCartItem(c *gin.Context) {
-    req := requests.CartItemDeleteRequest{}
-    if err := c.ShouldBindJSON(&req); err != nil {
-        response.BadRequest(c, err.Error())
-        return
-    }
+	req := requests.CartItemDeleteRequest{}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
 
-    if req.CartID == 0 || req.UserID == 0 || req.CartItemID == 0 {
-        response.BadRequest(c, "Invalid cart_id, user_id, or cart_item_id")
-        return
-    }
+	if req.CartID == 0 || req.UserID == 0 || req.CartItemID == 0 {
+		response.BadRequest(c, "Invalid cart_id, user_id, or cart_item_id")
+		return
+	}
 
-    err := DeleteCartItemService(c.Request.Context(), req.CartID, req.UserID, req.CartItemID)
-    if err != nil {
-        response.InternalError(c, err.Error())
-        return
-    }
+	err := DeleteCartItemService(c.Request.Context(), req.CartID, req.UserID, req.CartItemID)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
 
-    response.Success(c, map[string]interface{}{
-        "message":       "Cart item deleted successfully",
-        "cart_id":       req.CartID,
-        "user_id":       req.UserID,
-        "cart_item_id":  req.CartItemID,
-    })
+	response.Success(c, map[string]interface{}{
+		"message":      "Cart item deleted successfully",
+		"cart_id":      req.CartID,
+		"user_id":      req.UserID,
+		"cart_item_id": req.CartItemID,
+	})
 }
-
-
 
 func GetCartItemByID(c *gin.Context) {
 	id := requests.CartItemIdRequest{}
