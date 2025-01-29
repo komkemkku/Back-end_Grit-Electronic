@@ -12,6 +12,6 @@ type ImageIdRequest struct {
 
 type ImageCreateRequest struct {
 	RefID       int    `json:"ref_id"`
-	Type         string    `json:"type"`
-	Description     string    `json:"description"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
 }

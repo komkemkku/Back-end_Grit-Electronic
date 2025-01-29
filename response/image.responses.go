@@ -32,3 +32,10 @@ type ImagePaymentResp struct {
 	RefID       int    `json:"ref_id"`
 	Description string `json:"description"`
 }
+
+type ImageReviewResp struct {
+	ID          int    `json:"id"`
+	RefID       int    `json:"ref_id"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+}

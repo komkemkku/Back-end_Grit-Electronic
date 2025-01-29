@@ -3,7 +3,6 @@ package reviews
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/image"
@@ -31,8 +30,11 @@ func ListReviewService(ctx context.Context, req requests.ReviewRequest) ([]respo
 		ColumnExpr("r.description AS description").
 		ColumnExpr("r.created_at AS created_at").
 		ColumnExpr("r.updated_at AS updated_at").
+		ColumnExpr("COALESCE(json_agg(json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description)) FILTER (WHERE i.id IS NOT NULL), '[]') AS image").
 		Join("LEFT JOIN products AS p ON p.id = r.product_id").
-		Join("LEFT JOIN users AS u ON u.id = r.user_id")
+		Join("LEFT JOIN users AS u ON u.id = r.user_id").
+		Join("LEFT JOIN images AS i ON i.ref_id = r.id AND i.type = 'review_image'").
+		GroupExpr("r.id, u.id, p.id")
 
 	if req.Search != "" {
 		query.Where("p.name ILIKE ?", "%"+req.Search+"%")
@@ -48,9 +50,9 @@ func ListReviewService(ctx context.Context, req requests.ReviewRequest) ([]respo
 		return nil, 0, err
 	}
 
-	for i := range resp {
-		resp[i].ImageReview = []string{}
-	}
+	// for i := range resp {
+	// 	resp[i].ImageReview = []string{}
+	// }
 
 	return resp, total, nil
 }
@@ -73,8 +75,12 @@ func GetByIdReviewService(ctx context.Context, id int64) (*response.ReviewRespon
 		ColumnExpr("r.description AS description").
 		ColumnExpr("r.created_at AS created_at").
 		ColumnExpr("r.updated_at AS updated_at").
+		ColumnExpr("COALESCE(json_agg(json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description)) FILTER (WHERE i.id IS NOT NULL), '[]') AS image").
 		Join("LEFT JOIN products AS p ON p.id = r.product_id").
-		Join("LEFT JOIN users AS u ON u.id = r.user_id").Where("r.id = ?", id).Scan(ctx, review)
+		Join("LEFT JOIN users AS u ON u.id = r.user_id").
+		Join("LEFT JOIN images AS i ON i.ref_id = r.id AND i.type = 'review_image'").
+		GroupExpr("r.id, u.id, p.id").
+		Where("r.id = ?", id).Scan(ctx, review)
 	if err != nil {
 		return nil, err
 	}
@@ -82,22 +88,23 @@ func GetByIdReviewService(ctx context.Context, id int64) (*response.ReviewRespon
 }
 
 func CreateReviewService(ctx context.Context, req requests.ReviewCreateRequest) (*model.Reviews, error) {
-	// ตรวจสอบค่าที่ส่งมา
+	// ตรวจสอบค่าคะแนนรีวิว
 	if req.Rating <= 0 || req.Rating > 5 {
-		return nil, errors.New("rating must be between 1 and 5")
+		return nil, errors.New("คะแนนรีวิวต้องอยู่ระหว่าง 1 ถึง 5")
 	}
 
+	// ตรวจสอบ `ProductID`
 	if req.ProductID <= 0 {
-		return nil, errors.New("invalid product ID")
+		return nil, errors.New("product not found")
 	}
 
-	// ตรวจสอบว่าสินค้ามีอยู่ในฐานข้อมูล
+	// ตรวจสอบว่าสินค้ามีอยู่ในระบบหรือไม่
 	exists, err := db.NewSelect().
 		Table("products").
 		Where("id = ?", req.ProductID).
 		Exists(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to check product existence: %w", err)
+		return nil, errors.New("error")
 	}
 	if !exists {
 		return nil, errors.New("product not found")
@@ -110,30 +117,34 @@ func CreateReviewService(ctx context.Context, req requests.ReviewCreateRequest) 
 		UserID:      req.UserID,
 		Description: req.Description,
 	}
-
 	review.SetCreatedNow()
 	review.SetUpdateNow()
 
+	// บันทึกข้อมูลรีวิวลงฐานข้อมูล
 	_, err = db.NewInsert().Model(review).Exec(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create review: %w", err)
+		return nil, errors.New("failed to insert")
 	}
 
-	img := requests.ImageCreateRequest{
-		RefID:       review.ID,
-		Type:        "review_image",
-		Description: req.ImageReview,
-	}
+	// เพิ่มรูปภาพสำหรับรีวิว
+	for _, image := range req.ImageReview {
+		img := &model.Images{
+			RefID:       review.ID,
+			Type:        "review_image",
+			Description: image,
+		}
 
-	_, err = image.CreateImageService(ctx, img)
-	if err != nil {
-		return nil, err
+		_, err := db.NewInsert().Model(img).Exec(ctx)
+		if err != nil {
+			return nil, errors.New("failed to insert image")
+		}
 	}
 
 	return review, nil
 }
 
-func UpdateReviewService(ctx context.Context, id int64, req requests.ReviewUpdateRequest) (*model.Reviews, error) {
+func UpdateReviewService(ctx context.Context, id int, req requests.ReviewUpdateRequest) (*model.Reviews, error) {
+	// ตรวจสอบว่ามีรีวิวอยู่หรือไม่
 	ex, err := db.NewSelect().TableExpr("reviews").Where("id=?", id).Exists(ctx)
 	if err != nil {
 		return nil, err
@@ -142,12 +153,14 @@ func UpdateReviewService(ctx context.Context, id int64, req requests.ReviewUpdat
 		return nil, errors.New("review not found")
 	}
 
+	// ดึงข้อมูลรีวิวปัจจุบัน
 	review := &model.Reviews{}
-
 	err = db.NewSelect().Model(review).Where("id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
+
+	// อัปเดตข้อมูลรีวิว
 	review.ProductID = req.ProductID
 	review.UserID = req.UserID
 	review.Description = req.Description
@@ -159,23 +172,95 @@ func UpdateReviewService(ctx context.Context, id int64, req requests.ReviewUpdat
 		return nil, err
 	}
 
+	// ตรวจสอบว่ารูปภาพที่เกี่ยวข้องมีอยู่หรือไม่
+	exists, err := db.NewSelect().
+		TableExpr("images").
+		Where("ref_id = ? AND type = 'review_image'", review.ID).
+		Exists(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if exists {
+		// ถ้ามีรูปภาพอยู่แล้ว ให้อัปเดตข้อมูลเดิม
+		_, err = db.NewUpdate().
+			TableExpr("images").
+			Set("description = ?", req.ImageReview).
+			Where("ref_id = ? AND type = 'review_image'", review.ID).
+			Exec(ctx)
+		if err != nil {
+			return nil, errors.New("failed to update review slip")
+		}
+	} else {
+		// ถ้าไม่มีรูปภาพ ให้สร้างใหม่
+		for _, images := range req.ImageReview {
+			img := requests.ImageCreateRequest{
+				RefID:       review.ID,
+				Type:        "review_image",
+				Description: images,
+			}
+			_, err = image.CreateImageService(ctx, img)
+
+			if err != nil {
+				return nil, errors.New("failed to create review slip")
+			}
+		}
+	}
+
+	// // ลบรูปภาพเก่าก่อนเพิ่มรูปใหม่
+	// _, err = db.NewDelete().
+	// 	TableExpr("images").
+	// 	Where("ref_id = ? AND type = 'review_image'", review.ID).
+	// 	Exec(ctx)
+	// if err != nil {
+	// 	return nil, errors.New("failed to delete old review images")
+	// }
+
+	// // เพิ่มรูปภาพใหม่
+	// for _, image := range req.ImageReview {
+	// 	img := requests.ImageCreateRequest{
+	// 		RefID:       review.ID,
+	// 		Type:        "review_image",
+	// 		Description: image,
+	// 	}
+
+	// 	_, err = image.CreateImageService(ctx, img)
+
+	// 	if err != nil {
+	// 		return nil, errors.New("failed to create review slip")
+	// 	}
+	// }
+
 	return review, nil
 }
 
 func DeleteReviewService(ctx context.Context, id int64) error {
-	ex, err := db.NewSelect().TableExpr("reviews").Where("id=?", id).Exists(ctx)
-
+	// ตรวจสอบว่ารีวิวมีอยู่ในระบบหรือไม่
+	exists, err := db.NewSelect().TableExpr("reviews").Where("id=?", id).Exists(ctx)
 	if err != nil {
 		return err
 	}
-
-	if !ex {
-		return errors.New("review not found")
+	if !exists {
+		return errors.New("ไม่พบรีวิวในระบบ")
 	}
 
-	_, err = db.NewDelete().TableExpr("reviews").Where("id =?", id).Exec(ctx)
+	// ลบรูปภาพที่เกี่ยวข้องกับรีวิว
+	_, err = db.NewDelete().
+		TableExpr("images").
+		Where("ref_id = ? AND type = 'review_image'", id).
+		Exec(ctx)
 	if err != nil {
-		return err
+		return errors.New("failed to delete")
 	}
+
+	// ลบข้อมูลรีวิว
+	_, err = db.NewDelete().
+		TableExpr("reviews").
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return errors.New("failed to delete review")
+	}
+
 	return nil
 }
