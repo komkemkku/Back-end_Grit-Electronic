@@ -80,9 +80,6 @@ func GetByIdOrderService(ctx context.Context, userID int64) (*response.OrderResp
 }
 
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
-func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
-	// ตรวจสอบ user_id
-	ex, err := db.NewSelect().TableExpr("users").Where("id = ?", req.UserID).Exists(ctx)
 	ex, err := db.NewSelect().TableExpr("users").Where("id = ?", req.UserID).Exists(ctx)
 	if err != nil {
 		return nil, err
@@ -92,7 +89,6 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 	}
   
 	// ดึงข้อมูล payments ที่เกี่ยวข้องกับ user_id
-	ex, err = db.NewSelect().TableExpr("payments").Where("id = ?", req.PaymentID).Exists(ctx)
 	ex, err = db.NewSelect().TableExpr("payments").Where("id = ?", req.PaymentID).Exists(ctx)
 	if err != nil {
 		return nil, err
