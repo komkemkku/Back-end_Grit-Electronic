@@ -174,12 +174,12 @@ func UpdateUserService(ctx context.Context, ID int, req requests.UserUpdateReque
 	if err != nil {
 		return nil, err
 	}
-	user.FirstName = req.Firstname
-	user.LastName = req.Lastname
-	user.Username = req.Username
+	// user.FirstName = req.Firstname
+	// user.LastName = req.Lastname
+	// user.Username = req.Username
 	user.Password = hashpassword
-	user.Email = req.Email
-	user.Phone = req.Phone
+	// user.Email = req.Email
+	// user.Phone = req.Phone
 	user.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(user).Where("id = ?", ID).Exec(ctx)
