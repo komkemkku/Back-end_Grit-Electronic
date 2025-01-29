@@ -2,6 +2,7 @@ package orders
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
+	"github.com/uptrace/bun"
 )
 
 var db = configs.Database()
@@ -47,10 +49,7 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 
 func GetByIdOrderService(ctx context.Context, userID int64) (*response.OrderResponses, error) {
 	// ตรวจสอบว่าผู้ใช้งานมีอยู่ในระบบหรือไม่
-	exists, err := db.NewSelect().
-		TableExpr("orders").
-		Where("user_id = ?", userID).
-		Exists(ctx)
+	exists, err := db.NewSelect().TableExpr("orders").Where("user_id = ?", userID).Exists(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("database query error: %w", err)
 	}
@@ -80,62 +79,107 @@ func GetByIdOrderService(ctx context.Context, userID int64) (*response.OrderResp
 }
 
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
-func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
-	// ตรวจสอบ user_id
-	ex, err := db.NewSelect().TableExpr("users").Where("id = ?", req.UserID).Exists(ctx)
-	ex, err := db.NewSelect().TableExpr("users").Where("id = ?", req.UserID).Exists(ctx)
+	exists, err := db.NewSelect().TableExpr("orders").Where("user_id = ?").Exists(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("database query error: %w", err)
 	}
-	if !ex {
+	if !exists {
 		return nil, errors.New("user not found")
 	}
-  
-	// ดึงข้อมูล payments ที่เกี่ยวข้องกับ user_id
-	ex, err = db.NewSelect().TableExpr("payments").Where("id = ?", req.PaymentID).Exists(ctx)
-	ex, err = db.NewSelect().TableExpr("payments").Where("id = ?", req.PaymentID).Exists(ctx)
-	if err != nil {
-		return nil, err
+
+	// Fetch cart ID for the user
+	var cart struct {
+		ID int64 `json:"id"`
 	}
-	if !ex {
-		return nil, errors.New("payment not found")
+	err = db.NewSelect().
+		TableExpr("carts").
+		Column("id").
+		Where("user_id = ?", req.UserID).
+		Scan(ctx, &cart)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find cart for user_id %d: %v", req.UserID, err)
 	}
 
-	// ตรวจสอบ shipments
-	ex, err = db.NewSelect().TableExpr("shipments").Where("id = ?", req.ShipmentID).Exists(ctx)
-	if err != nil {
-		return nil, err
+	// Fetch cart items and join with product details
+	var products []struct {
+		ProductID   int64   `json:"product_id"`
+		Name        string  `json:"name"`
+		Price       float64 `json:"price"`
+		Quantity    int64   `json:"quantity"`
+		TotalAmount float64 `json:"total_amount"`
 	}
-	if !ex {
-		return nil, errors.New("shipment not found")
+	err = db.NewSelect().
+		TableExpr("cart_items AS ci").
+		Join("JOIN products AS p ON p.id = ci.product_id").
+		ColumnExpr("p.id AS product_id, p.name, p.price, ci.quantity, (p.price * ci.quantity) AS total_amount").
+		Where("ci.cart_id = ?", cart.ID).
+		Scan(ctx, &products)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch products: %v", err)
 	}
 
-	// ตรวจสอบ carts
-	ex, err = db.NewSelect().TableExpr("carts").Where("id = ?", req.CartID).Exists(ctx)
-	if err != nil {
-		return nil, err
+	// Calculate total price
+	totalPrice := 0.0
+	for _, p := range products {
+		totalPrice += p.TotalAmount
 	}
-	if !ex {
-		return nil, errors.New("carts not found")
-	}
-  
-	// สร้างคำสั่งซื้อ
+
+	// Create order
 	order := &model.Orders{
-	  UserID:     req.UserID,
-	  PaymentID:  req.PaymentID,
-	  ShipmentID: req.ShipmentID,
-	  Status:     req.Status,
+		UserID:     req.UserID,
+		ShipmentID: req.ShipmentID,
+		PaymentID:  req.PaymentID,
+		Total_price: totalPrice,
+		Status:     "pending",
 	}
-	order.SetCreatedNow()
-	order.SetUpdateNow()
-  
-	_, err = db.NewInsert().Model(order).Exec(ctx)
+	_, err = db.NewInsert().
+		Model(order).
+		Returning("id").
+		Exec(ctx)
 	if err != nil {
-	  return nil, fmt.Errorf("error creating order: %v", err)
+		return nil, fmt.Errorf("failed to create order: %v", err)
+	}
+
+	// Create order details
+	orderDetails := make([]model.OrderDetail, len(products))
+	for i, p := range products {
+		orderDetails[i] = model.OrderDetail{
+			OrderID:            order.ID,
+			ProductName:        p.Name,
+			TotalProductPrice:  p.Price,
+			TotalProductAmount: int(p.Quantity),
+		}
+	}
+	_, err = db.NewInsert().
+		Model(&orderDetails).
+		Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert order details: %v", err)
+	}
+
+	// Delete cart items and cart in a transaction
+	err = db.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewDelete().
+			TableExpr("cart_items").
+			Where("cart_id = ?", cart.ID).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("failed to delete cart items: %v", err)
+		}
+		if _, err := tx.NewDelete().
+			TableExpr("carts").
+			Where("id = ?", cart.ID).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("failed to delete cart: %v", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("transaction error: %v", err)
 	}
 
 	return order, nil
 }
+
 
 func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateRequest) (*model.Orders, error) {
 	// ตรวจสอบว่า order มีอยู่ในฐานข้อมูลหรือไม่
@@ -204,5 +248,3 @@ func DeleteOrderService(ctx context.Context, id int64) error {
 	}
 	return nil
 }
-
-
