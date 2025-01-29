@@ -89,7 +89,7 @@ func UpdateReview(c *gin.Context) {
 		return
 	}
 
-	data, err := UpdateReviewService(c, int64(id.ID), req)
+	data, err := UpdateReviewService(c, int(id.ID), req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return

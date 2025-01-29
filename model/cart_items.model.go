@@ -8,9 +8,6 @@ type CartItem struct {
 	ID                  int     `bun:",type:serial,autoincrement,pk"`
 	CartID              int     `bun:"cart_id"`
 	ProductID           int     `bun:"product_id"`
-	ProductName         string  `bun:"product_name"`
-	ProductImageMain    string  `bun:"product_image_main"`
-	TotalProductPrice   float32 `bun:"total_product_price"`
 	TotalProductAamount int     `bun:"total_product_amount"`
 	Status              string  `bun:"status"`
 

@@ -80,7 +80,9 @@ func GetByIdOrderService(ctx context.Context, userID int64) (*response.OrderResp
 }
 
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
+func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
 	// ตรวจสอบ user_id
+	ex, err := db.NewSelect().TableExpr("users").Where("id = ?", req.UserID).Exists(ctx)
 	ex, err := db.NewSelect().TableExpr("users").Where("id = ?", req.UserID).Exists(ctx)
 	if err != nil {
 		return nil, err
@@ -88,8 +90,9 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 	if !ex {
 		return nil, errors.New("user not found")
 	}
-
+  
 	// ดึงข้อมูล payments ที่เกี่ยวข้องกับ user_id
+	ex, err = db.NewSelect().TableExpr("payments").Where("id = ?", req.PaymentID).Exists(ctx)
 	ex, err = db.NewSelect().TableExpr("payments").Where("id = ?", req.PaymentID).Exists(ctx)
 	if err != nil {
 		return nil, err
@@ -115,21 +118,20 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 	if !ex {
 		return nil, errors.New("carts not found")
 	}
-
+  
 	// สร้างคำสั่งซื้อ
 	order := &model.Orders{
-		UserID:     req.UserID,
-		PaymentID:  req.PaymentID,
-		ShipmentID: req.ShipmentID,
-		CartID:     req.CartID,
-		Status:     req.Status,
+	  UserID:     req.UserID,
+	  PaymentID:  req.PaymentID,
+	  ShipmentID: req.ShipmentID,
+	  Status:     req.Status,
 	}
 	order.SetCreatedNow()
 	order.SetUpdateNow()
-
+  
 	_, err = db.NewInsert().Model(order).Exec(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error creating order: %v", err)
+	  return nil, fmt.Errorf("error creating order: %v", err)
 	}
 
 	return order, nil
@@ -169,7 +171,6 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 		order.ShipmentID = req.ShipmentID
 	}
 	if req.CartID != 0 {
-		order.CartID = req.CartID
 	}
 	order.SetUpdateNow() // ตั้งค่า UpdatedAt
 

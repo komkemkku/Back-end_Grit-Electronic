@@ -54,6 +54,9 @@ func main() {
 	r.DELETE("/user/:id", users.DeleteUser)
 	r.PATCH("/user/:id", users.UpdateUser)
 
+	// Get Info
+	r.GET("/user/info", md, users.GetInfo)
+
 	// Product
 	r.POST("/product/create", products.CreateProduct)
 	r.GET("/product/:id", products.GetProductByID)

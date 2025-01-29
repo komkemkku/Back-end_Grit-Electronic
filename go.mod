@@ -13,7 +13,7 @@ require (
 	github.com/uptrace/bun/dialect/pgdialect v1.2.8
 	github.com/uptrace/bun/extra/bundebug v1.2.8
 	golang.org/x/crypto v0.32.0
-	
+
 )
 
 require (

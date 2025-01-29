@@ -13,13 +13,12 @@ type ReviewProductDetailResp struct {
 }
 
 type ReviewResponses struct {
-	ID          int  `bun:"id" json:"id"`
-	User        string `bun:"user" json:"user"`
-	Product     string `bun:"product" json:"product"`
-	Rating      int    `bun:"rating" json:"rating"`
-	Description string `bun:"description" json:"description"`
-	ImageReview []string `json:"image"`
-	CreatedAt   string `bun:"created_at" json:"created_at"`
-	UpdatedAt   string `bun:"updated_at" json:"updated_at"`
+	ID          int               `bun:"id" json:"id"`
+	User        string            `bun:"user" json:"user"`
+	Product     string            `bun:"product" json:"product"`
+	Rating      int               `bun:"rating" json:"rating"`
+	Description string            `bun:"description" json:"description"`
+	ImageReview []ImageReviewResp `bun:"image"`
+	CreatedAt   string            `bun:"created_at" json:"created_at"`
+	UpdatedAt   string            `bun:"updated_at" json:"updated_at"`
 }
-

@@ -92,9 +92,6 @@ func CreateCartItemService(ctx context.Context, req requests.CartItemCreateReque
 			// ถ้าไม่มีกระร้า ให้สร้างใหม่
 			cart = &model.Carts{
 				UserID:          req.UserID,
-				TotalCartAmount: 0,
-				TotalCartPrice:  0,
-				Status:          "pending",
 			}
 			cart.SetCreatedNow()
 			cart.SetUpdateNow()
@@ -122,7 +119,6 @@ func CreateCartItemService(ctx context.Context, req requests.CartItemCreateReque
 	if exists {
 		// ถ้ามีสินค้าอยู่แล้ว เพิ่มจำนวน
 		cartItem.TotalProductAamount += req.TotalProductAmount
-		cartItem.TotalProductPrice += req.TotalProductPrice
 		cartItem.SetUpdateNow()
 
 		_, err = db.NewUpdate().Model(cartItem).Where("id = ?", cartItem.ID).Exec(ctx)
@@ -134,9 +130,6 @@ func CreateCartItemService(ctx context.Context, req requests.CartItemCreateReque
 		cartItem = &model.CartItem{
 			CartID:              cart.ID,
 			ProductID:           req.ProductID,
-			ProductName:         req.ProductName,
-			ProductImageMain:    req.ProductImageMain,
-			TotalProductPrice:   req.TotalProductPrice,
 			TotalProductAamount: req.TotalProductAmount,
 			Status:              req.Status,
 		}
@@ -150,8 +143,6 @@ func CreateCartItemService(ctx context.Context, req requests.CartItemCreateReque
 	}
 
 	// อัปเดต `cart` ตามจำนวนและราคาของสินค้าที่เพิ่มเข้ามา
-	cart.TotalCartAmount += req.TotalProductAmount
-	cart.TotalCartPrice += req.TotalProductPrice
 	cart.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(cart).Where("id = ?", cart.ID).Exec(ctx)
@@ -162,22 +153,23 @@ func CreateCartItemService(ctx context.Context, req requests.CartItemCreateReque
 	return cartItem, nil
 }
 
-func UpdateCartItemService(ctx context.Context, cart_id int64, req requests.CartItemUpdateRequest) (*model.CartItem, error) {
+func UpdateCartItemService(ctx context.Context, id int64, req requests.CartItemUpdateRequest) (*model.CartItem, error) {
 	cartItem := &model.CartItem{}
+
 	// exist ในการค้นหาแทน
-	err := db.NewSelect().Model(cartItem).Where("id = ?", cart_id).Scan(ctx)
+	ex, err := db.NewSelect().TableExpr("products").Where("id=?", id).Exists(ctx)
 	if err != nil {
-		return nil, errors.New("cart_item not found")
+		return nil, err
+	}
+	if !ex {
+		return nil, errors.New("product not found")
 	}
 
 	// อัปเดตข้อมูลสินค้าในตะกร้า
 	cartItem.TotalProductAamount = req.TotalProductAmount
-	cartItem.TotalProductPrice = req.TotalProductPrice
-	cartItem.ProductName = req.ProductName
-	cartItem.ProductImageMain = req.ProductImageMain
 	cartItem.SetUpdateNow()
 
-	_, err = db.NewUpdate().Model(cartItem).Where("cart_id = ?", cart_id).Exec(ctx)
+	_, err = db.NewUpdate().Model(cartItem).Where("cart_id = ?", id).Exec(ctx)
 	if err != nil {
 		return nil, err
 	}

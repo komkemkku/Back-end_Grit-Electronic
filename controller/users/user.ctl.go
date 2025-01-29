@@ -29,7 +29,7 @@ func UserList(c *gin.Context) {
 	response.SuccessWithPaginate(c, data, paginate)
 }
 
-func GetInto(c *gin.Context) {
+func GetInfo(c *gin.Context) {
 	user := c.GetInt("user_id")
 
 	data, err := GetByIdUserService(c, user)
@@ -114,12 +114,12 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
-	data, err := UpdateUserService(c, id.ID, req)
+	_, err := UpdateUserService(c, id.ID, req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
-	response.Success(c, data)
+	response.Success(c, "Updated successfully")
 }
 
 func DeleteUser(c *gin.Context) {

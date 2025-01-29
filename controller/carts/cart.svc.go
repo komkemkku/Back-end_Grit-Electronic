@@ -85,9 +85,6 @@ func CreateCartService(ctx context.Context, req requests.CartAddItemRequest) (*m
 	if !exists {
 		cart = &model.Carts{
 			UserID:          req.UserID,
-			TotalCartAmount: req.TotalCartAmount,
-			TotalCartPrice:  req.TotalCartPrice,
-			Status:          "active",
 		}
 		cart.SetCreatedNow()
 		cart.SetUpdateNow()
@@ -123,8 +120,7 @@ func UpdateCartService(ctx context.Context, userID int64, req requests.CartUpdat
 	}
 
 	// อัปเดตรายละเอียดตะกร้า
-	cart.TotalCartAmount += req.TotalCartAmount
-	cart.TotalCartPrice += req.TotalCartPrice
+
 	cart.SetUpdateNow()
 
 	_, err = db.NewUpdate().
