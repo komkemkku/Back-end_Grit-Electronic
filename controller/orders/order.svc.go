@@ -2,7 +2,6 @@ package orders
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 
@@ -46,79 +45,75 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 	return resp, total, nil
 }
 
-func GetByIdOrderService(ctx context.Context, id int64) (*response.OrderResponses, error) {
-    // ตรวจสอบว่าคำสั่งซื้อมีอยู่ในระบบหรือไม่
-    ex, err := db.NewSelect().
-        TableExpr("orders").
-        Where("id = ?", id).
-        Exists(ctx)
-    if err != nil {
-        return nil, err
-    }
-    if !ex {
-        return nil, errors.New("order not found")
-    }
+func GetByIdOrderService(ctx context.Context, userID int64) (*response.OrderResponses, error) {
+	// ตรวจสอบว่าผู้ใช้งานมีอยู่ในระบบหรือไม่
+	exists, err := db.NewSelect().
+		TableExpr("orders").
+		Where("user_id = ?", userID).
+		Exists(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("database query error: %w", err)
+	}
+	if !exists {
+		return nil, errors.New("user not found")
+	}
 
-    // สร้างตัวแปรสำหรับเก็บผลลัพธ์
-    order := &response.OrderResponses{}
+	// สร้าง response object
+	order := &response.OrderResponses{}
 
-    // ดึงข้อมูลคำสั่งซื้อ
-    err = db.NewSelect().
-        TableExpr("orders AS o").
-        Column("o.id", "o.user_id", "o.payment_id", "o.shipment_id", "o.cart_id", "o.status", "o.created_at", "o.updated_at").
-        Where("o.id = ?", id).
-        Scan(ctx, order)
-    if err != nil {
-        return nil, err
-    }
+	err = db.NewSelect().
+		TableExpr("orders AS o").
+		Column("o.id", "o.user_id", "o.status", "o.created_at", "o.updated_at").
+		ColumnExpr("c.total_cart_amount", "c.total_cart_price").
+		ColumnExpr("p.system_bank_id", "p.price", "p.bank_name", "p.account_name", "p.account_number", "p.status AS payment_status").
+		ColumnExpr("s.firstname", "s.lastname", "s.address", "s.zip_code", "s.sub_district", "s.district", "s.province", "s.status AS shipment_status").
+		Join("LEFT JOIN carts AS c ON o.cart_id = c.id").
+		Join("LEFT JOIN payments AS p ON o.payment_id = p.id").
+		Join("LEFT JOIN shipments AS s ON o.shipment_id = s.id").
+		Where("o.user_id = ?", userID).
+		Scan(ctx, order)
 
-    return order, nil
+	if err != nil {
+		return nil, fmt.Errorf("query execution error: %w", err)
+	}
+	return order, nil
 }
 
-
-
-func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (map[string]interface{}, error) {
+func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
 	// ตรวจสอบ user_id
-	user := struct {
-		ID       int64  `json:"id"`
-		Username string `json:"name"`
-	}{}
-	err := db.NewSelect().TableExpr("users").Column("id", "username").Where("id = ?", req.UserID).Scan(ctx, &user)
+	ex, err := db.NewSelect().TableExpr("users").Where("id = ?", req.UserID).Exists(ctx)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("user not found: no user with id = %d", req.UserID)
-		}
-		return nil, fmt.Errorf("error fetching user: %v", err)
+		return nil, err
+	}
+	if !ex {
+		return nil, errors.New("user not found")
 	}
 
 	// ดึงข้อมูล payments ที่เกี่ยวข้องกับ user_id
-	payments := []model.Payments{}
-	err = db.NewSelect().
-		Model(&payments).
-		Where("id = ?", req.UserID). // ใช้คอลัมน์ admin_id แทน user_id
-		Scan(ctx)
+	ex, err = db.NewSelect().TableExpr("payments").Where("id = ?", req.PaymentID).Exists(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch payments: %v", err)
+		return nil, err
+	}
+	if !ex {
+		return nil, errors.New("payment not found")
 	}
 
-	// ดึงข้อมูล shipments ที่เกี่ยวข้องกับ user_id
-	shipments := []model.Shipments{}
-	err = db.NewSelect().
-		Model(&shipments).
-		Where("id IN (SELECT shipment_id FROM orders WHERE user_id = ?)", req.UserID).
-		Scan(ctx)
+	// ตรวจสอบ shipments
+	ex, err = db.NewSelect().TableExpr("shipments").Where("id = ?", req.ShipmentID).Exists(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch shipments: %v", err)
+		return nil, err
+	}
+	if !ex {
+		return nil, errors.New("shipment not found")
 	}
 
-	// ดึงข้อมูล carts ที่เกี่ยวข้องกับ user_id
-	carts := []model.Carts{}
-	err = db.NewSelect().
-		Model(&carts).
-		Where("user_id = ?", req.UserID).
-		Scan(ctx)
+	// ตรวจสอบ carts
+	ex, err = db.NewSelect().TableExpr("carts").Where("id = ?", req.CartID).Exists(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch carts: %v", err)
+		return nil, err
+	}
+	if !ex {
+		return nil, errors.New("carts not found")
 	}
 
 	// สร้างคำสั่งซื้อ
@@ -137,23 +132,7 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (m
 		return nil, fmt.Errorf("error creating order: %v", err)
 	}
 
-	// จัดเรียง response
-	response := map[string]interface{}{
-		"user":  user,
-		"carts": carts,
-		"order": map[string]interface{}{
-			"id":          order.ID,
-			"user_id":     order.UserID,
-			"payment_id":  order.PaymentID,
-			"shipment_id": order.ShipmentID,
-			"cart_id":     order.CartID,
-			"status":      order.Status,
-		},
-		"payments":  payments,
-		"shipments": shipments,
-	}
-
-	return response, nil
+	return order, nil
 }
 
 func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateRequest) (*model.Orders, error) {
@@ -207,7 +186,6 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 	return order, nil
 }
 
-
 func DeleteOrderService(ctx context.Context, id int64) error {
 	ex, err := db.NewSelect().TableExpr("orders").Where("id=?", id).Exists(ctx)
 
@@ -225,3 +203,5 @@ func DeleteOrderService(ctx context.Context, id int64) error {
 	}
 	return nil
 }
+
+
