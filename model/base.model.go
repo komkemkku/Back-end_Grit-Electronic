@@ -25,8 +25,12 @@ type UpdateUnixTimestamp struct {
 	UpdatedAt int64 `json:"updated_at" bun:",notnull,default:EXTRACT(EPOCH FROM NOW())"`
 }
 
+// type SoftDelete struct {
+// 	DeletedAt *time.Time `json:"deleted_at" bun:",soft_delete,nullzero"`
+// }
+
 type SoftDelete struct {
-	DeletedAt *time.Time `json:"deleted_at" bun:",soft_delete,nullzero"`
+	DeletedAt int64 `json:"deleted_at" bun:",soft_delete,nullzero"`
 }
 
 func (t *CreateUnixTimestamp) SetCreated(ts int64) {

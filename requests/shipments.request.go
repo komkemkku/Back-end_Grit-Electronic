@@ -11,6 +11,7 @@ type ShipmentIdRequest struct {
 }
 
 type ShipmentCreateRequest struct {
+	UserID      int    `json:"user_id"`
 	Firstname   string `json:"firstname"`
 	Lastname    string `json:"lastname"`
 	Address     string `json:"address"`

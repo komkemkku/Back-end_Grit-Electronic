@@ -11,18 +11,18 @@ type ReviewIdRequest struct {
 }
 
 type ReviewCreateRequest struct {
-	ProductID   int    `json:"product_id"`
-	UserID      int    `json:"user_id"`
-	Description string `json:"description"`
-	Rating      int    `json:"rating"`
+	ProductID   int      `json:"product_id"`
+	UserID      int      `json:"user_id"`
+	Description string   `json:"description"`
+	Rating      int      `json:"rating"`
 	ImageReview []string `json:"image_review"`
 }
 
 type ReviewUpdateRequest struct {
-	ID          int    `json:"id"`
-	ProductID   int    `json:"product_id"`
-	UserID      int    `json:"user_id"`
-	Description string `json:"description"`
-	Rating      int    `json:"rating"`
+	ID          int      `json:"id"`
+	ProductID   int      `json:"product_id"`
+	UserID      int      `json:"user_id"`
+	Description string   `json:"description"`
+	Rating      int      `json:"rating"`
 	ImageReview []string `json:"image_review"`
 }

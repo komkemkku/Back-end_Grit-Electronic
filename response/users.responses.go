@@ -20,3 +20,8 @@ type UserRespWistlist struct {
 	ID       int    `json:"id"`
 	Username string `json:"username"`
 }
+
+type UserRespCart struct {
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+}

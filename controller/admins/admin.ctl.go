@@ -7,6 +7,18 @@ import (
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
 )
 
+func GetInfoAdmin(c *gin.Context) {
+	admin := c.GetInt("admin_id")
+
+	data, err := GetByIdAdminService(c, admin)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+	response.Success(c, data)
+
+}
+
 func AdmintList(c *gin.Context) {
 	req := requests.AdminRequest{}
 	if err := c.BindQuery(&req); err != nil {
@@ -36,7 +48,7 @@ func GetAdminByID(c *gin.Context) {
 		return
 	}
 
-	data, err := GetByIdAdminService(c, int64(id.ID))
+	data, err := GetByIdAdminService(c, id.ID)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return

@@ -57,11 +57,31 @@ func GetByIdCartService(ctx context.Context, id int64) (*response.CartResponses,
 	// Query ตะกร้าพร้อมรายการสินค้า
 	err = db.NewSelect().
 		TableExpr("carts AS c").
-		Column("c.id", "c.user_id", "c.total_cart_amount", "c.total_cart_price", "c.status", "c.created_at", "c.updated_at").
-		ColumnExpr("json_agg(json_build_object('id', ci.id, 'product_id', ci.product_id, 'product_name', ci.product_name, 'product_image_main', ci.product_image_main, 'total_product_price', ci.total_product_price, 'total_product_amount', ci.total_product_amount)) AS cart_items").
+		Column("c.id", "c.created_at", "c.updated_at").
+		ColumnExpr("u.id AS user__id").
+		ColumnExpr("u.username AS user__username").
+		ColumnExpr(`
+		COALESCE(
+			json_agg(
+				json_build_object(
+					'id', ci.id,
+					'product', json_build_object(
+						'id', p.id,
+						'name', p.name,
+						'price', p.price
+					),
+					'total_product_amount', ci.total_product_amount
+				)
+				ORDER BY ci.id ASC
+			) FILTER (WHERE ci.id IS NOT NULL), '[]'
+		) AS cart_items
+	`).
 		Join("LEFT JOIN cart_items AS ci ON ci.cart_id = c.id").
-		GroupExpr("c.id").
-		Where("c.id = ?", id).Scan(ctx, cart)
+		Join("LEFT JOIN users AS u ON u.id = c.user_id").
+		Join("LEFT JOIN products AS p ON p.id = ci.product_id").
+		GroupExpr("c.id, u.id").
+		Where("c.id = ?", id).
+		Scan(ctx, cart)
 
 	if err != nil {
 		return nil, err
@@ -84,7 +104,7 @@ func CreateCartService(ctx context.Context, req requests.CartAddItemRequest) (*m
 	var cart *model.Carts
 	if !exists {
 		cart = &model.Carts{
-			UserID:          req.UserID,
+			UserID: req.UserID,
 		}
 		cart.SetCreatedNow()
 		cart.SetUpdateNow()
@@ -159,4 +179,3 @@ func DeleteCartService(ctx context.Context, userID int64) error {
 
 	return nil
 }
-

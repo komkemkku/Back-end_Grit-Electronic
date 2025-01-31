@@ -7,6 +7,18 @@ import (
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
 )
 
+func GetInfoUser(c *gin.Context) {
+	user := c.GetInt("user_id")
+
+	data, err := GetByIdUserService(c, user)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+	response.Success(c, data)
+
+}
+
 func UserList(c *gin.Context) {
 	req := requests.UserRequest{}
 	if err := c.BindQuery(&req); err != nil {
@@ -27,18 +39,6 @@ func UserList(c *gin.Context) {
 	}
 
 	response.SuccessWithPaginate(c, data, paginate)
-}
-
-func GetInfo(c *gin.Context) {
-	user := c.GetInt("user_id")
-
-	data, err := GetByIdUserService(c, user)
-	if err != nil {
-		response.InternalError(c, err.Error())
-		return
-	}
-	response.Success(c, data)
-
 }
 
 func GetUserByID(c *gin.Context) {

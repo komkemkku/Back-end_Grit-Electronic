@@ -6,6 +6,7 @@ type Shipments struct {
 	bun.BaseModel `bun:"table:shipments"`
 
 	ID          int    `bun:",type:serial,autoincrement,pk"`
+	UserID      int    `bun:"user_id"`
 	Firstname   string `bun:"firstname"`
 	Lastname    string `bun:"lastname"`
 	Address     string `bun:"address"`

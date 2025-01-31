@@ -55,7 +55,8 @@ func main() {
 	r.PATCH("/user/:id", users.UpdateUser)
 
 	// Get Info
-	r.GET("/user/info", md, users.GetInfo)
+	r.GET("/user/info", md, users.GetInfoUser)
+	r.GET("/admin/info", md, admins.GetInfoAdmin)
 
 	// Product
 	r.POST("/product/create", products.CreateProduct)
@@ -91,12 +92,15 @@ func main() {
 
 	// CartItem
 	r.POST("/cartitem/create", md, cartitems.CreateCartItem)
-	// r.POST("/cartitem/create", md)
+	r.GET("/cartitem", md, cartitems.CartItemList)
+	r.DELETE("/cartitem", md, cartitems.DeleteCartItem)
+	r.PATCH("/cartitem/:id", md, cartitems.UpdateCartItem)
 
-	r.GET("/cartitem/:id", cartitems.GetCartItemByID)
-	r.GET("/cartitem", cartitems.CartItemList)
-	r.DELETE("/cartitem", cartitems.DeleteCartItem)
-	r.PATCH("/cartitem/:id", cartitems.UpdateCartItem)
+
+	// r.GET("/cartitem/:id", cartitems.GetCartItemByID)
+	// r.GET("/cartitem", cartitems.CartItemList)
+	// r.DELETE("/cartitem", cartitems.DeleteCartItem)
+	// r.PATCH("/cartitem/:id", cartitems.UpdateCartItem)
 
 	// Review
 	r.POST("/review/create", reviews.CreateReview)
@@ -130,7 +134,7 @@ func main() {
 	r.PATCH("/category/:id", categories.UpdateCategory)
 
 	// Shipment
-	r.POST("/shipment/create", shipments.CreateShipment)
+	r.POST("/shipment/create", md, shipments.CreateShipment)
 	r.GET("/shipment/:id", shipments.GetShipmentByID)
 	r.GET("/shipment", shipments.ShipmenttList)
 	r.DELETE("/shipment/:id", shipments.DeleteShipment)
