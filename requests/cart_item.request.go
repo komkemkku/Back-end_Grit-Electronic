@@ -11,27 +11,24 @@ type CartItemIdRequest struct {
 }
 
 type CartItemCreateRequest struct {
-	UserID             int     `json:"user_id"`
-	ProductID          int     `json:"product_id"`
-	ProductName        string  `json:"product_name"`
-	ProductImageMain   string  `json:"product_image_main"`
-	TotalProductPrice  float32 `json:"total_product_price"`
-	TotalProductAmount int     `json:"total_product_amount"`
-	Status             string  `json:"status"`
+	UserID             int `json:"user_id"`
+	ProductID          int `json:"product_id"`
+	TotalProductAmount int `json:"total_product_amount"`
+	// TotalProductPrice  float64 `json:"total_product_price"`
+	Status string `json:"status"`
 }
 
 type CartItemUpdateRequest struct {
-	ID                 int     `json:"id"`
-	ProductID          int     `json:"product_id"`
-	ProductName        string  `json:"product_name"`
-	ProductImageMain   string  `json:"product_image_main"`
-	TotalProductPrice  float32 `json:"total_product_price"`
-	TotalProductAmount int     `json:"total_product_amount"`
-	Status             string  `json:"status"`
+	ID                 int    `json:"id"`
+	UserID             int    `json:"user_id"`
+	ProductID          int    `json:"product_id"`
+	// CartID             int    `json:"cart_id"`
+	TotalProductAmount int    `json:"total_product_amount"`
+	Status             string `json:"status"`
 }
 
 type CartItemDeleteRequest struct {
-	CartID     int `json:"cart_id"`
+	// CartID     int `json:"cart_id"`
 	UserID     int `json:"user_id"`
 	CartItemID int `json:"cart_item_id"`
 }

@@ -48,7 +48,7 @@ func ListAdminService(ctx context.Context, req requests.AdminRequest) ([]respons
 	return resp, total, nil
 }
 
-func GetByIdAdminService(ctx context.Context, id int64) (*response.AdminResponses, error) {
+func GetByIdAdminService(ctx context.Context, id int) (*response.AdminResponses, error) {
 	ex, err := db.NewSelect().TableExpr("admins").Where("id = ?", id).Exists(ctx)
 	if err != nil {
 		return nil, err
@@ -59,10 +59,10 @@ func GetByIdAdminService(ctx context.Context, id int64) (*response.AdminResponse
 	admin := &response.AdminResponses{}
 
 	err = db.NewSelect().TableExpr("admins AS a").
-	Column("a.id", "a.name", "a.email", "a.is_active", "a.created_at", "a.updated_at").
-	ColumnExpr("r.id AS role__id").
-	ColumnExpr("r.name AS role__name").
-	Join("LEFT JOIN roles as r ON r.id = a.role_id").Where("a.id = ?", id).Scan(ctx, admin)
+		Column("a.id", "a.name", "a.email", "a.is_active", "a.created_at", "a.updated_at").
+		ColumnExpr("r.id AS role__id").
+		ColumnExpr("r.name AS role__name").
+		Join("LEFT JOIN roles as r ON r.id = a.role_id").Where("a.id = ?", id).Scan(ctx, admin)
 	if err != nil {
 		return nil, err
 	}

@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
-	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/image"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
@@ -26,7 +25,7 @@ func ListCartItemService(ctx context.Context, req requests.CartItemRequest) ([]r
 
 	query := db.NewSelect().
 		TableExpr("cart_items AS ci").
-		Column("ci.id", "ci.cart_id", "ci.product_name", "ci.product_image_main", "ci.total_product_price", "ci.total_product_amount", "ci.status", "ci.created_at", "ci.updated_at").
+		Column("ci.id", "ci.cart_id", "ci.total_product_amount", "ci.status", "ci.created_at", "ci.updated_at").
 		ColumnExpr("p.id AS product__id").
 		ColumnExpr("p.name AS product__name").
 		ColumnExpr("p.price AS product__price").
@@ -34,9 +33,9 @@ func ListCartItemService(ctx context.Context, req requests.CartItemRequest) ([]r
 
 	query.Order("ci.id ASC")
 
-	if req.Search != "" {
-		query.Where("ci.name ILIKE ?", "%"+req.Search+"%")
-	}
+	// if req.Search != "" {
+	// 	query.Where("ci.name ILIKE ?", "%"+req.Search+"%")
+	// }
 
 	total, err := query.Count(ctx)
 	if err != nil {
@@ -62,9 +61,8 @@ func GetByIdCartItemService(ctx context.Context, id int64) (*response.CartItemRe
 	}
 	cart_item := &response.CartItemResponses{}
 
-	// แบบที่ 1
 	err = db.NewSelect().TableExpr("cart_items AS ci").
-		Column("ci.id", "ci.cart_id", "ci.product_name", "ci.product_image_main", "ci.total_product_price", "ci.total_product_amount", "ci.status", "ci.created_at", "ci.updated_at").
+		Column("ci.id", "ci.cart_id", "ci.total_product_amount", "ci.status", "ci.created_at", "ci.updated_at").
 		ColumnExpr("p.id AS product__id").
 		ColumnExpr("p.name AS product__name").
 		ColumnExpr("p.price AS product__price").
@@ -79,156 +77,196 @@ func GetByIdCartItemService(ctx context.Context, id int64) (*response.CartItemRe
 }
 
 func CreateCartItemService(ctx context.Context, req requests.CartItemCreateRequest) (*model.CartItem, error) {
-	// ตรวจสอบว่ามีตะกร้าของผู้ใช้อยู่หรือไม่
-	cart := &model.Carts{}
+	// ตรวจสอบว่าสินค้ามีอยู่ในฐานข้อมูลหรือไม่
+	product := &model.Products{}
 	err := db.NewSelect().
+		Model(product).
+		Where("id = ?", req.ProductID).
+		Scan(ctx)
+	if err != nil {
+		return nil, errors.New("product not found")
+	}
+
+	// ตรวจสอบว่าผู้ใช้มี cart อยู่หรือไม่
+	cart := &model.Carts{}
+	err = db.NewSelect().
 		Model(cart).
 		Where("user_id = ?", req.UserID).
-		Where("status = ?", "pending").
 		Scan(ctx)
 
 	if err != nil {
+		// ถ้าไม่มีตะกร้า ให้สร้างใหม่
 		if errors.Is(err, sql.ErrNoRows) {
-			// ถ้าไม่มีกระร้า ให้สร้างใหม่
 			cart = &model.Carts{
-				UserID:          req.UserID,
+				UserID: req.UserID,
 			}
 			cart.SetCreatedNow()
 			cart.SetUpdateNow()
 
-			_, err = db.NewInsert().Model(cart).Exec(ctx)
+			_, err = db.NewInsert().
+				Model(cart).
+				Returning("id").
+				Exec(ctx, &cart.ID)
 			if err != nil {
-				return nil, fmt.Errorf("failed to create cart: %v", err)
+				return nil, errors.New("failed to insert cart")
 			}
 		} else {
-			// กรณี error อื่นๆ
-			return nil, fmt.Errorf("failed to check cart: %v", err)
+			return nil, errors.New("failed to check cart")
 		}
 	}
 
 	// ตรวจสอบว่าสินค้าอยู่ใน `cart_items` หรือไม่
 	cartItem := &model.CartItem{}
-	exists, err := db.NewSelect().Model(cartItem).
+	itemExists, err := db.NewSelect().
+		Model(cartItem).
 		Where("cart_id = ?", cart.ID).
 		Where("product_id = ?", req.ProductID).
 		Exists(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("failed to check cart item")
 	}
 
-	if exists {
-		// ถ้ามีสินค้าอยู่แล้ว เพิ่มจำนวน
-		cartItem.TotalProductAamount += req.TotalProductAmount
-		cartItem.SetUpdateNow()
-
-		_, err = db.NewUpdate().Model(cartItem).Where("id = ?", cartItem.ID).Exec(ctx)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		// ถ้าไม่มีสินค้า ให้เพิ่มใหม่
-		cartItem = &model.CartItem{
-			CartID:              cart.ID,
-			ProductID:           req.ProductID,
-			TotalProductAamount: req.TotalProductAmount,
-			Status:              req.Status,
-		}
-		cartItem.SetCreatedNow()
-		cartItem.SetUpdateNow()
-
-		_, err = db.NewInsert().Model(cartItem).Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to insert cart item: %v", err)
-		}
+	if itemExists {
+		return nil, errors.New("product already in cart")
 	}
 
-	// อัปเดต `cart` ตามจำนวนและราคาของสินค้าที่เพิ่มเข้ามา
-	cart.SetUpdateNow()
-
-	_, err = db.NewUpdate().Model(cart).Where("id = ?", cart.ID).Exec(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update cart: %v", err)
+	// ถ้าไม่มีสินค้า ให้เพิ่มใหม่
+	cartItem = &model.CartItem{
+		CartID:             cart.ID,
+		ProductID:          req.ProductID,
+		TotalProductAmount: req.TotalProductAmount,
+		Status:             "in_cart",
 	}
-
-	return cartItem, nil
-}
-
-func UpdateCartItemService(ctx context.Context, id int64, req requests.CartItemUpdateRequest) (*model.CartItem, error) {
-	cartItem := &model.CartItem{}
-
-	// exist ในการค้นหาแทน
-	ex, err := db.NewSelect().TableExpr("products").Where("id=?", id).Exists(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if !ex {
-		return nil, errors.New("product not found")
-	}
-
-	// อัปเดตข้อมูลสินค้าในตะกร้า
-	cartItem.TotalProductAamount = req.TotalProductAmount
+	cartItem.SetCreatedNow()
 	cartItem.SetUpdateNow()
 
-	_, err = db.NewUpdate().Model(cartItem).Where("cart_id = ?", id).Exec(ctx)
+	_, err = db.NewInsert().Model(cartItem).Exec(ctx)
 	if err != nil {
-		return nil, err
-	}
-
-	img := requests.ImageCreateRequest{
-		RefID:       cartItem.ID,
-		Type:        "product_cart_item",
-		Description: req.ProductImageMain,
-	}
-
-	_, err = image.CreateImageService(ctx, img)
-	if err != nil {
-		return nil, err
+		return nil, errors.New("failed to update cart item")
 	}
 
 	return cartItem, nil
 }
 
-func DeleteCartItemService(ctx context.Context, cartID, userID, cartItemID int) error {
-	cartItem := &model.CartItem{}
+func UpdateCartItemService(ctx context.Context, UserID int, cartItemID int, req requests.CartItemUpdateRequest) (*model.CartItem, error) {
+	// ตรวจสอบว่าผู้ใช้มีตะกร้าหรือไม่
+	var cart model.Carts
+	cartExists, err := db.NewSelect().
+		Model(&cart).
+		Where("user_id = ?", UserID).
+		Exists(ctx)
 
-	// ตรวจสอบว่า cart_item มีอยู่จริง
-	// exist ในการค้นหาแทน
+	if err != nil {
+		return nil, fmt.Errorf("failed to check cart: %v", err)
+	}
 
-	err := db.NewSelect().
-		Model(cartItem).
-		Where("id = ? AND cart_id = ? AND EXISTS (SELECT 1 FROM carts WHERE id = ? AND user_id = ?)", cartItemID, cartID, cartID, userID).
+	if !cartExists {
+		return nil, errors.New("cart not found for this user")
+	}
+
+	// ดึง cart_id ที่ตรงกับ user
+	err = db.NewSelect().
+		Model(&cart).
+		Where("user_id = ?", UserID).
 		Scan(ctx)
 	if err != nil {
-		return errors.New("cart_item not found")
+		return nil, fmt.Errorf("failed to get cart ID: %v", err)
 	}
 
-	// ลบ cart_item
-	_, err = db.NewDelete().
-		Model(cartItem).
+	// ตรวจสอบว่าสินค้าอยู่ใน cart หรือไม่
+	var cartItem model.CartItem
+	cartItemExists, err := db.NewSelect().
+		Model(&cartItem).
 		Where("id = ?", cartItemID).
+		Where("cart_id = ?", cart.ID).
+		Exists(ctx)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to check cart item: %v", err)
+	}
+
+	if !cartItemExists {
+		return nil, errors.New("cart item not found in this cart")
+	}
+
+	// ดึงข้อมูล cart_item
+	err = db.NewSelect().
+		Model(&cartItem).
+		Where("id = ?", cartItemID).
+		Where("cart_id = ?", cart.ID).
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get cart item: %v", err)
+	}
+
+	// ตรวจสอบว่า total_product_amount ต้องมากกว่า 0
+	if req.TotalProductAmount <= 0 {
+		return nil, errors.New("total product amount must be greater than 0")
+	}
+
+	// อัปเดต product_id และ total_product_amount
+	cartItem.ProductID = req.ProductID
+	cartItem.TotalProductAmount = req.TotalProductAmount
+	cartItem.SetUpdateNow()
+
+	_, err = db.NewUpdate().
+		Model(&cartItem).
+		Where("id = ?", cartItem.ID).
 		Exec(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to delete cart_item: %v", err)
+		return nil, fmt.Errorf("failed to update cart item: %v", err)
 	}
 
-	// ตรวจสอบจำนวนสินค้าที่เหลือใน cart_item
-	// 	query.count ในการนับแทน
+	return &cartItem, nil
+}
 
-	var itemCount int
-	err = db.NewSelect().
-		TableExpr("cart_items").
-		ColumnExpr("COUNT(*)").
-		Where("cart_id = ?", cartID).
-		Scan(ctx, &itemCount)
+func DeleteCartItemService(ctx context.Context, userID int, cartItemID int) error {
+	// ดึง cart_id ของ user จากฐานข้อมูล
+	var cart model.Carts
+	err := db.NewSelect().
+		Model(&cart).
+		Where("user_id = ?", userID).
+		Scan(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to check remaining cart_items: %v", err)
+		return errors.New("cart not found for this user")
 	}
 
-	// หากไม่มีสินค้าเหลือใน cart ให้ลบ cart อัตโนมัติ
-	if itemCount == 0 {
+	// ตรวจสอบว่า cart_item_id มีอยู่ใน cart_id นี้หรือไม่
+	itemExists, err := db.NewSelect().
+		TableExpr("cart_items").
+		Where("id = ?", cartItemID).
+		Where("cart_id = ?", cart.ID).
+		Exists(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to check cart item: %v", err)
+	}
+	if !itemExists {
+		return errors.New("cart item not found in this cart")
+	}
+
+	// ลบ cart_item_id ที่ระบุ
+	_, err = db.NewDelete().
+		TableExpr("cart_items").
+		Where("id = ?", cartItemID).
+		Where("cart_id = ?", cart.ID).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to delete cart item: %v", err)
+	}
+
+	query := db.NewSelect().
+		TableExpr("cart_items").
+		Where("cart_id = ?", cart.ID)
+
+	total, err := query.Count(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to count remaining cart items: %v", err)
+	}
+
+	if total == 0 {
 		_, err = db.NewDelete().
-			TableExpr("carts").
-			Where("id = ?", cartID).
+			Model(&cart).
+			Where("id = ?", cart.ID).
 			Exec(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to delete empty cart: %v", err)

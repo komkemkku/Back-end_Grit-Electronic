@@ -182,14 +182,27 @@ func UpdateReviewService(ctx context.Context, id int, req requests.ReviewUpdateR
 	}
 
 	if exists {
-		// ถ้ามีรูปภาพอยู่แล้ว ให้อัปเดตข้อมูลเดิม
-		_, err = db.NewUpdate().
+		// ถ้ามีรูปภาพอยู่แล้ว ให้ลบภาพเก่าออกก่อน
+		_, err = db.NewDelete().
 			TableExpr("images").
-			Set("description = ?", req.ImageReview).
 			Where("ref_id = ? AND type = 'review_image'", review.ID).
 			Exec(ctx)
 		if err != nil {
-			return nil, errors.New("failed to update review slip")
+			return nil, errors.New("failed to delete old review images")
+		}
+	
+		// เพิ่มรูปภาพใหม่
+		for _, image := range req.ImageReview {
+			img := &model.Images{
+				RefID:       review.ID,
+				Type:        "review_image",
+				Description: image,
+			}
+	
+			_, err := db.NewInsert().Model(img).Exec(ctx)
+			if err != nil {
+				return nil, errors.New("failed to insert image")
+			}
 		}
 	} else {
 		// ถ้าไม่มีรูปภาพ ให้สร้างใหม่
@@ -199,38 +212,14 @@ func UpdateReviewService(ctx context.Context, id int, req requests.ReviewUpdateR
 				Type:        "review_image",
 				Description: images,
 			}
+	
 			_, err = image.CreateImageService(ctx, img)
-
 			if err != nil {
 				return nil, errors.New("failed to create review slip")
 			}
 		}
 	}
-
-	// // ลบรูปภาพเก่าก่อนเพิ่มรูปใหม่
-	// _, err = db.NewDelete().
-	// 	TableExpr("images").
-	// 	Where("ref_id = ? AND type = 'review_image'", review.ID).
-	// 	Exec(ctx)
-	// if err != nil {
-	// 	return nil, errors.New("failed to delete old review images")
-	// }
-
-	// // เพิ่มรูปภาพใหม่
-	// for _, image := range req.ImageReview {
-	// 	img := requests.ImageCreateRequest{
-	// 		RefID:       review.ID,
-	// 		Type:        "review_image",
-	// 		Description: image,
-	// 	}
-
-	// 	_, err = image.CreateImageService(ctx, img)
-
-	// 	if err != nil {
-	// 		return nil, errors.New("failed to create review slip")
-	// 	}
-	// }
-
+	
 	return review, nil
 }
 

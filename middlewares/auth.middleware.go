@@ -38,10 +38,22 @@ func AuthMiddleware() gin.HandlerFunc {
 			Phone    string `json:"phone"`
 		}
 
+		type admin struct {
+			ID       int    `json:"id"`
+			Name     string `json:"name"`
+			Email    string `json:"email"`
+			Password string `json:"password"`
+		}
+
 		tt, _ := json.Marshal(claims["sub"])
 		var usr *user
 		_ = json.Unmarshal(tt, &usr)
 		ctx.Set("user_id", usr.ID)
+
+		tt, _ = json.Marshal(claims["sub"])
+		var adm *admin
+		_ = json.Unmarshal(tt, &adm)
+		ctx.Set("admin_id", adm.ID)
 
 		ctx.Next()
 	}

@@ -12,6 +12,7 @@ type ProductResponses struct {
 	IsActive    bool                `json:"is_active"`
 	Created_at  int64               `json:"created_at"`
 	Updated_at  int64               `json:"updated_at"`
+	Deleted_at  int64               `json:"deleted_at"`
 }
 
 type ProductDetailResponses struct {
@@ -42,7 +43,6 @@ type ProductRespCartItem struct {
 }
 
 type ProductRespReview struct {
-    ID   int    `json:"id"`
-    Name string `json:"name"`
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
-

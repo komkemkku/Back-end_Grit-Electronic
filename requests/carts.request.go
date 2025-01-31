@@ -11,10 +11,7 @@ type CartIdRequest struct {
 }
 
 type CartAddItemRequest struct {
-	UserID          int     `json:"user_id"`
-	TotalCartAmount int     `json:"total_cart_amount"`
-	TotalCartPrice  float32 `json:"total_cart_price"`
-	Status          string  `json:"status"`
+	UserID int `json:"user_id"`
 }
 
 type CartUpdateItemRequest struct {

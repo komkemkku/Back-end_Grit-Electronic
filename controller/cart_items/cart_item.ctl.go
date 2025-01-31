@@ -29,29 +29,26 @@ func CreateCartItem(c *gin.Context) {
 }
 
 func DeleteCartItem(c *gin.Context) {
+
+	user := c.GetInt("user_id")
+
+	// รับค่า `cart_item_id` จาก request body
 	req := requests.CartItemDeleteRequest{}
+
+	req.UserID = user
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
 
-	if req.CartID == 0 || req.UserID == 0 || req.CartItemID == 0 {
-		response.BadRequest(c, "Invalid cart_id, user_id, or cart_item_id")
-		return
-	}
-
-	err := DeleteCartItemService(c.Request.Context(), req.CartID, req.UserID, req.CartItemID)
+	err := DeleteCartItemService(c, user, req.CartItemID)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
 
-	response.Success(c, map[string]interface{}{
-		"message":      "Cart item deleted successfully",
-		"cart_id":      req.CartID,
-		"user_id":      req.UserID,
-		"cart_item_id": req.CartItemID,
-	})
+	response.Success(c, "cart item deleted successfully")
 }
 
 func GetCartItemByID(c *gin.Context) {
@@ -92,23 +89,28 @@ func CartItemList(c *gin.Context) {
 }
 
 func UpdateCartItem(c *gin.Context) {
-	id := requests.CartItemIdRequest{}
-	if err := c.BindUri(&id); err != nil {
+	user := c.GetInt("user_id")
+
+	cartItemID := requests.CartItemIdRequest{}
+	if err := c.BindUri(&cartItemID); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
 
 	req := requests.CartItemUpdateRequest{}
+	req.UserID = user
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
 
-	data, err := UpdateCartItemService(c, int64(id.ID), req)
+	// เรียกใช้ service และส่ง userID, cartItemID เข้าไป
+	data, err := UpdateCartItemService(c, user, cartItemID.ID, req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
+
 	response.Success(c, data)
 }

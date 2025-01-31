@@ -26,7 +26,7 @@ func ListProductService(ctx context.Context, req requests.ProductRequest) ([]res
 
 	query := db.NewSelect().
 		TableExpr("products AS p").
-		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.is_active", "p.created_at", "p.updated_at").
+		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.is_active", "p.created_at", "p.updated_at", "p.deleted_at").
 		ColumnExpr("c.id AS category__id").
 		ColumnExpr("c.name AS category__name").
 		ColumnExpr("json_agg(json_build_object('id', r.id, 'description', r.description, 'rating', r.rating, 'username', u.username)) AS reviews").
@@ -35,9 +35,9 @@ func ListProductService(ctx context.Context, req requests.ProductRequest) ([]res
 		Join("LEFT JOIN reviews AS r ON r.product_id = p.id").
 		Join("LEFT JOIN users AS u ON u.id = r.user_id").
 		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'").
+		Where("p.deleted_at IS NULL").
 		GroupExpr("p.id, c.id, i.id, i.ref_id, i.type, i.description")
 
-	// query.Where("p.is_active = ?", true)
 	query.Order("p.id ASC")
 
 	if req.Search != "" {
@@ -70,7 +70,7 @@ func GetByIdProductService(ctx context.Context, id int64) (*response.ProductDeta
 
 	// แบบที่ 1
 	err = db.NewSelect().TableExpr("products AS p").
-		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.is_active", "p.created_at", "p.updated_at").
+		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.is_active", "p.created_at", "p.updated_at", "p.deleted_at").
 		ColumnExpr("c.id AS category__id").
 		ColumnExpr("c.name AS category__name").
 		ColumnExpr("json_agg(json_build_object('id', r.id, 'description', r.description, 'rating', r.rating, 'username', u.username)) AS reviews").
@@ -79,6 +79,7 @@ func GetByIdProductService(ctx context.Context, id int64) (*response.ProductDeta
 		Join("LEFT JOIN reviews AS r ON r.product_id = p.id").
 		Join("LEFT JOIN users AS u ON u.id = r.user_id").
 		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'").
+		Where("p.deleted_at IS NULL").
 		GroupExpr("p.id, c.id, i.id, i.ref_id, i.type, i.description").
 		Where("p.id = ?", id).
 		Scan(ctx, product)
@@ -99,6 +100,20 @@ func CreateProductService(ctx context.Context, req requests.ProductCreateRequest
 	}
 	if !ex {
 		return nil, errors.New("categories not found")
+	}
+
+	// ตรวจสอบว่าสินค้าชื่อนี้มีอยู่แล้วหรือไม่
+	productExists, err := db.NewSelect().
+		TableExpr("products").
+		Where("name = ?", req.Name).
+		Where("category_id = ?", req.CategoryID).
+		Where("deleted_at IS NULL").
+		Exists(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if productExists {
+		return nil, errors.New("product already exists in this category")
 	}
 
 	// เพิ่มสินค้าใหม่
@@ -213,18 +228,19 @@ func DeleteProductService(ctx context.Context, productID int64) error {
 
 	// ตั้งค่า is_active เป็น false และบันทึกเวลาใน deleted_at
 	product.IsActive = false
-	now := time.Now()
-	product.DeletedAt = &now
+	timestamp := time.Now().Unix()
 
 	_, err = db.NewUpdate().
 		Model(product).
-		Column("is_active", "deleted_at").
+		Set("is_active = ?", false).
+		Set("deleted_at = ?", timestamp).
 		Where("id = ?", productID).
 		Exec(ctx)
 	if err != nil {
 		return errors.New("failed to update product as deleted")
 	}
 
+	// ลบรูปภาพของสินค้า
 	_, err = db.NewDelete().
 		TableExpr("images").
 		Where("ref_id = ? AND type = 'product_main'", productID).

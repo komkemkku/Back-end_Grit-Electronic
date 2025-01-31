@@ -115,20 +115,23 @@ func CreateCategoryService(ctx context.Context, req requests.CategoryCreateReque
 }
 
 func UpdateCategoryService(ctx context.Context, id int64, req requests.CategoryUpdateRequest) (*model.Categories, error) {
-	ex, err := db.NewSelect().TableExpr("categories").Where("id=?", id).Exists(ctx)
+	// ตรวจสอบว่าหมวดหมู่มีอยู่หรือไม่
+	exists, err := db.NewSelect().TableExpr("categories").Where("id=?", id).Exists(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if !ex {
+	if !exists {
 		return nil, errors.New("category not found")
 	}
 
+	// ดึงข้อมูลหมวดหมู่เดิม
 	category := &model.Categories{}
-
 	err = db.NewSelect().Model(category).Where("id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
+
+	// อัปเดตข้อมูลหมวดหมู่
 	category.Name = req.Name
 	category.IsActive = req.IsActive
 	category.SetUpdateNow()
@@ -138,19 +141,42 @@ func UpdateCategoryService(ctx context.Context, id int64, req requests.CategoryU
 		return nil, err
 	}
 
-	img := requests.ImageCreateRequest{
-		RefID:       category.ID,
-		Type:        "categories",
-		Description: req.ImageCategories,
-	}
-
-	_, err = image.CreateImageService(ctx, img)
+	// ตรวจสอบว่ามีรูปภาพเดิมอยู่หรือไม่
+	imgExists, err := db.NewSelect().
+		TableExpr("images").
+		Where("ref_id = ? AND type = 'categories'", category.ID).
+		Exists(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	if imgExists {
+		// อัปเดตรูปภาพเดิม
+		_, err = db.NewUpdate().
+			TableExpr("images").
+			Set("description = ?", req.ImageCategories).
+			Where("ref_id = ? AND type = 'categories'", category.ID).
+			Exec(ctx)
+		if err != nil {
+			return nil, errors.New("failed to update category image")
+		}
+	} else {
+		// ถ้ายังไม่มีรูปภาพ ให้เพิ่มใหม่
+		img := requests.ImageCreateRequest{
+			RefID:       category.ID,
+			Type:        "categories",
+			Description: req.ImageCategories,
+		}
+
+		_, err = image.CreateImageService(ctx, img)
+		if err != nil {
+			return nil, errors.New("failed to create category image")
+		}
+	}
+
 	return category, nil
 }
+
 
 func DeleteCategoryService(ctx context.Context, categoryID int64) error {
 	exists, err := db.NewSelect().

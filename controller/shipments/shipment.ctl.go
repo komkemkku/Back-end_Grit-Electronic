@@ -8,7 +8,12 @@ import (
 )
 
 func CreateShipment(c *gin.Context) {
+
+	user := c.GetInt("user_id")
+
 	req := requests.ShipmentCreateRequest{}
+
+	req.UserID = user
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())

@@ -25,8 +25,8 @@ func ListShipmentService(ctx context.Context, req requests.ShipmentRequest) ([]r
 
 	// สร้าง query
 	query := db.NewSelect().
-    TableExpr("shipments AS s").
-    Column("s.id", "s.firstname", "s.lastname", "s.address", "s.zip_code", "s.sub_district", "s.district", "s.province", "s.status", "s.created_at", "s.updated_at")
+		TableExpr("shipments AS s").
+		Column("s.id", "s.firstname", "s.lastname", "s.address", "s.zip_code", "s.sub_district", "s.district", "s.province", "s.status", "s.created_at", "s.updated_at")
 
 	if req.Search != "" {
 		query.Where("s.zip_code LIKE ?", "%"+req.Search+"%")
@@ -71,13 +71,14 @@ func CreateShipmentService(ctx context.Context, req requests.ShipmentCreateReque
 
 	zipcodeInt, err := strconv.Atoi(req.ZipCode)
 	if err != nil {
-        return nil, fmt.Errorf("invalid zipcode value: %v", err) // จัดการข้อผิดพลาด
-    }
+		return nil, fmt.Errorf("invalid zipcode value: %v", err) // จัดการข้อผิดพลาด
+	}
 
 	// เพิ่ม
 	shipment := &model.Shipments{
-		Firstname: req.Firstname,
-		Lastname:  req.Lastname,
+		UserID:      req.UserID,
+		Firstname:   req.Firstname,
+		Lastname:    req.Lastname,
 		Address:     req.Address,
 		ZipCode:     zipcodeInt,
 		SubDistrict: req.SubDistrict,
@@ -109,9 +110,9 @@ func UpdateShipmentService(ctx context.Context, id int64, req requests.ShipmentU
 	shipment := &model.Shipments{}
 
 	zipcodeInt, err := strconv.Atoi(req.ZipCode)
-	if err!= nil {
-        return nil, fmt.Errorf("invalid status value: %v", err)
-    }
+	if err != nil {
+		return nil, fmt.Errorf("invalid status value: %v", err)
+	}
 
 	err = db.NewSelect().Model(shipment).Where("id = ?", id).Scan(ctx)
 	if err != nil {
