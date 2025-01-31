@@ -10,36 +10,43 @@ import (
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
-	"github.com/uptrace/bun"
 )
 
 var db = configs.Database()
 
 func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]response.OrderResponses, int, error) {
-
-	var Offset int64
+	var offset int64
 	if req.Page > 0 {
-		Offset = (req.Page - 1) * req.Size
+		offset = (req.Page - 1) * req.Size
 	}
 
 	resp := []response.OrderResponses{}
 
 	// สร้าง query
-	query := db.NewSelect().
-		TableExpr("orders AS o").
-		Column("o.id", "o.user_id", "o.payment_id", "o.shipment_id", "o.cart_id", "status", "o.created_at", "o.updated_at")
+	query := db.NewSelect().TableExpr("orders AS o").
+		Column("o.id", "o.user_id", "o.status", "o.created_at", "o.updated_at").
+		ColumnExpr("SUM(ci.quantity) AS total_amount").
+		ColumnExpr("SUM(p.price * ci.quantity) AS total_price").
+		ColumnExpr("py.system_bank_id, py.price AS payment_price, py.bank_name, py.account_name, py.account_number, py.status AS payment_status").
+		ColumnExpr("s.firstname, s.lastname, s.address, s.zip_code, s.sub_district, s.district, s.province, s.status AS shipment_status").
+		Join("LEFT JOIN cart_items AS ci ON ci.order_id = o.id").
+		// Join("LEFT JOIN products AS p ON p.id = ci.product_id").
+		Join("LEFT JOIN payments AS py ON py.id = o.payment_id").
+		Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id").
+		Group("o.id, py.id, s.id")
 
 	if req.Search != "" {
 		query.Where("o.status ILIKE ?", "%"+req.Search+"%")
 	}
 
+	// นับจำนวน total records
 	total, err := query.Count(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	// Execute query
-	err = query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
+	// ดึงข้อมูล orders พร้อม payment และ shipment
+	err = query.Offset(int(offset)).Limit(int(req.Size)).Scan(ctx, &resp)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -60,15 +67,17 @@ func GetByIdOrderService(ctx context.Context, userID int64) (*response.OrderResp
 	// สร้าง response object
 	order := &response.OrderResponses{}
 
-	err = db.NewSelect().
-		TableExpr("orders AS o").
+	err = db.NewSelect().TableExpr("orders AS o").
 		Column("o.id", "o.user_id", "o.status", "o.created_at", "o.updated_at").
-		ColumnExpr("c.total_cart_amount", "c.total_cart_price").
-		ColumnExpr("p.system_bank_id", "p.price", "p.bank_name", "p.account_name", "p.account_number", "p.status AS payment_status").
-		ColumnExpr("s.firstname", "s.lastname", "s.address", "s.zip_code", "s.sub_district", "s.district", "s.province", "s.status AS shipment_status").
-		Join("LEFT JOIN carts AS c ON o.cart_id = c.id").
-		Join("LEFT JOIN payments AS p ON o.payment_id = p.id").
-		Join("LEFT JOIN shipments AS s ON o.shipment_id = s.id").
+		ColumnExpr("SUM(ci.quantity) AS total_amount").
+		ColumnExpr("SUM(p.price * ci.quantity) AS total_price").
+		ColumnExpr("py.system_bank_id, py.price AS payment_price, py.bank_name, py.account_name, py.account_number, py.status AS payment_status").
+		ColumnExpr("s.firstname, s.lastname, s.address, s.zip_code, s.sub_district, s.district, s.province, s.status AS shipment_status").
+		Join("LEFT JOIN cart_items AS ci ON ci.order_id = o.id").
+		Join("LEFT JOIN products AS p ON p.id = ci.product_id").
+		Join("LEFT JOIN payments AS py ON py.id = o.payment_id").
+		Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id").
+		Group("o.id, py.id, s.id").
 		Where("o.user_id = ?", userID).
 		Scan(ctx, order)
 
@@ -77,109 +86,72 @@ func GetByIdOrderService(ctx context.Context, userID int64) (*response.OrderResp
 	}
 	return order, nil
 }
-
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
-	exists, err := db.NewSelect().TableExpr("orders").Where("user_id = ?").Exists(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("database query error: %w", err)
+	var cartID int64
+	fmt.Printf("Finding cart with user_id: %d\n", req.UserID) 
+	if err := db.NewSelect().Table("carts").Column("id").Where("user_id = ?", req.UserID).Scan(ctx, &cartID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no cart found for user_id: %d", req.UserID)
+		}
+		return nil, fmt.Errorf("failed to find cart: %v", err)
 	}
-	if !exists {
-		return nil, errors.New("user not found")
-	}
+	fmt.Printf("Found cart ID: %d\n", cartID) 
 
-	// Fetch cart ID for the user
-	var cart struct {
-		ID int64 `json:"id"`
-	}
-	err = db.NewSelect().
-		TableExpr("carts").
-		Column("id").
-		Where("user_id = ?", req.UserID).
-		Scan(ctx, &cart)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find cart for user_id %d: %v", req.UserID, err)
-	}
-
-	// Fetch cart items and join with product details
-	var products []struct {
+	var cartItems []struct {
 		ProductID   int64   `json:"product_id"`
-		Name        string  `json:"name"`
+		ProductName string  `json:"product_name"`
+		Amount      int64   `json:"amount"`
 		Price       float64 `json:"price"`
-		Quantity    int64   `json:"quantity"`
-		TotalAmount float64 `json:"total_amount"`
 	}
-	err = db.NewSelect().
-		TableExpr("cart_items AS ci").
-		Join("JOIN products AS p ON p.id = ci.product_id").
-		ColumnExpr("p.id AS product_id, p.name, p.price, ci.quantity, (p.price * ci.quantity) AS total_amount").
-		Where("ci.cart_id = ?", cart.ID).
-		Scan(ctx, &products)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch products: %v", err)
+	if err := db.NewSelect().
+		Table("cart_items").
+		ColumnExpr("cart_items.product_id, products.name AS product_name, cart_items.total_product_amount AS amount, products.price").
+		Join("JOIN products ON products.id = cart_items.product_id").
+		Where("cart_id = ?", cartID).
+		Scan(ctx, &cartItems); err != nil {
+		return nil, fmt.Errorf("failed to fetch cart items: %v", err)
 	}
 
-	// Calculate total price
 	totalPrice := 0.0
-	for _, p := range products {
-		totalPrice += p.TotalAmount
+	totalAmount := 0
+	for _, item := range cartItems {
+		totalPrice += item.Price * float64(item.Amount)
+		totalAmount += int(item.Amount)
 	}
 
-	// Create order
 	order := &model.Orders{
-		UserID:     req.UserID,
-		ShipmentID: req.ShipmentID,
-		PaymentID:  req.PaymentID,
-		Total_price: totalPrice,
-		Status:     "pending",
+		UserID:       req.UserID,
+		ShipmentID:   req.ShipmentID,
+		PaymentID:    req.PaymentID,
+		Total_price:  totalPrice,
+		Total_amount: totalAmount,
+		Status:       "pending",
 	}
-	_, err = db.NewInsert().
-		Model(order).
-		Returning("id").
-		Exec(ctx)
-	if err != nil {
+	if _, err := db.NewInsert().Model(order).Returning("id").Exec(ctx); err != nil {
 		return nil, fmt.Errorf("failed to create order: %v", err)
 	}
 
-	// Create order details
-	orderDetails := make([]model.OrderDetail, len(products))
-	for i, p := range products {
-		orderDetails[i] = model.OrderDetail{
+	for _, item := range cartItems {
+		orderDetail := &model.OrderDetail{
 			OrderID:            order.ID,
-			ProductName:        p.Name,
-			TotalProductPrice:  p.Price,
-			TotalProductAmount: int(p.Quantity),
+			ProductName:        item.ProductName,
+			TotalProductPrice:  item.Price * float64(item.Amount),
+			TotalProductAmount: int(item.Amount),
 		}
-	}
-	_, err = db.NewInsert().
-		Model(&orderDetails).
-		Exec(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to insert order details: %v", err)
+		if _, err := db.NewInsert().Model(orderDetail).Exec(ctx); err != nil {
+			return nil, fmt.Errorf("failed to create order detail: %v", err)
+		}
 	}
 
-	// Delete cart items and cart in a transaction
-	err = db.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewDelete().
-			TableExpr("cart_items").
-			Where("cart_id = ?", cart.ID).
-			Exec(ctx); err != nil {
-			return fmt.Errorf("failed to delete cart items: %v", err)
-		}
-		if _, err := tx.NewDelete().
-			TableExpr("carts").
-			Where("id = ?", cart.ID).
-			Exec(ctx); err != nil {
-			return fmt.Errorf("failed to delete cart: %v", err)
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("transaction error: %v", err)
+	if _, err := db.NewDelete().Table("cart_items").Where("cart_id = ?", cartID).Exec(ctx); err != nil {
+		return nil, fmt.Errorf("failed to delete cart items: %v", err)
+	}
+	if _, err := db.NewDelete().Table("carts").Where("id = ?", cartID).Exec(ctx); err != nil {
+		return nil, fmt.Errorf("failed to delete cart: %v", err)
 	}
 
 	return order, nil
 }
-
 
 func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateRequest) (*model.Orders, error) {
 	// ตรวจสอบว่า order มีอยู่ในฐานข้อมูลหรือไม่
