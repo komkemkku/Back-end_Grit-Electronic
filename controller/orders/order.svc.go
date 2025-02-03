@@ -58,15 +58,12 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 	// ส่ง response กลับ
 	return resp, total, nil
 }
-
-
-
-
-
-
 func GetByIdOrderService(ctx context.Context, userID int64) (*response.OrderResponses, error) {
 	// ตรวจสอบว่าผู้ใช้งานมีอยู่ในระบบหรือไม่
-	exists, err := db.NewSelect().TableExpr("orders").Where("user_id = ?", userID).Exists(ctx)
+	exists, err := db.NewSelect().
+		Table("orders").
+		Where("user_id = ?", userID).
+		Exists(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("database query error: %w", err)
 	}
@@ -77,25 +74,30 @@ func GetByIdOrderService(ctx context.Context, userID int64) (*response.OrderResp
 	// สร้าง response object
 	order := &response.OrderResponses{}
 
-	err = db.NewSelect().TableExpr("orders AS o").
-		Column("o.id", "o.user_id", "o.status", "o.created_at", "o.updated_at").
-		ColumnExpr("SUM(ci.quantity) AS total_amount").
-		ColumnExpr("SUM(p.price * ci.quantity) AS total_price").
-		ColumnExpr("py.system_bank_id, py.price AS payment_price, py.bank_name, py.account_name, py.account_number, py.status AS payment_status").
-		ColumnExpr("s.firstname, s.lastname, s.address, s.zip_code, s.sub_district, s.district, s.province, s.status AS shipment_status").
-		Join("LEFT JOIN cart_items AS ci ON ci.order_id = o.id").
-		Join("LEFT JOIN products AS p ON p.id = ci.product_id").
+	// Query ข้อมูล order, payment, shipment
+	err = db.NewSelect().
+		TableExpr("orders AS o").
+		Column("o.id AS order_id", "o.user_id", "o.status AS order_status", "o.created_at", "o.updated_at", "o.total_price", "o.total_amount").
+		ColumnExpr("py.price AS payment_price, py.bank_name, py.account_name, py.account_number, py.status AS payment_status").
+		ColumnExpr("s.firstname AS shipment_firstname, s.lastname AS shipment_lastname, s.address AS shipment_address, s.zip_code AS shipment_zip_code, s.sub_district AS shipment_sub_district, s.district AS shipment_district, s.province AS shipment_province, s.status AS shipment_status").
+		ColumnExpr("ci.product_id, ci.total_product_amount AS cart_item_total_product_amount").
 		Join("LEFT JOIN payments AS py ON py.id = o.payment_id").
 		Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id").
-		Group("o.id, py.id, s.id").
+		Join("LEFT JOIN carts AS c ON c.user_id = o.user_id").
+		Join("LEFT JOIN cart_items AS ci ON ci.cart_id = c.id").
 		Where("o.user_id = ?", userID).
 		Scan(ctx, order)
 
 	if err != nil {
-		return nil, fmt.Errorf("query execution error: %w", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("no orders found for user_id: %d", userID)
+		}
+		return nil, fmt.Errorf("failed to fetch order details: %w", err)
 	}
+
 	return order, nil
 }
+
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
 	var cartID int64
 	fmt.Printf("Finding cart with user_id: %d\n", req.UserID)
@@ -112,14 +114,22 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 		ProductName string  `json:"product_name"`
 		Amount      int64   `json:"amount"`
 		Price       float64 `json:"price"`
+		Stock       int64   `json:"stock"`
 	}
 	if err := db.NewSelect().
 		Table("cart_items").
-		ColumnExpr("cart_items.product_id, products.name AS product_name, cart_items.total_product_amount AS amount, products.price").
+		ColumnExpr("cart_items.product_id, products.name AS product_name, cart_items.total_product_amount AS amount, products.price, products.stock").
 		Join("JOIN products ON products.id = cart_items.product_id").
 		Where("cart_id = ?", cartID).
 		Scan(ctx, &cartItems); err != nil {
 		return nil, fmt.Errorf("failed to fetch cart items: %v", err)
+	}
+
+	// ตรวจสอบว่าสินค้าในสต็อกเพียงพอหรือไม่
+	for _, item := range cartItems {
+		if item.Amount > item.Stock {
+			return nil, fmt.Errorf("not enough stock for product %s", item.ProductName)
+		}
 	}
 
 	totalPrice := 0.0
@@ -137,11 +147,23 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 		Total_amount: totalAmount,
 		Status:       "pending",
 	}
+	order.SetCreatedNow()
+	order.SetUpdateNow()
+
 	if _, err := db.NewInsert().Model(order).Returning("id").Exec(ctx); err != nil {
 		return nil, fmt.Errorf("failed to create order: %v", err)
 	}
 
 	for _, item := range cartItems {
+		// ลดจำนวน stock ของสินค้า
+		if _, err := db.NewUpdate().
+			Table("products").
+			Set("stock = stock - ?", item.Amount).
+			Where("id = ?", item.ProductID).
+			Exec(ctx); err != nil {
+			return nil, fmt.Errorf("failed to update stock for product %s: %v", item.ProductName, err)
+		}
+
 		orderDetail := &model.OrderDetail{
 			OrderID:            order.ID,
 			ProductName:        item.ProductName,
@@ -186,7 +208,7 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 		return nil, fmt.Errorf("failed to fetch order: %v", err)
 	}
 
-	// อัปเดตข้อมูลเฉพาะ status, payment_id, shipment_id
+	// อัปเดตข้อมูล
 	if req.Status != "" {
 		order.Status = req.Status
 	}
@@ -196,12 +218,14 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 	if req.ShipmentID != 0 {
 		order.ShipmentID = req.ShipmentID
 	}
+	if req.CartID != 0 {
+	}
 	order.SetUpdateNow() // ตั้งค่า UpdatedAt
 
 	// บันทึกข้อมูลกลับไปยังฐานข้อมูล
 	_, err = db.NewUpdate().
 		Model(order).
-		Column("status", "payment_id", "shipment_id", "updated_at").
+		Column("status", "payment_id", "shipment_id", "cart_id", "updated_at").
 		Where("id = ?", id).
 		Exec(ctx)
 	if err != nil {

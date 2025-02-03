@@ -1,6 +1,5 @@
 package response
 
-
 // type OrderResponses struct {
 //     ID         int    `json:"id"`
 //     UserID     int    `json:"user_id"`
@@ -13,20 +12,18 @@ package response
 // }
 
 type OrderRespOrderDetail struct {
-	ID          int     `json:"id"`
-	Status      int     `json:"status"`
+	ID     int `json:"id"`
+	Status int `json:"status"`
 }
 
-
-
 type OrderResponses struct {
-	ID            int     `json:"id"`
-	UserID        int     `json:"user_id"`
-	Status        string  `json:"status"`
-	CreatedAt     string  `json:"created_at"`
-	UpdatedAt     string  `json:"updated_at"`
-	TotalAmount   int     `json:"total_amount"`
-	TotalPrice    float64 `json:"total_price"`
+	ID          int     `json:"id"`
+	UserID      int     `json:"user_id"`
+	Status      string  `json:"status"`
+	CreatedAt   string  `json:"created_at"`
+	UpdatedAt   string  `json:"updated_at"`
+	TotalAmount int     `json:"total_amount"`
+	TotalPrice  float64 `json:"total_price"`
 
 	// ข้อมูลการชำระเงิน
 	SystemBankID  int     `json:"system_bank_id" bun:"system_bank_id"`
@@ -37,18 +34,12 @@ type OrderResponses struct {
 	PaymentStatus string  `json:"payment_status" bun:"payment_status"`
 
 	// ข้อมูลการจัดส่ง
-	Firstname    string `json:"firstname" bun:"firstname"`
-	Lastname     string `json:"lastname" bun:"lastname"`
-	Address      string `json:"address" bun:"address"`
-	ZipCode      string `json:"zip_code" bun:"zip_code"`
-	SubDistrict  string `json:"sub_district" bun:"sub_district"`
-	District     string `json:"district" bun:"district"`
-	Province     string `json:"province" bun:"province"`
+	Firstname      string `json:"firstname" bun:"firstname"`
+	Lastname       string `json:"lastname" bun:"lastname"`
+	Address        string `json:"address" bun:"address"`
+	ZipCode        string `json:"zip_code" bun:"zip_code"`
+	SubDistrict    string `json:"sub_district" bun:"sub_district"`
+	District       string `json:"district" bun:"district"`
+	Province       string `json:"province" bun:"province"`
 	ShipmentStatus string `json:"shipment_status" bun:"shipment_status"`
 }
-
-
-
-
-
-
