@@ -14,7 +14,7 @@ type CartItemCreateRequest struct {
 	UserID             int `json:"user_id"`
 	ProductID          int `json:"product_id"`
 	TotalProductAmount int `json:"total_product_amount"`
-	Status string `json:"status"`
+	// Status string `json:"status"`
 }
 
 type CartItemUpdateRequest struct {
@@ -23,7 +23,7 @@ type CartItemUpdateRequest struct {
 	ProductID          int    `json:"product_id"`
 	// CartID             int    `json:"cart_id"`
 	TotalProductAmount int    `json:"total_product_amount"`
-	Status             string `json:"status"`
+	// Status             string `json:"status"`
 }
 
 type CartItemDeleteRequest struct {

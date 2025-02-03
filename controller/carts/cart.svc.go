@@ -12,57 +12,32 @@ import (
 
 var db = configs.Database()
 
-// func ListCartService(ctx context.Context, req requests.CartRequest) ([]response.CartResponses, int, error) {
-// 	var Offset int64
-// 	if req.Page > 0 {
-// 		Offset = (req.Page - 1) * req.Size
-// 	}
-
-// 	resp := []response.CartResponses{}
-
-// 	// สร้าง query พร้อมเชื่อมโยงกับ cart_items
-// 	query := db.NewSelect().
-// 		TableExpr("carts AS c").
-// 		Column("c.id", "c.user_id", "c.total_cart_amount", "c.total_cart_price", "c.status", "c.created_at", "c.updated_at").
-// 		ColumnExpr("json_agg(json_build_object('id', ci.id, 'product_id', ci.product_id, 'product_name', ci.product_name, 'product_image_main', ci.product_image_main, 'total_product_price', ci.total_product_price, 'total_product_amount', ci.total_product_amount)) AS cart_items").
-// 		Join("LEFT JOIN cart_items AS ci ON ci.cart_id = c.id").
-// 		GroupExpr("c.id")
-
-// 	total, err := query.Count(ctx)
-// 	if err != nil {
-// 		return nil, 0, err
-// 	}
-
-// 	// Execute query
-// 	err = query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
-// 	if err != nil {
-// 		return nil, 0, err
-// 	}
-
-// 	return resp, total, nil
-// }
-
-func GetByIdCartService(ctx context.Context, id int64) (*response.CartResponses, error) {
-	// ตรวจสอบว่ามีตะกร้าอยู่หรือไม่
-	ex, err := db.NewSelect().TableExpr("carts").Where("id = ?", id).Exists(ctx)
+func GetByIdCartService(ctx context.Context, userID int64) (*response.CartResponses, error) {
+	// ตรวจสอบว่าผู้ใช้มีตะกร้าหรือไม่
+	exists, err := db.NewSelect().
+		TableExpr("carts").
+		Where("user_id = ?", userID).
+		Exists(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if !ex {
-		return nil, errors.New("cart not found")
+	if !exists {
+
+		emptyCart := &response.CartResponses{
+			CartItems: []response.CartItemRes{},
+		}
+		return emptyCart, nil
 	}
 
-	cart := &response.CartResponses{}
+	// ดึงข้อมูลตะกร้าและสินค้า
+	cartResponse := &response.CartResponses{}
 
-	// Query ตะกร้าพร้อมรายการสินค้า
 	err = db.NewSelect().
 		TableExpr("carts AS c").
 		Column("c.id", "c.created_at", "c.updated_at").
 		ColumnExpr("u.id AS user__id").
 		ColumnExpr("u.username AS user__username").
-		ColumnExpr(`
-		COALESCE(
-			json_agg(
+		ColumnExpr(`COALESCE(json_agg(
 				json_build_object(
 					'id', ci.id,
 					'product', json_build_object(
@@ -71,23 +46,20 @@ func GetByIdCartService(ctx context.Context, id int64) (*response.CartResponses,
 						'price', p.price
 					),
 					'total_product_amount', ci.total_product_amount
-				)
-				ORDER BY ci.id ASC
-			) FILTER (WHERE ci.id IS NOT NULL), '[]'
-		) AS cart_items
-	`).
+				) ORDER BY ci.id ASC
+			) FILTER (WHERE ci.id IS NOT NULL), '[]') AS cart_items`).
 		Join("LEFT JOIN cart_items AS ci ON ci.cart_id = c.id").
 		Join("LEFT JOIN users AS u ON u.id = c.user_id").
 		Join("LEFT JOIN products AS p ON p.id = ci.product_id").
 		GroupExpr("c.id, u.id").
-		Where("c.id = ?", id).
-		Scan(ctx, cart)
+		Where("c.user_id = ?", userID).
+		Scan(ctx, cartResponse)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return cart, nil
+	return cartResponse, nil
 }
 
 func CreateCartService(ctx context.Context, req requests.CartAddItemRequest) (*model.Carts, error) {

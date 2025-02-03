@@ -36,14 +36,19 @@ func ListProductService(ctx context.Context, req requests.ProductRequest) ([]res
 		Join("LEFT JOIN users AS u ON u.id = r.user_id").
 		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'").
 		Where("p.deleted_at IS NULL").
-		// Where("p.is_active IS true").
 		GroupExpr("p.id, c.id, i.id, i.ref_id, i.type, i.description")
 
-	query.Order("p.id ASC")
+	// **เพิ่มเงื่อนไขกรองประเภทสินค้า**
+	if req.CategoryID > 0 {
+		query.Where("c.id = ?", req.CategoryID)
+	}
 
+	// **เพิ่มเงื่อนไขค้นหาด้วยชื่อสินค้า**
 	if req.Search != "" {
 		query.Where("p.name ILIKE ?", "%"+req.Search+"%")
 	}
+
+	query.Order("p.id ASC")
 
 	total, err := query.Count(ctx)
 	if err != nil {
