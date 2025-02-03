@@ -94,6 +94,7 @@ func GetByIdWishlistsService(ctx context.Context, id int64) (*response.WishlistR
 }
 
 func CreateWishlistsService(ctx context.Context, req requests.WishlistsAddRequest) error {
+
 	wishlist := &model.Wishlists{
 		UserID:           req.UserID,
 		ProductID:        req.ProductID,

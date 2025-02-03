@@ -8,7 +8,12 @@ import (
 )
 
 func CreateOrder(c *gin.Context) {
+
+	user := c.GetInt("user_id")
+
 	req := requests.OrderCreateRequest{}
+
+	req.UserID = user
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())

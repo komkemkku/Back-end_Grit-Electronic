@@ -36,6 +36,7 @@ func ListProductService(ctx context.Context, req requests.ProductRequest) ([]res
 		Join("LEFT JOIN users AS u ON u.id = r.user_id").
 		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'").
 		Where("p.deleted_at IS NULL").
+		// Where("p.is_active IS true").
 		GroupExpr("p.id, c.id, i.id, i.ref_id, i.type, i.description")
 
 	query.Order("p.id ASC")
@@ -80,6 +81,7 @@ func GetByIdProductService(ctx context.Context, id int64) (*response.ProductDeta
 		Join("LEFT JOIN users AS u ON u.id = r.user_id").
 		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'").
 		Where("p.deleted_at IS NULL").
+		Where("p.is_active IS true").
 		GroupExpr("p.id, c.id, i.id, i.ref_id, i.type, i.description").
 		Where("p.id = ?", id).
 		Scan(ctx, product)

@@ -70,14 +70,14 @@ func main() {
 	r.POST("/auth/login/admin", auth.LoginAdmin)
 
 	// Order
-	r.POST("/order/create", orders.CreateOrder)
+	r.POST("/order/create", md, orders.CreateOrder)
 	r.GET("/order/:id", orders.GetOrderByID)
 	r.GET("/order", orders.OrderList)
 	r.DELETE("/order/:id", orders.DeleteOrder)
 	r.PATCH("/order/:id", orders.UpdateOrder)
 
 	// Wishlist
-	r.POST("/wish/create", wishlist.CreateWishlist)
+	r.POST("/wish/create", md, wishlist.CreateWishlist)
 	r.GET("/wish/:id", wishlist.GetWishlistByID)
 	r.GET("/wish", wishlist.Wishlist)
 	r.DELETE("/wish/:id", wishlist.DeleteWishlists)

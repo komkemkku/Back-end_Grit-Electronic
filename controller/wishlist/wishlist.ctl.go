@@ -34,7 +34,12 @@ func Wishlist(c *gin.Context) {
 }
 
 func CreateWishlist(c *gin.Context) {
+
+	user := c.GetInt("user_id")
+
 	var req requests.WishlistsAddRequest
+
+	req.UserID = user
 
 	// ตรวจสอบ JSON Input
 	if err := c.ShouldBindJSON(&req); err != nil {

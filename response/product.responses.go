@@ -27,6 +27,7 @@ type ProductDetailResponses struct {
 	IsActive    bool                      `json:"is_active"`
 	Created_at  int64                     `json:"created_at"`
 	Updated_at  int64                     `json:"updated_at"`
+	Deleted_at  int64                     `json:"deleted_at"`
 }
 
 type ProductRespCart struct {

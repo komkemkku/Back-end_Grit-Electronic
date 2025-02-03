@@ -18,6 +18,19 @@ type PaymentResponses struct {
 type PaymentUserResp struct {
 }
 
+type PaymentOrderResp struct {
+	ID              int                   `json:"id"`
+	UpdatedBy       int                   `json:"updated_by"`
+	// SystemBank      SystemBankRespPayment `bun:"systembank"`
+	// ImageSystemBank ImageSystemBankResp   `bun:"imagesystembank"`
+	// Price           float64               `json:"price"`
+	// Status          string                `json:"status"`
+	// Image           ImagePaymentResp      `bun:"image"`
+	// BankName        string                `json:"bank_name"`
+	// AccountName     string                `json:"account_name"`
+	// AccountNumber   string                `json:"account_number"`
+}
+
 type PaymentRespOrderDetail struct {
 	ID     int     `json:"id"`
 	Price  float64 `json:"price"`

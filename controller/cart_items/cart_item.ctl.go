@@ -32,7 +32,6 @@ func DeleteCartItem(c *gin.Context) {
 
 	user := c.GetInt("user_id")
 
-	// รับค่า `cart_item_id` จาก request body
 	req := requests.CartItemDeleteRequest{}
 
 	req.UserID = user

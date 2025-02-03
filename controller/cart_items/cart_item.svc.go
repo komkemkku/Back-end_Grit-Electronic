@@ -82,6 +82,7 @@ func CreateCartItemService(ctx context.Context, req requests.CartItemCreateReque
 	err := db.NewSelect().
 		Model(product).
 		Where("id = ?", req.ProductID).
+		Where("is_active IS true").
 		Scan(ctx)
 	if err != nil {
 		return nil, errors.New("product not found")

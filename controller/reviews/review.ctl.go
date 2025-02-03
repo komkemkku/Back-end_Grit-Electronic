@@ -76,7 +76,9 @@ func GetReviewByID(c *gin.Context) {
 }
 
 func UpdateReview(c *gin.Context) {
+
 	id := requests.ReviewIdRequest{}
+
 	if err := c.BindUri(&id); err != nil {
 		response.BadRequest(c, err.Error())
 		return

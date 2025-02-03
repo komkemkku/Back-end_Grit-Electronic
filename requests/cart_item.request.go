@@ -14,7 +14,6 @@ type CartItemCreateRequest struct {
 	UserID             int `json:"user_id"`
 	ProductID          int `json:"product_id"`
 	TotalProductAmount int `json:"total_product_amount"`
-	// TotalProductPrice  float64 `json:"total_product_price"`
 	Status string `json:"status"`
 }
 

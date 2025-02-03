@@ -22,22 +22,97 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 
 	resp := []response.OrderResponses{}
 
+	// แบบที่ 1
 	// สร้าง query
-	query := db.NewSelect().TableExpr("orders AS o").
-		Column("o.id", "o.user_id", "o.status", "o.created_at", "o.updated_at").
-		ColumnExpr("SUM(ci.quantity) AS total_amount").
-		ColumnExpr("SUM(p.price * ci.quantity) AS total_price").
-		ColumnExpr("py.system_bank_id, py.price AS payment_price, py.bank_name, py.account_name, py.account_number, py.status AS payment_status").
-		ColumnExpr("s.firstname, s.lastname, s.address, s.zip_code, s.sub_district, s.district, s.province, s.status AS shipment_status").
-		Join("LEFT JOIN cart_items AS ci ON ci.order_id = o.id").
-		// Join("LEFT JOIN products AS p ON p.id = ci.product_id").
-		Join("LEFT JOIN payments AS py ON py.id = o.payment_id").
-		Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id").
-		Group("o.id, py.id, s.id")
+	// query := db.NewSelect().TableExpr("orders AS o").
+	// 	Column("o.id", "o.user_id", "o.status", "o.created_at", "o.updated_at").
+	// 	ColumnExpr("SUM(ci.quantity) AS total_amount").
+	// 	ColumnExpr("SUM(p.price * ci.quantity) AS total_price").
+	// 	ColumnExpr("py.system_bank_id, py.price AS payment_price, py.bank_name, py.account_name, py.account_number, py.status AS payment_status").
+	// 	ColumnExpr("s.firstname, s.lastname, s.address, s.zip_code, s.sub_district, s.district, s.province, s.status AS shipment_status").
+	// 	Join("LEFT JOIN cart_items AS ci ON ci.order_id = o.id").
+	// 	// Join("LEFT JOIN products AS p ON p.id = ci.product_id").
+	// 	Join("LEFT JOIN payments AS py ON py.id = o.payment_id").
+	// 	Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id").
+	// 	Group("o.id, py.id, s.id")
+
+	// แบบที่ 2
+	query := db.NewSelect().
+    TableExpr("orders AS o").
+    Column("o.id", "o.status", "o.created_at", "o.updated_at").
+    
+    // ✅ User ควรเป็น Object ไม่ใช่ Array
+    ColumnExpr(`
+        COALESCE(
+            json_build_object('id', u.id, 'username', u.username),
+            '{}'::json
+        ) AS user
+    `).
+
+    // ✅ Payment ควรเป็น Object
+    ColumnExpr(`
+        COALESCE(
+            json_build_object('id', py.id, 'updated_by', py.updated_by),
+            '{}'::json
+        ) AS payment
+    `).
+
+    // ✅ Shipment ควรเป็น Object
+	ColumnExpr(`
+    COALESCE(
+        json_build_object(
+            'id', s.id,
+            'firstname', s.firstname,
+            'lastname', s.lastname,
+            'address', s.address,
+            'zip_code', s.zip_code::TEXT,
+            '"sub_district"', s.sub_district,
+            'district', s.district,
+            'province', s.province
+        ),
+        '{}'::json
+    ) AS shipment
+`).
+
+    // ✅ Order Details ควรเป็น Array (เพราะมีหลายสินค้า)
+    ColumnExpr(`
+        COALESCE(
+            json_agg(
+                json_build_object(
+                    'id', od.id, 
+                    'product_name', od.product_name, 
+                    'total_product_amount', od.total_product_amount
+                )
+            ) FILTER (WHERE od.id IS NOT NULL), '[]'
+        ) AS order_details
+    `).
+
+    Join("LEFT JOIN users AS u ON u.id = o.user_id").
+    Join("LEFT JOIN payments AS py ON py.id = o.payment_id").
+    Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id").
+    Join("LEFT JOIN order_details AS od ON od.order_id = o.id").
+    GroupExpr("o.id, py.id, s.id, u.id")
+
 
 	if req.Search != "" {
 		query.Where("o.status ILIKE ?", "%"+req.Search+"%")
 	}
+
+	// แบบ 3
+	// query := db.NewSelect().
+	// 	TableExpr("orders AS o").
+	// 	Column("o.id", "o.status", "o.created_at", "o.updated_at").
+	// 	ColumnExpr("SUM(ci.quantity) AS total_amount").
+	// 	ColumnExpr("SUM(p.price * ci.quantity) AS total_price").
+	// 	ColumnExpr(`py.price AS payment_price, py.bank_name,py.account_name, py.account_number, py.status AS payment`).
+	// 	ColumnExpr(`s.firstname,s.lastname, s.address, s.zip_code, s.sub_district, s.district, s.province, s.status AS shipment`).
+	// 	ColumnExpr(`u.id AS user_id, u.username, u.email, u.firstname, u.lastname, u.phone`).
+	// 	Join("LEFT JOIN cart_items AS ci ON ci.order_id = o.id").
+	// 	Join("LEFT JOIN products AS p ON p.id = ci.product_id").
+	// 	Join("LEFT JOIN payments AS py ON py.id = o.payment_id").
+	// 	Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id").
+	// 	Join("LEFT JOIN users AS u ON u.id = o.user_id").
+	// 	Group("py.id, s.id, u.id, o.id")
 
 	// นับจำนวน total records
 	total, err := query.Count(ctx)
@@ -87,20 +162,20 @@ func GetByIdOrderService(ctx context.Context, userID int64) (*response.OrderResp
 	return order, nil
 }
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
-	var cartID int64
-	fmt.Printf("Finding cart with user_id: %d\n", req.UserID) 
+	var cartID int
+	fmt.Printf("Finding cart with user_id: %d\n", req.UserID)
 	if err := db.NewSelect().Table("carts").Column("id").Where("user_id = ?", req.UserID).Scan(ctx, &cartID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("no cart found for user_id: %d", req.UserID)
 		}
 		return nil, fmt.Errorf("failed to find cart: %v", err)
 	}
-	fmt.Printf("Found cart ID: %d\n", cartID) 
+	fmt.Printf("Found cart ID: %d\n", cartID)
 
 	var cartItems []struct {
-		ProductID   int64   `json:"product_id"`
+		ProductID   int     `json:"product_id"`
 		ProductName string  `json:"product_name"`
-		Amount      int64   `json:"amount"`
+		Amount      int     `json:"amount"`
 		Price       float64 `json:"price"`
 	}
 	if err := db.NewSelect().
@@ -127,6 +202,9 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 		Total_amount: totalAmount,
 		Status:       "pending",
 	}
+	order.SetCreatedNow()
+	// order.SetUpdatedNow()
+
 	if _, err := db.NewInsert().Model(order).Returning("id").Exec(ctx); err != nil {
 		return nil, fmt.Errorf("failed to create order: %v", err)
 	}
@@ -138,6 +216,9 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 			TotalProductPrice:  item.Price * float64(item.Amount),
 			TotalProductAmount: int(item.Amount),
 		}
+		orderDetail.SetCreatedNow()
+		// orderDetail.SetUpdatedNow()
+
 		if _, err := db.NewInsert().Model(orderDetail).Exec(ctx); err != nil {
 			return nil, fmt.Errorf("failed to create order detail: %v", err)
 		}
