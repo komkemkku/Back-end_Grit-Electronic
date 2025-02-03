@@ -205,13 +205,12 @@ func UpdateCartItemService(ctx context.Context, UserID int, cartItemID int, req 
 		return nil, errors.New("total product amount must be greater than 0")
 	}
 
-	// อัปเดต product_id และ total_product_amount
-	cartItem.ProductID = req.ProductID
 	cartItem.TotalProductAmount = req.TotalProductAmount
 	cartItem.SetUpdateNow()
 
 	_, err = db.NewUpdate().
 		Model(&cartItem).
+		Column("total_product_amount", "updated_at"). // อัปเดตเฉพาะฟิลด์ที่กำหนด
 		Where("id = ?", cartItem.ID).
 		Exec(ctx)
 	if err != nil {

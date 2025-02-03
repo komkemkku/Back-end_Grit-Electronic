@@ -7,6 +7,7 @@ import (
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
 )
 
+// ไม่ได้ใช้
 func AddCart(c *gin.Context) {
 	req := requests.CartAddItemRequest{}
 
@@ -39,44 +40,22 @@ func DeleteCart(c *gin.Context) {
 }
 
 func GetCartByID(c *gin.Context) {
-	id := requests.CartIdRequest{}
-	if err := c.BindUri(&id); err != nil {
-		response.BadRequest(c, err.Error())
-		return
+
+		userID := c.GetInt("user_id")
+		if userID == 0 {
+			response.BadRequest(c, "user ID is required")
+			return
+		}
+	
+		data, err := GetByIdCartService(c, int64(userID))
+		if err != nil {
+			response.InternalError(c, err.Error())
+			return
+		}
+	
+		response.Success(c, data)
 	}
-
-	data, err := GetByIdCartService(c, int64(id.ID))
-	if err != nil {
-		response.InternalError(c, err.Error())
-		return
-	}
-	response.Success(c, data)
-}
-
-// func CartList(c *gin.Context) {
-// 	req := requests.CartRequest{}
-// 	if err := c.BindQuery(&req); err != nil {
-// 		response.BadRequest(c, err.Error())
-// 		return
-// 	}
-
-// 	// เพิ่มตัวแปรเพื่อรับ grandTotal
-// 	data, total, err := ListCartService(c.Request.Context(), req)
-// 	if err != nil {
-// 		response.InternalError(c, err.Error())
-// 		return
-// 	}
-
-
-// 	// เพิ่ม grandTotal เข้าไปใน Response หากต้องการ
-// 	paginate := model.Paginate{
-// 		Page:       req.Page,
-// 		Size:       req.Size,
-// 		Total:      int64(total),
-// 	}
-
-// 	response.SuccessWithPaginate(c, data, paginate)
-// }
+	
 
 
 func UpdateCart(c *gin.Context) {

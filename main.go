@@ -85,7 +85,7 @@ func main() {
 
 	// Cart
 	r.POST("/cart/create", carts.AddCart)
-	r.GET("/cart/:id", carts.GetCartByID)
+	r.GET("/cart", md, carts.GetCartByID)
 	// r.GET("/cart", carts.CartList)
 	r.DELETE("/cart/:id", carts.DeleteCart)
 	r.PATCH("/cart/:id", carts.UpdateCart)
@@ -95,7 +95,6 @@ func main() {
 	r.GET("/cartitem", md, cartitems.CartItemList)
 	r.DELETE("/cartitem", md, cartitems.DeleteCartItem)
 	r.PATCH("/cartitem/:id", md, cartitems.UpdateCartItem)
-
 
 	// r.GET("/cartitem/:id", cartitems.GetCartItemByID)
 	// r.GET("/cartitem", cartitems.CartItemList)
