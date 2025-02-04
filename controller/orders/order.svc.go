@@ -58,15 +58,18 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 	// ส่ง response กลับ
 	return resp, total, nil
 }
-func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderResponses, error) {
-    // ตรวจสอบว่ามีคำสั่งซื้อนี้อยู่หรือไม่
-    ex, err := db.NewSelect().Table("orders").Where("id = ?", orderID).Exists(ctx)
-    if err != nil {
-        return nil, err
-    }
-    if !ex {
-        return nil, errors.New("order not found")
-    }
+func GetByIdOrderService(ctx context.Context, userID int64) (*response.OrderResponses, error) {
+	// ตรวจสอบว่าผู้ใช้งานมีอยู่ในระบบหรือไม่
+	exists, err := db.NewSelect().
+		Table("orders").
+		Where("user_id = ?", userID).
+		Exists(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("database query error: %w", err)
+	}
+	if !exists {
+		return nil, errors.New("user not found")
+	}
 
     // สร้าง response object
     order := &response.OrderResponses{}
