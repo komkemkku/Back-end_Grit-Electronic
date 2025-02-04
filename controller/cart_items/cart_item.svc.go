@@ -88,6 +88,14 @@ func CreateCartItemService(ctx context.Context, req requests.CartItemCreateReque
 		return nil, errors.New("product not found")
 	}
 
+	if product.Stock < req.TotalProductAmount {
+		return nil, errors.New("not enough stock")
+	}
+
+	if req.TotalProductAmount <= 0 {
+		return nil, errors.New("the product amount must be greater than 1")
+	}
+
 	// ตรวจสอบว่าผู้ใช้มี cart อยู่หรือไม่
 	cart := &model.Carts{}
 	err = db.NewSelect().
@@ -148,6 +156,7 @@ func CreateCartItemService(ctx context.Context, req requests.CartItemCreateReque
 
 	return cartItem, nil
 }
+
 
 func UpdateCartItemService(ctx context.Context, UserID int, cartItemID int, req requests.CartItemUpdateRequest) (*model.CartItem, error) {
 	// ตรวจสอบว่าผู้ใช้มีตะกร้าหรือไม่

@@ -16,6 +16,7 @@ import (
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/orders"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/payments"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/products"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/reports"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/reviews"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/shipments"
 	systembank "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/system_bank"
@@ -145,6 +146,9 @@ func main() {
 	r.GET("/payment", payments.PaymentList)
 	r.DELETE("/payment/:id", payments.DeletePayment)
 	r.PATCH("/payment/:id", payments.UpdatePayment)
+
+	// Dashboard
+	r.GET("/dashboard", reports.Dashboard)
 
 	r.Run()
 

@@ -6,6 +6,7 @@ type Paginate struct {
 	Page  int64
 	Size  int64
 	Total int64
+	Categories int
 }
 
 // model/paginate.go หรือไฟล์ที่คุณประกาศ struct Paginate
