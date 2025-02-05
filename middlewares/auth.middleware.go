@@ -36,6 +36,13 @@ func AuthMiddleware() gin.HandlerFunc {
 			Password string `json:"password"`
 			Email    string `json:"email"`
 			Phone    string `json:"phone"`
+
+			// Address
+			Address     string `json:"address"`
+			ZipCode     int    `json:"zip_code"`
+			SubDistrict string `json:"subDistrict"`
+			District    string `json:"district"`
+			Province    string `json:"province"`
 		}
 
 		type admin struct {

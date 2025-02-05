@@ -59,10 +59,12 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 	// ส่ง response กลับ
 	return resp, total, nil
 }
-
-func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderResponses, error) {
+func GetByIdOrderService(ctx context.Context, userID int64) (*response.OrderResponses, error) {
 	// ตรวจสอบว่าผู้ใช้งานมีอยู่ในระบบหรือไม่
-	exists, err := db.NewSelect().Table("orders").Where("user_id = ?", orderID).Exists(ctx)
+	exists, err := db.NewSelect().
+		Table("orders").
+		Where("user_id = ?", userID).
+		Exists(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("database query error: %w", err)
 	}
@@ -70,44 +72,43 @@ func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRes
 		return nil, errors.New("user not found")
 	}
 
-	// สร้าง response object
-	order := &response.OrderResponses{}
+    // สร้าง response object
+    order := &response.OrderResponses{}
 
-	err = db.NewSelect().
-		TableExpr("orders AS o").
-		Column("o.id", "o.user_id", "o.status", "o.created_at", "o.updated_at").
-		ColumnExpr("COALESCE(SUM(ci.total_product_amount), 0) AS total_amount").
-		ColumnExpr("COALESCE(SUM(p.price * ci.total_product_amount), 0) AS total_price").
-		ColumnExpr(`py.system_bank_id, py.price AS payment_price, py.bank_name, py.account_name, py.account_number, py.status AS payment_status`).
-		ColumnExpr(`s.firstname, s.lastname, s.address, s.zip_code, s.sub_district, s.district, s.province, s.status AS shipment_status`).
-		ColumnExpr(`u.id AS user_id, u.username, u.email, u.firstname, u.lastname, u.phone`).
-		Join("LEFT JOIN products AS p ON p.id = ci.product_id").
-		Join("LEFT JOIN payments AS py ON py.id = o.payment_id").
-		Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id").
-		Join("LEFT JOIN users AS u ON u.id = o.user_id").
-		Where("o.user_id = ?", orderID).
-		Scan(ctx, order)
+    // ดึงข้อมูลจากตาราง orders และข้อมูลที่เกี่ยวข้อง
+    err = db.NewSelect().
+        TableExpr("orders AS o"). // ใช้ "orders" แทน "order"
+        Column("o.id", "o.user_id", "o.status", "o.created_at", "o.updated_at", "o.total_price", "o.total_amount").
+        ColumnExpr("py.system_bank_id, py.price AS payment_price, py.bank_name, py.account_name, py.account_number, py.status AS payment_status").
+        ColumnExpr("s.firstname, s.lastname, s.address, s.zip_code, s.sub_district, s.district, s.province, s.status AS shipment_status").
+        Join("LEFT JOIN payments AS py ON py.id = o.payment_id").
+        Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id").
+        Where("o.id = ?", orderID).
+        Scan(ctx, order)
 
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("no orders found for user_id: %d", orderID)
-		}
-		return nil, fmt.Errorf("failed to fetch order details: %w", err)
-	}
+    if err != nil {
+        return nil, fmt.Errorf("failed to fetch order details: %v", err)
+    }
 
-	return order, nil
+    return order, nil
 }
 
+
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
+	// เริ่ม Transaction
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start transaction: %v", err)
+	}
+	defer tx.Rollback()
+
 	var cartID int64
-	fmt.Printf("Finding cart with user_id: %d\n", req.UserID)
-	if err := db.NewSelect().Table("carts").Column("id").Where("user_id = ?", req.UserID).Scan(ctx, &cartID); err != nil {
+	if err := tx.NewSelect().Table("carts").Column("id").Where("user_id = ?", req.UserID).Scan(ctx, &cartID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("no cart found for user_id: %d", req.UserID)
 		}
 		return nil, fmt.Errorf("failed to find cart: %v", err)
 	}
-	fmt.Printf("Found cart ID: %d\n", cartID)
 
 	var cartItems []struct {
 		ProductID   int64   `json:"product_id"`
@@ -116,7 +117,7 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 		Price       float64 `json:"price"`
 		Stock       int64   `json:"stock"`
 	}
-	if err := db.NewSelect().
+	if err := tx.NewSelect().
 		Table("cart_items").
 		ColumnExpr("cart_items.product_id, products.name AS product_name, cart_items.total_product_amount AS amount, products.price, products.stock").
 		Join("JOIN products ON products.id = cart_items.product_id").
@@ -150,17 +151,13 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 	order.SetCreatedNow()
 	order.SetUpdateNow()
 
-	if _, err := db.NewInsert().Model(order).Returning("id").Exec(ctx); err != nil {
+	if _, err := tx.NewInsert().Model(order).Returning("id").Exec(ctx); err != nil {
 		return nil, fmt.Errorf("failed to create order: %v", err)
 	}
 
 	for _, item := range cartItems {
 		// ลดจำนวน stock ของสินค้า
-		if _, err := db.NewUpdate().
-			Table("products").
-			Set("stock = stock - ?", item.Amount).
-			Where("id = ?", item.ProductID).
-			Exec(ctx); err != nil {
+		if _, err := tx.NewUpdate().Table("products").Set("stock = stock - ?", item.Amount).Where("id = ?", item.ProductID).Exec(ctx); err != nil {
 			return nil, fmt.Errorf("failed to update stock for product %s: %v", item.ProductName, err)
 		}
 
@@ -170,16 +167,20 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 			TotalProductPrice:  item.Price * float64(item.Amount),
 			TotalProductAmount: int(item.Amount),
 		}
-		if _, err := db.NewInsert().Model(orderDetail).Exec(ctx); err != nil {
+		if _, err := tx.NewInsert().Model(orderDetail).Exec(ctx); err != nil {
 			return nil, fmt.Errorf("failed to create order detail: %v", err)
 		}
 	}
 
-	if _, err := db.NewDelete().Table("cart_items").Where("cart_id = ?", cartID).Exec(ctx); err != nil {
+	if _, err := tx.NewDelete().Table("cart_items").Where("cart_id = ?", cartID).Exec(ctx); err != nil {
 		return nil, fmt.Errorf("failed to delete cart items: %v", err)
 	}
-	if _, err := db.NewDelete().Table("carts").Where("id = ?", cartID).Exec(ctx); err != nil {
+	if _, err := tx.NewDelete().Table("carts").Where("id = ?", cartID).Exec(ctx); err != nil {
 		return nil, fmt.Errorf("failed to delete cart: %v", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %v", err)
 	}
 
 	return order, nil
@@ -187,10 +188,7 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 
 func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateRequest) (*model.Orders, error) {
 	// ตรวจสอบว่า order มีอยู่ในฐานข้อมูลหรือไม่
-	exists, err := db.NewSelect().
-		TableExpr("orders").
-		Where("id = ?", id).
-		Exists(ctx)
+	exists, err := db.NewSelect().TableExpr("orders").Where("id = ?", id).Exists(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check if order exists: %v", err)
 	}
