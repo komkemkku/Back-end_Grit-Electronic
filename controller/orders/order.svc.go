@@ -26,8 +26,13 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 
 	// สร้าง query หลัก
 	query := db.NewSelect().
-	TableExpr("orders AS o").
-    Column("o.id", "o.user_id", "o.payment_id", "shipment_id", "o.total_price", "o.total_amount", "o.status", "o.created_at", "o.updated_at")
+		TableExpr("orders AS o").
+		Column("o.id", "o.user_id", "u.username", "o.status", "o.created_at", "o.updated_at", "o.total_price", "o.total_amount").
+		ColumnExpr("py.system_bank_id, py.price AS payment_price, py.bank_name, py.account_name, py.account_number, py.status AS payment_status").
+		ColumnExpr("s.firstname, s.lastname, s.address, s.zip_code, s.sub_district, s.district, s.province, s.status AS shipment_status").
+		Join("LEFT JOIN users AS u ON u.id = o.user_id"). 
+		Join("LEFT JOIN payments AS py ON py.id = o.payment_id").
+		Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id")
 
 	// เงื่อนไขการค้นหา
 	if req.Search != "" {

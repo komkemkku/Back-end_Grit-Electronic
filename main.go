@@ -103,7 +103,7 @@ func main() {
 	// r.PATCH("/cartitem/:id", cartitems.UpdateCartItem)
 
 	// Review
-	r.POST("/review/create", reviews.CreateReview)
+	r.POST("/review/create", md, reviews.CreateReview)
 	r.GET("/review/:id", reviews.GetReviewByID)
 	r.GET("/review", reviews.ReviewList)
 	r.DELETE("/review/:id", reviews.DeleteReview)

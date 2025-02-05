@@ -9,7 +9,6 @@ type CartItem struct {
 	CartID             int     `bun:"cart_id"`
 	ProductID          int     `bun:"product_id"`
 	TotalProductAmount int     `bun:"total_product_amount"`
-	// TotalProductPrice  float64 `bun:"total_product_price"`
 	Status             string  `bun:"status"`
 
 	CreateUnixTimestamp

@@ -29,13 +29,14 @@ func ListProductService(ctx context.Context, req requests.ProductRequest) ([]res
 		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.is_active", "p.created_at", "p.updated_at", "p.deleted_at").
 		ColumnExpr("c.id AS category__id").
 		ColumnExpr("c.name AS category__name").
-		ColumnExpr("json_agg(json_build_object('id', r.id, 'description', r.description, 'rating', r.rating, 'username', u.username)) AS reviews").
-		ColumnExpr("json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description) AS image").
+		ColumnExpr("COALESCE(json_agg(json_build_object('id', r.id, 'description', r.description, 'rating', r.rating, 'username', u.username)) FILTER (WHERE r.id IS NOT NULL), '[]') AS reviews").
+		ColumnExpr("COALESCE(json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description), '{}'::json) AS image").
 		Join("LEFT JOIN categories AS c ON c.id = p.category_id").
 		Join("LEFT JOIN reviews AS r ON r.product_id = p.id").
 		Join("LEFT JOIN users AS u ON u.id = r.user_id").
 		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'").
 		Where("p.deleted_at IS NULL").
+		Where("p.is_active IS true").
 		GroupExpr("p.id, c.id, i.id, i.ref_id, i.type, i.description")
 
 	// **เพิ่มเงื่อนไขกรองประเภทสินค้า**
@@ -65,22 +66,27 @@ func ListProductService(ctx context.Context, req requests.ProductRequest) ([]res
 }
 
 func GetByIdProductService(ctx context.Context, id int64) (*response.ProductDetailResponses, error) {
-	ex, err := db.NewSelect().TableExpr("products").Where("id = ?", id).Exists(ctx)
+	// ตรวจสอบว่ามีสินค้าหรือไม่
+	ex, err := db.NewSelect().
+		TableExpr("products").
+		Where("id = ?", id).
+		Exists(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if !ex {
 		return nil, errors.New("product not found")
 	}
+
 	product := &response.ProductDetailResponses{}
 
-	// แบบที่ 1
+	// ดึงข้อมูลสินค้า พร้อมรีวิวและรูปภาพ
 	err = db.NewSelect().TableExpr("products AS p").
 		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.is_active", "p.created_at", "p.updated_at", "p.deleted_at").
 		ColumnExpr("c.id AS category__id").
 		ColumnExpr("c.name AS category__name").
-		ColumnExpr("json_agg(json_build_object('id', r.id, 'description', r.description, 'rating', r.rating, 'username', u.username)) AS reviews").
-		ColumnExpr("json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description) AS image").
+		ColumnExpr("COALESCE(json_agg(json_build_object('id', r.id, 'description', r.description, 'rating', r.rating, 'username', u.username)) FILTER (WHERE r.id IS NOT NULL), '[]') AS reviews").
+		ColumnExpr("COALESCE(json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description), '{}'::json) AS image").
 		Join("LEFT JOIN categories AS c ON c.id = p.category_id").
 		Join("LEFT JOIN reviews AS r ON r.product_id = p.id").
 		Join("LEFT JOIN users AS u ON u.id = r.user_id").
@@ -94,6 +100,7 @@ func GetByIdProductService(ctx context.Context, id int64) (*response.ProductDeta
 	if err != nil {
 		return nil, err
 	}
+
 	return product, nil
 }
 
