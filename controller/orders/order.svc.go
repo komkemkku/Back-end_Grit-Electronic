@@ -27,12 +27,8 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 	// สร้าง query หลัก
 	query := db.NewSelect().
 		TableExpr("orders AS o").
-		Column("o.id", "o.user_id", "u.username", "o.status", "o.created_at", "o.updated_at", "o.total_price", "o.total_amount").
-		ColumnExpr("py.system_bank_id, py.price AS payment_price, py.bank_name, py.account_name, py.account_number, py.status AS payment_status").
-		ColumnExpr("s.firstname, s.lastname, s.address, s.zip_code, s.sub_district, s.district, s.province, s.status AS shipment_status").
-		Join("LEFT JOIN users AS u ON u.id = o.user_id"). 
-		Join("LEFT JOIN payments AS py ON py.id = o.payment_id").
-		Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id")
+		Column("o.id", "o.user_id", "o.payment_id", "shipment_id", "o.total_price", "o.total_amount", "o.status", "o.created_at", "o.updated_at")
+
 
 	// เงื่อนไขการค้นหา
 	if req.Search != "" {
@@ -59,40 +55,40 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 	// ส่ง response กลับ
 	return resp, total, nil
 }
-func GetByIdOrderService(ctx context.Context, userID int64) (*response.OrderResponses, error) {
-	// ตรวจสอบว่าผู้ใช้งานมีอยู่ในระบบหรือไม่
+
+func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRespOrderDetail, error) {
+	// ตรวจสอบว่าคำสั่งซื้อนั้นมีอยู่ในฐานข้อมูลหรือไม่
 	exists, err := db.NewSelect().
 		Table("orders").
-		Where("user_id = ?", userID).
+		Where("id = ?", orderID). // ใช้ order_id แทน user_id
 		Exists(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("database query error: %w", err)
 	}
 	if !exists {
-		return nil, errors.New("user not found")
+		return nil, errors.New("order not found")
 	}
 
-    // สร้าง response object
-    order := &response.OrderResponses{}
+	// สร้าง response object
+	order := &response.OrderRespOrderDetail{}
 
-    // ดึงข้อมูลจากตาราง orders และข้อมูลที่เกี่ยวข้อง
-    err = db.NewSelect().
-        TableExpr("orders AS o"). // ใช้ "orders" แทน "order"
-        Column("o.id", "o.user_id", "o.status", "o.created_at", "o.updated_at", "o.total_price", "o.total_amount").
-        ColumnExpr("py.system_bank_id, py.price AS payment_price, py.bank_name, py.account_name, py.account_number, py.status AS payment_status").
-        ColumnExpr("s.firstname, s.lastname, s.address, s.zip_code, s.sub_district, s.district, s.province, s.status AS shipment_status").
-        Join("LEFT JOIN payments AS py ON py.id = o.payment_id").
-        Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id").
-        Where("o.id = ?", orderID).
-        Scan(ctx, order)
+	// ดึงข้อมูลจากตาราง orders และข้อมูลที่เกี่ยวข้อง
+	err = db.NewSelect().
+		TableExpr("orders AS o").
+		Column("o.id", "o.user_id", "o.status", "o.created_at", "o.updated_at", "o.total_price", "o.total_amount").
+		ColumnExpr("py.system_bank_id, py.price AS payment_price, py.bank_name, py.account_name, py.account_number, py.status AS payment_status").
+		ColumnExpr("s.firstname, s.lastname, s.address, s.zip_code, s.sub_district, s.district, s.province, s.status AS shipment_status").
+		Join("LEFT JOIN payments AS py ON py.id = o.payment_id").
+		Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id").
+		Where("o.id = ?", orderID).
+		Scan(ctx, order)
 
-    if err != nil {
-        return nil, fmt.Errorf("failed to fetch order details: %v", err)
-    }
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch order details: %v", err)
+	}
 
-    return order, nil
+	return order, nil
 }
-
 
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
 	// เริ่ม Transaction

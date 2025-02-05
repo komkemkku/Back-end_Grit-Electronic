@@ -126,20 +126,38 @@ func CreateCartItemService(ctx context.Context, req requests.CartItemCreateReque
 
 	// ตรวจสอบว่าสินค้าอยู่ใน `cart_items` หรือไม่
 	cartItem := &model.CartItem{}
-	itemExists, err := db.NewSelect().
+	err = db.NewSelect().
 		Model(cartItem).
 		Where("cart_id = ?", cart.ID).
 		Where("product_id = ?", req.ProductID).
-		Exists(ctx)
-	if err != nil {
-		return nil, errors.New("failed to check cart item")
+		Scan(ctx)
+
+	if err == nil {
+		// ✅ ถ้าสินค้าอยู่ในตะกร้าแล้ว → อัปเดตจำนวนสินค้า
+		newTotalAmount := cartItem.TotalProductAmount + req.TotalProductAmount
+
+		// ตรวจสอบว่าสินค้าเกินสต็อกหรือไม่
+		if newTotalAmount > product.Stock {
+			return nil, errors.New("not enough stock")
+		}
+
+		cartItem.TotalProductAmount = newTotalAmount
+		cartItem.SetUpdateNow()
+
+		_, err = db.NewUpdate().
+			Model(cartItem).
+			Column("total_product_amount", "updated_at").
+			Where("cart_id = ?", cart.ID).
+			Where("product_id = ?", req.ProductID).
+			Exec(ctx)
+		if err != nil {
+			return nil, errors.New("failed to update cart item")
+		}
+
+		return cartItem, nil
 	}
 
-	if itemExists {
-		return nil, errors.New("product already in cart")
-	}
-
-	// ถ้าไม่มีสินค้า ให้เพิ่มใหม่
+	// ✅ ถ้าไม่มีสินค้า → เพิ่มสินค้าใหม่
 	cartItem = &model.CartItem{
 		CartID:             cart.ID,
 		ProductID:          req.ProductID,
@@ -151,11 +169,12 @@ func CreateCartItemService(ctx context.Context, req requests.CartItemCreateReque
 
 	_, err = db.NewInsert().Model(cartItem).Exec(ctx)
 	if err != nil {
-		return nil, errors.New("failed to update cart item")
+		return nil, errors.New("failed to insert cart item")
 	}
 
 	return cartItem, nil
 }
+
 
 
 func UpdateCartItemService(ctx context.Context, UserID int, cartItemID int, req requests.CartItemUpdateRequest) (*model.CartItem, error) {
