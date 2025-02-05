@@ -44,7 +44,9 @@ func DeleteOrder(c *gin.Context) {
 }
 
 func GetOrderByID(c *gin.Context) {
+
 	id := requests.OrderIdRequest{}
+
 	if err := c.BindUri(&id); err != nil {
 		response.BadRequest(c, err.Error())
 		return
