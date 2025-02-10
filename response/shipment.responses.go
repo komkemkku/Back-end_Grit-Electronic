@@ -38,7 +38,6 @@ type ShipmentRespOrderDetail struct {
 	SubDistrict string `json:"sub_district"`
 	District    string `json:"district"`
 	Province    string `json:"province"`
-	Status      string `json:"status"`
 }
 
 type ShipmentRespOrder struct {
