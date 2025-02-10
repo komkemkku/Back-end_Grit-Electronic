@@ -31,10 +31,11 @@ type PaymentOrderResp struct {
 }
 
 type PaymentRespOrderDetail struct {
-	ID            int     `json:"id"`
-	Price         float64 `json:"price"`
-	BankName      string  `json:"bank_name"`
-	AccountName   string  `json:"account_name"`
-	AccountNumber string  `json:"account_number"`
-	Description   string  `json:"description"`
+	ID         int                   `json:"id"`
+	Price      float64               `json:"price"`
+	// SystemBank SystemBankRespPayment `bun:"systembank"`
+	// BankName      string  `json:"bank_name"`
+	// AccountName   string  `json:"account_name"`
+	// AccountNumber string  `json:"account_number"`
+	// Description   string  `json:"description"`
 }
