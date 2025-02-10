@@ -31,5 +31,6 @@ type OrderUpdateRequest struct {
 	// PaymentID  int    `json:"payment_id"`
 	// ShipmentID int    `json:"shipment_id"`
 	// CartID     int    `json:"cart_id"`
-	Status string `json:"status"`
+	Status         string `json:"status"`
+	TrackingNumber string `json:"tracking_number"` // เพิ่มฟิลด์นี้
 }

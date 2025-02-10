@@ -51,6 +51,9 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 		query.Where("o.status ILIKE ?", "%"+req.Status+"%")
 	}
 
+	// เพิ่มเงื่อนไขการเรียงข้อมูล
+	// ตัวอย่างการเรียงตาม created_at จากใหม่ไปเก่า (DESC)
+	query.Order("o.created_at DESC")
 	// สร้าง query สำหรับนับจำนวนทั้งหมด
 	countQuery := db.NewSelect().
 		TableExpr("orders AS o")
@@ -74,9 +77,8 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 	return resp, total, nil
 }
 
-
 func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRespOrderDetail, error) {
-	// ตรวจสอบว่าคำสั่งซื้อนั้นมีอยู่ในฐานข้อมูลหรือไม่
+	// 1) ตรวจสอบว่าคำสั่งซื้อนั้นมีอยู่ในฐานข้อมูลหรือไม่
 	exists, err := db.NewSelect().
 		Table("orders").
 		Where("id = ?", orderID).
@@ -88,12 +90,14 @@ func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRes
 		return nil, errors.New("order not found")
 	}
 
-	// สร้าง response object
+	// 2) สร้าง response object
 	order := &response.OrderRespOrderDetail{}
 
+	// 3) ดึงข้อมูลจากตาราง orders และตารางที่เกี่ยวข้อง (User, Payment, Shipment, ... )
 	err = db.NewSelect().
 		TableExpr("orders AS o").
-		Column("o.id", "o.total_price", "o.total_amount", "o.status", "o.created_at", "o.updated_at").
+		// เพิ่ม "o.tracking_number" ใน Column หรือ ColumnExpr
+		Column("o.id", "o.total_price", "o.total_amount", "o.status", "o.tracking_number", "o.created_at", "o.updated_at").
 		ColumnExpr("u.id AS user__id").
 		ColumnExpr("u.firstname AS user__firstname").
 		ColumnExpr("u.lastname AS user__lastname").
@@ -119,14 +123,31 @@ func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRes
 		Join("LEFT JOIN users AS u ON u.id = o.user_id").
 		Join("LEFT JOIN payments AS py ON py.id = o.payment_id").
 		Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id").
-		Join("LEFT JOIN system_banks AS sb ON sb.id = py.system_bank_id"). // เชื่อม system_banks กับ payments
+		Join("LEFT JOIN system_banks AS sb ON sb.id = py.system_bank_id").
 		Where("o.id = ?", orderID).
 		Scan(ctx, order)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch order details: %v", err)
 	}
 
+	// 4) ดึงชื่อสินค้าจากตาราง order_details (กรณีออเดอร์มีแค่ 1 สินค้า)
+	//    ถ้ามีหลายสินค้าและต้องการหลายชื่อ อาจต้องปรับเป็น slice แทน
+	var productItems []struct {
+		ProductName string `bun:"product_name"`
+	}
+	err = db.NewSelect().
+		Table("order_details").
+		Column("product_name").
+		Where("order_id = ?", orderID).
+		Scan(ctx, &productItems)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, fmt.Errorf("failed to fetch product names: %v", err)
+	}
+
+	// 5) ใส่ product_name หลายค่าใน order.Products
+	for _, p := range productItems {
+		order.Products = append(order.Products, p.ProductName)
+	}
 	return order, nil
 }
 
@@ -234,8 +255,11 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 }
 
 func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateRequest) (*model.Orders, error) {
-	// ตรวจสอบว่า order มีอยู่ในฐานข้อมูลหรือไม่
-	exists, err := db.NewSelect().TableExpr("orders").Where("id = ?", id).Exists(ctx)
+	// 1) เช็กว่า Order นี้มีอยู่ในฐานข้อมูลหรือไม่
+	exists, err := db.NewSelect().
+		TableExpr("orders").
+		Where("id = ?", id).
+		Exists(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -243,26 +267,50 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 		return nil, errors.New("order not found")
 	}
 
-	// ดึงข้อมูล order
+	// 2) ดึงข้อมูล Order จาก DB
 	order := &model.Orders{}
 	err = db.NewSelect().Model(order).Where("id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch order: %v", err)
 	}
 
-	order.Status = req.Status
-	order.SetUpdateNow() // ตั้งค่า UpdatedAt ถ้ามีการเปลี่ยนแปลง status
-
-	// บันทึกข้อมูลกลับไปยังฐานข้อมูล โดยอัปเดตแค่ status และ updated_at
-	_, err = db.NewUpdate().
-		Model(order).
-		Column("status", "updated_at").
-		Where("id = ?", id).
-		Exec(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update order: %v", err)
+	// ตรวจสอบว่ากรณีเรากำลังจะเปลี่ยนไปเป็น cancelled แต่สถานะปัจจุบันเป็น "shipping" หรือ "shipped"
+	// ถ้าใช่ ให้ return error ไม่ให้ทำงานต่อ
+	if (order.Status == "shipping" || order.Status == "shipped") && req.Status == "cancelled" {
+		return nil, errors.New("cannot cancel an order that is in shipping or already shipped")
 	}
 
+	// 3) อัปเดต Status ตาม request
+	order.Status = req.Status
+	order.SetUpdateNow() // ฟังก์ชันกำหนด updated_at ใน struct
+
+	// 4) ถ้าสถานะเป็น "shipping" ให้บันทึก TrackingNumber ด้วย
+	if req.Status == "shipping" {
+		// ตรวจสอบว่า TrackingNumber ถูกตั้งค่าหรือไม่
+		if req.TrackingNumber == "" {
+			return nil, errors.New("tracking number must be provided when the order is shipping")
+		}
+		order.TrackingNumber = req.TrackingNumber
+		_, err = db.NewUpdate().Model(order).Column("status", "tracking_number", "updated_at").Where("id = ?", id).Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update order: %v", err)
+		}
+	} else if req.Status != "shipping" && req.TrackingNumber != "" {
+		// ถ้าสถานะไม่ใช่ "shipping" จะไม่สามารถอัปเดต TrackingNumber ได้
+		return nil, errors.New("cannot set tracking number when order status is not shipping")
+	} else {
+		// ถ้าเป็นสถานะอื่น ๆ ก็อัปเดตเฉพาะ status และ updated_at
+		_, err = db.NewUpdate().
+			Model(order).
+			Column("status", "updated_at").
+			Where("id = ?", id).
+			Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update order: %v", err)
+		}
+	}
+
+	// 5) ถ้าสถานะเป็น "cancelled" ให้คืนสินค้าเข้าคลัง
 	if order.Status == "cancelled" {
 		// ดึงรายละเอียดคำสั่งซื้อที่เกี่ยวข้อง
 		var orderDetails []struct {
