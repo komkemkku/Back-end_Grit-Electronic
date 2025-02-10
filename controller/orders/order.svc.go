@@ -35,6 +35,7 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 		ColumnExpr("u.username").
 		ColumnExpr("u.firstname AS user_firstname").
 		ColumnExpr("u.lastname AS user_lastname").
+		ColumnExpr("u.phone AS user_phone").
 		ColumnExpr("s.id AS shipment_id").
 		ColumnExpr("s.firstname AS shipment_firstname").
 		ColumnExpr("s.lastname AS shipment_lastname").
@@ -97,6 +98,7 @@ func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRes
 		ColumnExpr("u.id AS user__id").
 		ColumnExpr("u.firstname AS user__firstname").
 		ColumnExpr("u.lastname AS user__lastname").
+		ColumnExpr("u.phone AS user__phone").
 		ColumnExpr("COALESCE(py.id, NULL) AS payment__id").
 		ColumnExpr("COALESCE(py.price, NULL) AS payment__price").
 		ColumnExpr("py.bank_name AS payment__bank_name").
@@ -119,7 +121,7 @@ func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRes
 		Join("LEFT JOIN users AS u ON u.id = o.user_id").
 		Join("LEFT JOIN payments AS py ON py.id = o.payment_id").
 		Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id").
-		Join("LEFT JOIN system_banks AS sb ON sb.id = py.system_bank_id"). // เชื่อม system_banks กับ payments
+		Join("LEFT JOIN system_banks AS sb ON sb.id = py.system_bank_id").
 		Where("o.id = ?", orderID).
 		Scan(ctx, order)
 

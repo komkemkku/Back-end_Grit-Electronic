@@ -30,4 +30,5 @@ type UserRespOrderDetail struct {
 	ID        int    `json:"id"`
 	Firstname string `json:"firstname"`
 	Lastname  string `json:"lastname"`
+	Phone     string `json:"phone"`
 }

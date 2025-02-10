@@ -149,6 +149,7 @@ func main() {
 
 	// Dashboard
 	r.GET("/dashboard", reports.Dashboard)
+	// r.GET("/dashboard/category", reports.DashboardTotalByCategory)
 
 	r.Run()
 

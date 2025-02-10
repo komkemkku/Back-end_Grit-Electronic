@@ -15,3 +15,15 @@ func Dashboard(c *gin.Context) {
 	response.Success(c, data)
 
 }
+
+
+// func DashboardTotalByCategory(c *gin.Context) {
+
+// 	data, err := DashboardByCategory(c)
+// 	if err != nil {
+// 		response.InternalError(c, err.Error())
+// 		return
+// 	}
+// 	response.Success(c, data)
+
+// }
