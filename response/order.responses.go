@@ -1,7 +1,5 @@
 package response
 
-import "time"
-
 type OrderResponses struct {
 	ID                  int       `json:"id"`
 	UserID              int       `json:"user_id"`

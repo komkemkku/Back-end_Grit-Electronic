@@ -35,6 +35,7 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 		ColumnExpr("u.username").
 		ColumnExpr("u.firstname AS user_firstname").
 		ColumnExpr("u.lastname AS user_lastname").
+		ColumnExpr("u.phone AS user_phone").
 		ColumnExpr("s.id AS shipment_id").
 		ColumnExpr("s.firstname AS shipment_firstname").
 		ColumnExpr("s.lastname AS shipment_lastname").
@@ -101,6 +102,7 @@ func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRes
 		ColumnExpr("u.id AS user__id").
 		ColumnExpr("u.firstname AS user__firstname").
 		ColumnExpr("u.lastname AS user__lastname").
+		ColumnExpr("u.phone AS user__phone").
 		ColumnExpr("COALESCE(py.id, NULL) AS payment__id").
 		ColumnExpr("COALESCE(py.price, NULL) AS payment__price").
 		ColumnExpr("py.bank_name AS payment__bank_name").
