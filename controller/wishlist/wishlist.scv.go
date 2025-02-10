@@ -98,8 +98,6 @@ func CreateWishlistsService(ctx context.Context, req requests.WishlistsAddReques
 	wishlist := &model.Wishlists{
 		UserID:           req.UserID,
 		ProductID:        req.ProductID,
-		PricePerProduct:  req.PricePerProduct,
-		AmountPerProduct: req.AmountPerProduct,
 	}
 	wishlist.SetCreatedNow()
 	wishlist.SetUpdateNow()

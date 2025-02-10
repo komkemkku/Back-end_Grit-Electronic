@@ -1,14 +1,11 @@
 package response
 
-import "time"
-
 type OrderResponses struct {
 	ID                  int       `json:"id"`
 	UserID              int       `json:"user_id"`
 	Username            string    `json:"username"` // เพิ่มฟิลด์นี้
 	UserFirstname       string    `json:"firstname"`
 	UserLastname        string    `json:"lastname"`
-	UserPhone           string    `json:"phone"`
 	TotalPrice          float64   `json:"total_price"`
 	TotalAmount         int       `json:"total_amount"`
 	Status              string    `json:"status"`
@@ -21,7 +18,7 @@ type OrderResponses struct {
 	ShipmentSubDistrict string    `json:"shipment_sub_district"`
 	ShipmentDistrict    string    `json:"shipment_district"`
 	ShipmentProvince    string    `json:"shipment_province"`
-	CreatedAt           time.Time `json:"created_at"`
+	CreatedAt           time.Time `json:"created_at"` // เก็บค่าเป็น time.Time
 	UpdatedAt           time.Time `json:"updated_at"`
 }
 
@@ -29,18 +26,25 @@ type OrderResponses struct {
 type OrderRespOrderDetail struct {
 	ID              int                     `json:"id"`
 	User            UserRespOrderDetail     `bun:"user"`
+	Products        []string                `json:"product_name"`
+	TotalAmount     int                     `json:"total_amount"`
+	TotalPrice      float64                 `json:"total_price"`
+	Status          string                  `json:"status"`
+	TrackingNumber  string                  `json:"tracking_number"`
+	Images          []int64                 `json:"images"`
 	Payment         PaymentRespOrderDetail  `bun:"payment"`
 	SystemBank      SystemBankRespPayment   `bun:"system_bank"`
 	ImageSystemBank ImageSystemBankResp     `bun:"imagesystembank"`
 	Shipment        ShipmentRespOrderDetail `bun:"shipment"`
-	TotalAmount     int                     `json:"total_amount"`
-	TotalPrice      float64                 `json:"total_price"`
-	Status          string                  `json:"status"`
-	Images          []int64                 `json:"images"`
 	Created_at      int64                   `json:"created_at"`
 	Updated_at      int64                   `json:"updated_at"`
 }
 
+// type OrderProduct struct {
+//     ProductName string `json:"product_name"`
+//     Amount      int64  `json:"amount"`
+//     // หากต้องการฟิลด์อื่นเพิ่มเติม (ราคา, product_id, ฯลฯ) ก็ใส่เพิ่มได้
+// }
 // type OrderResponses struct {
 // 	ID          int     `json:"id"`
 // 	UserID      int     `json:"user_id"`
