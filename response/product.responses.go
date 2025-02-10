@@ -47,3 +47,8 @@ type ProductRespReview struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
+
+// type ProductDetail struct {
+//     ProductID   int    `json:"product_id"`
+//     ProductName string `json:"product_name"`
+// }
