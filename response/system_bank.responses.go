@@ -13,9 +13,9 @@ type SystemBankResponses struct {
 }
 
 type SystemBankRespPayment struct {
-	ID             int    `json:"id"`
-	Bank_name      string `json:"bank_name"`
-	Account_name   string `json:"account_name"`
-	Account_number string `json:"account_number"`
-	Description    string `json:"description"`
+    ID               int64  `json:"id"`
+    BankName         string `json:"bank_name"`
+    AccountName      string `json:"account_name"` 
+    AccountNumber    string `json:"account_number"` 
+	Description      string `json:"description"`
 }

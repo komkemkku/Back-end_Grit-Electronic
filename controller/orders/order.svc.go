@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
@@ -24,27 +25,40 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 	// สร้าง slice สำหรับ response
 	resp := []response.OrderResponses{}
 
-	// สร้าง query หลัก
+	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("orders AS o").
-		Column("o.id", "o.user_id", "u.username", "o.status", "o.created_at", "o.updated_at", "o.total_price", "o.total_amount").
-		ColumnExpr("py.system_bank_id, py.price AS payment_price, py.bank_name, py.account_name, py.account_number, py.status AS payment_status").
-		ColumnExpr("s.firstname, s.lastname, s.address, s.zip_code, s.sub_district, s.district, s.province, s.status AS shipment_status").
-		Join("LEFT JOIN users AS u ON u.id = o.user_id"). 
-		Join("LEFT JOIN payments AS py ON py.id = o.payment_id").
+		Column("o.id", "o.user_id", "o.payment_id", "o.total_price", "o.total_amount", "o.status").
+		// ใช้ to_timestamp() เพื่อแปลง created_at และ updated_at
+		ColumnExpr("to_timestamp(o.created_at) AS created_at").
+		ColumnExpr("to_timestamp(o.updated_at) AS updated_at").
+		ColumnExpr("u.username").
+		ColumnExpr("u.firstname AS user_firstname").
+		ColumnExpr("u.lastname AS user_lastname").
+		ColumnExpr("s.id AS shipment_id").
+		ColumnExpr("s.firstname AS shipment_firstname").
+		ColumnExpr("s.lastname AS shipment_lastname").
+		ColumnExpr("s.address AS shipment_address").
+		ColumnExpr("s.zip_code AS shipment_zip_code").
+		ColumnExpr("s.sub_district AS shipment_sub_district").
+		ColumnExpr("s.district AS shipment_district").
+		ColumnExpr("s.province AS shipment_province").
+		Join("LEFT JOIN users AS u ON u.id = o.user_id").
 		Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id")
 
-	// เงื่อนไขการค้นหา
-	if req.Search != "" {
-		query.Where("o.status ILIKE ?", "%"+req.Search+"%")
+	// เพิ่มเงื่อนไขการค้นหาตาม status
+	if req.Status != "" {
+		query.Where("o.status ILIKE ?", "%"+req.Status+"%")
 	}
 
 	// สร้าง query สำหรับนับจำนวนทั้งหมด
 	countQuery := db.NewSelect().
 		TableExpr("orders AS o")
-	if req.Search != "" {
-		countQuery.Where("o.status ILIKE ?", "%"+req.Search+"%")
+
+	if req.Status != "" {
+		countQuery.Where("o.status ILIKE ?", "%"+req.Status+"%")
 	}
+
 	total, err := countQuery.Count(ctx)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to count orders: %v", err)
@@ -59,11 +73,13 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 	// ส่ง response กลับ
 	return resp, total, nil
 }
-func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderResponses, error) {
+
+
+func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRespOrderDetail, error) {
 	// ตรวจสอบว่าคำสั่งซื้อนั้นมีอยู่ในฐานข้อมูลหรือไม่
 	exists, err := db.NewSelect().
 		Table("orders").
-		Where("id = ?", orderID). // ใช้ order_id แทน user_id
+		Where("id = ?", orderID).
 		Exists(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("database query error: %w", err)
@@ -73,18 +89,38 @@ func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRes
 	}
 
 	// สร้าง response object
-	order := &response.OrderResponses{}
+	order := &response.OrderRespOrderDetail{}
 
-	// ดึงข้อมูลจากตาราง orders และข้อมูลที่เกี่ยวข้อง
 	err = db.NewSelect().
 		TableExpr("orders AS o").
-		Column("o.id", "o.user_id","username","o.status", "o.created_at", "o.updated_at", "o.total_price", "o.total_amount").
-		ColumnExpr("py.system_bank_id, py.price AS payment_price, py.bank_name, py.account_name, py.account_number, py.status AS payment_status").
-		ColumnExpr("s.firstname, s.lastname, s.address, s.zip_code, s.sub_district, s.district, s.province, s.status AS shipment_status").
+		Column("o.id", "o.total_price", "o.total_amount", "o.status", "o.created_at", "o.updated_at").
+		ColumnExpr("u.id AS user__id").
+		ColumnExpr("u.firstname AS user__firstname").
+		ColumnExpr("u.lastname AS user__lastname").
+		ColumnExpr("COALESCE(py.id, NULL) AS payment__id").
+		ColumnExpr("COALESCE(py.price, NULL) AS payment__price").
+		ColumnExpr("py.bank_name AS payment__bank_name").
+		ColumnExpr("py.account_name AS payment__account_name").
+		ColumnExpr("py.account_number AS payment__account_number").
+		ColumnExpr("COALESCE(py.status, NULL) AS payment__status").
+		ColumnExpr("sb.id AS system_bank__id").
+		ColumnExpr("sb.bank_name AS system_bank__bank_name").
+		ColumnExpr("sb.account_name AS system_bank__account_name").
+		ColumnExpr("sb.account_number AS system_bank__account_number").
+		ColumnExpr("sb.description AS system_bank__description").
+		ColumnExpr("s.id AS shipment__id").
+		ColumnExpr("s.firstname AS shipment__firstname").
+		ColumnExpr("s.lastname AS shipment__lastname").
+		ColumnExpr("s.address AS shipment__address").
+		ColumnExpr("s.zip_code AS shipment__zip_code").
+		ColumnExpr("s.sub_district AS shipment__sub_district").
+		ColumnExpr("s.district AS shipment__district").
+		ColumnExpr("s.province AS shipment__province").
 		Join("LEFT JOIN users AS u ON u.id = o.user_id").
 		Join("LEFT JOIN payments AS py ON py.id = o.payment_id").
 		Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id").
-		Where("o.id = ?", orderID). // ใช้ order_id แทน
+		Join("LEFT JOIN system_banks AS sb ON sb.id = py.system_bank_id"). // เชื่อม system_banks กับ payments
+		Where("o.id = ?", orderID).
 		Scan(ctx, order)
 
 	if err != nil {
@@ -95,21 +131,22 @@ func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRes
 }
 
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
-	// เริ่ม Transaction
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start transaction: %v", err)
 	}
 	defer tx.Rollback()
 
+	// 1. ดึงข้อมูลตะกร้าสินค้า
 	var cartID int64
 	if err := tx.NewSelect().Table("carts").Column("id").Where("user_id = ?", req.UserID).Scan(ctx, &cartID); err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("no cart found for user_id: %d", req.UserID)
 		}
 		return nil, fmt.Errorf("failed to find cart: %v", err)
 	}
 
+	// 2. ดึงข้อมูลสินค้าในตะกร้า
 	var cartItems []struct {
 		ProductID   int64   `json:"product_id"`
 		ProductName string  `json:"product_name"`
@@ -117,8 +154,7 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 		Price       float64 `json:"price"`
 		Stock       int64   `json:"stock"`
 	}
-	if err := tx.NewSelect().
-		Table("cart_items").
+	if err := tx.NewSelect().Table("cart_items").
 		ColumnExpr("cart_items.product_id, products.name AS product_name, cart_items.total_product_amount AS amount, products.price, products.stock").
 		Join("JOIN products ON products.id = cart_items.product_id").
 		Where("cart_id = ?", cartID).
@@ -126,30 +162,14 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 		return nil, fmt.Errorf("failed to fetch cart items: %v", err)
 	}
 
-	// ลดหรือเพิ่ม stock ของสินค้า
-	// ลด stock ของสินค้าในกรณีที่ไม่ใช่การยกเลิกคำสั่งซื้อ
-for _, item := range cartItems {
-	if req.Status == "canceled" { // ตรวจสอบสถานะคำสั่งซื้อ
-		// เพิ่ม stock เมื่อยกเลิก Order
-		if _, err := tx.NewUpdate().Table("products").
-			Set("stock = stock + ?", item.Amount). // เพิ่มจำนวน stock
-			Where("id = ?", item.ProductID).
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("failed to restore stock for product %s: %v", item.ProductName, err)
-		}
-	} else {
-		// ลด stock ของสินค้าเมื่อทำการสร้าง Order ใหม่
-		if _, err := tx.NewUpdate().Table("products").
-			Set("stock = stock - ?", item.Amount). // ลดจำนวน stock
-			Where("id = ?", item.ProductID).
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("failed to update stock for product %s: %v", item.ProductName, err)
+	// 3. ตรวจสอบสต็อกสินค้า
+	for _, item := range cartItems {
+		if item.Amount > item.Stock {
+			return nil, fmt.Errorf("not enough stock for product %s", item.ProductName)
 		}
 	}
-}
 
-
-	// คำนวณราคาทั้งหมด
+	// 4. คำนวณราคาและจำนวนรวม
 	totalPrice := 0.0
 	totalAmount := 0
 	for _, item := range cartItems {
@@ -157,23 +177,34 @@ for _, item := range cartItems {
 		totalAmount += int(item.Amount)
 	}
 
-	// สร้างคำสั่งซื้อ
 	order := &model.Orders{
 		UserID:       req.UserID,
 		ShipmentID:   req.ShipmentID,
 		PaymentID:    req.PaymentID,
 		Total_price:  totalPrice,
 		Total_amount: totalAmount,
-		Status:       req.Status, // ใช้สถานะจาก request
+		Status:       "pending", // กำหนดสถานะคำสั่งซื้อ
 	}
 	order.SetCreatedNow()
 	order.SetUpdateNow()
 
+	// 5. สร้างคำสั่งซื้อในฐานข้อมูล
 	if _, err := tx.NewInsert().Model(order).Returning("id").Exec(ctx); err != nil {
 		return nil, fmt.Errorf("failed to create order: %v", err)
 	}
 
-	// เพิ่ม Order Detail
+	// 6. ถ้าสถานะไม่ใช่ "cancelled", หักสต็อกสินค้า
+	for _, item := range cartItems {
+		if _, err := tx.NewUpdate().
+			Table("products").
+			Set("stock = stock - ?", item.Amount).
+			Where("id = ?", item.ProductID).
+			Exec(ctx); err != nil {
+			return nil, fmt.Errorf("failed to update stock for product %s: %v", item.ProductName, err)
+		}
+	}
+
+	// 7. สร้างรายละเอียดคำสั่งซื้อ
 	for _, item := range cartItems {
 		orderDetail := &model.OrderDetail{
 			OrderID:            order.ID,
@@ -186,7 +217,7 @@ for _, item := range cartItems {
 		}
 	}
 
-	// ลบรายการในตะกร้า
+	// 8. เคลียร์ตะกร้าสินค้า
 	if _, err := tx.NewDelete().Table("cart_items").Where("cart_id = ?", cartID).Exec(ctx); err != nil {
 		return nil, fmt.Errorf("failed to delete cart items: %v", err)
 	}
@@ -194,14 +225,13 @@ for _, item := range cartItems {
 		return nil, fmt.Errorf("failed to delete cart: %v", err)
 	}
 
-	// คอมมิตการทำธุรกรรม
+	// 9. คอมมิตการทำธุรกรรม
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %v", err)
 	}
 
 	return order, nil
 }
-
 
 func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateRequest) (*model.Orders, error) {
 	// ตรวจสอบว่า order มีอยู่ในฐานข้อมูลหรือไม่
@@ -220,14 +250,8 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 		return nil, fmt.Errorf("failed to fetch order: %v", err)
 	}
 
-	// อัปเดตแค่ status เท่านั้น
-	if req.Status != "" {
-		order.Status = req.Status
-		order.SetUpdateNow() // ตั้งค่า UpdatedAt ถ้ามีการเปลี่ยนแปลง status
-	} else {
-		// หากไม่มีการเปลี่ยนแปลง status ก็ไม่ต้องอัปเดต updated_at
-		return nil, errors.New("status is empty, no update performed")
-	}
+	order.Status = req.Status
+	order.SetUpdateNow() // ตั้งค่า UpdatedAt ถ้ามีการเปลี่ยนแปลง status
 
 	// บันทึกข้อมูลกลับไปยังฐานข้อมูล โดยอัปเดตแค่ status และ updated_at
 	_, err = db.NewUpdate().
@@ -239,9 +263,38 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 		return nil, fmt.Errorf("failed to update order: %v", err)
 	}
 
+	if order.Status == "cancelled" {
+		// ดึงรายละเอียดคำสั่งซื้อที่เกี่ยวข้อง
+		var orderDetails []struct {
+			ProductName string `bun:"product_name"`
+			Amount      int64  `bun:"total_product_amount"`
+		}
+		if err := db.NewSelect().
+			TableExpr("order_details AS od").
+			ColumnExpr("od.product_name,od.total_product_amount").
+			Where("od.order_id = ?", order.ID).
+			Scan(ctx, &orderDetails); err != nil {
+			return nil, fmt.Errorf("failed to fetch order details for cancellation: %v", err)
+		}
+
+		log.Printf("%v", orderDetails)
+
+		// คืนสินค้าในกรณีที่ยกเลิกคำสั่งซื้อ
+		for _, item := range orderDetails {
+			// เพิ่มสินค้าในสต็อกกลับ
+			if _, err := db.NewUpdate().
+				Table("products").
+				Set("stock = stock + ?", item.Amount).
+				Where("name = ?", item.ProductName).
+				Exec(ctx); err != nil {
+				return nil, fmt.Errorf("failed to restore stock for product %v: %v", item.ProductName, err)
+			}
+		}
+
+	}
+
 	return order, nil
 }
-
 
 func DeleteOrderService(ctx context.Context, id int64) error {
 	ex, err := db.NewSelect().TableExpr("orders").Where("id=?", id).Exists(ctx)

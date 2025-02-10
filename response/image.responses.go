@@ -18,6 +18,7 @@ type ImageSystemBankResp struct {
 	ID          int    `json:"id"`
 	RefID       int    `json:"ref_id"`
 	Type        string `json:"type"`
+	URL         string `json:"url"`
 	Description string `json:"description"`
 }
 

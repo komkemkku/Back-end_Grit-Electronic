@@ -36,5 +36,6 @@ type PaymentRespOrderDetail struct {
 	BankName      string  `json:"bank_name"`
 	AccountName   string  `json:"account_name"`
 	AccountNumber string  `json:"account_number"`
-	Description   string  `json:"description"`
+	Status        string  `json:"status"`
 }
+
