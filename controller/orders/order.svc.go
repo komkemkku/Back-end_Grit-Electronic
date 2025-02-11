@@ -16,10 +16,10 @@ import (
 var db = configs.Database()
 
 func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]response.OrderResponses, int, error) {
-	// คำนวณ offset สำหรับ pagination
-	var offset int
+	
+	var Offset int64
 	if req.Page > 0 {
-		offset = int((req.Page - 1) * req.Size)
+		Offset = (req.Page - 1) * req.Size
 	}
 
 	// สร้าง slice สำหรับ response
@@ -47,34 +47,20 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 		Join("LEFT JOIN users AS u ON u.id = o.user_id").
 		Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id")
 
-	// เพิ่มเงื่อนไขการค้นหาตาม status
 	if req.Status != "" {
 		query.Where("o.status ILIKE ?", "%"+req.Status+"%")
 	}
 
-	// เพิ่มเงื่อนไขการเรียงข้อมูล
-	// ตัวอย่างการเรียงตาม created_at จากใหม่ไปเก่า (DESC)
-	query.Order("o.created_at DESC")
-	// สร้าง query สำหรับนับจำนวนทั้งหมด
-	countQuery := db.NewSelect().
-		TableExpr("orders AS o")
-
-	if req.Status != "" {
-		countQuery.Where("o.status ILIKE ?", "%"+req.Status+"%")
-	}
-
-	total, err := countQuery.Count(ctx)
+	total, err := query.Count(ctx)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to count orders: %v", err)
+		return nil, 0, err
 	}
 
-	// ดึงข้อมูลพร้อม pagination
-	err = query.Offset(offset).Limit(int(req.Size)).Scan(ctx, &resp)
+	err = query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to fetch orders: %v", err)
+		return nil, 0, err
 	}
 
-	// ส่ง response กลับ
 	return resp, total, nil
 }
 
@@ -346,20 +332,20 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 	return order, nil
 }
 
-func DeleteOrderService(ctx context.Context, id int64) error {
-	ex, err := db.NewSelect().TableExpr("orders").Where("id=?", id).Exists(ctx)
+// func DeleteOrderService(ctx context.Context, id int64) error {
+// 	ex, err := db.NewSelect().TableExpr("orders").Where("id=?", id).Exists(ctx)
 
-	if err != nil {
-		return err
-	}
+// 	if err != nil {
+// 		return err
+// 	}
 
-	if !ex {
-		return errors.New("order not found")
-	}
+// 	if !ex {
+// 		return errors.New("order not found")
+// 	}
 
-	_, err = db.NewDelete().TableExpr("orders").Where("id =?", id).Exec(ctx)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+// 	_, err = db.NewDelete().TableExpr("orders").Where("id =?", id).Exec(ctx)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }

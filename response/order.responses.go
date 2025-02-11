@@ -1,11 +1,14 @@
 package response
 
+import "time"
+
 type OrderResponses struct {
 	ID                  int       `json:"id"`
 	UserID              int       `json:"user_id"`
 	Username            string    `json:"username"` // เพิ่มฟิลด์นี้
 	UserFirstname       string    `json:"firstname"`
 	UserLastname        string    `json:"lastname"`
+	UserPhone           string    `json:"phone"`
 	TotalPrice          float64   `json:"total_price"`
 	TotalAmount         int       `json:"total_amount"`
 	Status              string    `json:"status"`
@@ -18,7 +21,7 @@ type OrderResponses struct {
 	ShipmentSubDistrict string    `json:"shipment_sub_district"`
 	ShipmentDistrict    string    `json:"shipment_district"`
 	ShipmentProvince    string    `json:"shipment_province"`
-	CreatedAt           time.Time `json:"created_at"` // เก็บค่าเป็น time.Time
+	CreatedAt           time.Time `json:"created_at"` // เก็บค่าเป็น int64
 	UpdatedAt           time.Time `json:"updated_at"`
 }
 

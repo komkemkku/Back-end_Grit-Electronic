@@ -74,7 +74,7 @@ func main() {
 	r.POST("/order/create", md, orders.CreateOrder)
 	r.GET("/order/:id", orders.GetOrderByID)
 	r.GET("/order", orders.OrderList)
-	r.DELETE("/order/:id", orders.DeleteOrder)
+	//r.DELETE("/order/:id", orders.DeleteOrder)
 	r.PATCH("/order/:id", orders.UpdateOrder)
 
 	// Wishlist
