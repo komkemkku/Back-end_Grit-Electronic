@@ -9,6 +9,7 @@ type OrderResponses struct {
 	UserFirstname       string    `json:"firstname"`
 	UserLastname        string    `json:"lastname"`
 	UserPhone           string    `json:"phone"`
+	TrackingNumber      string    `json:"tracking_number"`
 	TotalPrice          float64   `json:"total_price"`
 	TotalAmount         int       `json:"total_amount"`
 	Status              string    `json:"status"`
@@ -34,7 +35,6 @@ type OrderRespOrderDetail struct {
 	TotalPrice      float64                 `json:"total_price"`
 	Status          string                  `json:"status"`
 	TrackingNumber  string                  `json:"tracking_number"`
-	Images          []int64                 `json:"images"`
 	Payment         PaymentRespOrderDetail  `bun:"payment"`
 	SystemBank      SystemBankRespPayment   `bun:"system_bank"`
 	ImageSystemBank ImageSystemBankResp     `bun:"image"`

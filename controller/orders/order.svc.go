@@ -16,7 +16,7 @@ import (
 var db = configs.Database()
 
 func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]response.OrderResponses, int, error) {
-	
+	// คำนวณ offset สำหรับ pagination
 	var Offset int64
 	if req.Page > 0 {
 		Offset = (req.Page - 1) * req.Size
@@ -28,14 +28,9 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("orders AS o").
-		Column("o.id", "o.user_id", "o.payment_id", "o.total_price", "o.total_amount", "o.status").
-		// ใช้ to_timestamp() เพื่อแปลง created_at และ updated_at
-		ColumnExpr("to_timestamp(o.created_at) AS created_at").
-		ColumnExpr("to_timestamp(o.updated_at) AS updated_at").
-		ColumnExpr("u.username").
+		Column("o.id", "o.user_id", "o.payment_id", "o.total_price", "o.total_amount", "o.status", "o.created_at", "o.updated_at", "u.username").
 		ColumnExpr("u.firstname AS user_firstname").
 		ColumnExpr("u.lastname AS user_lastname").
-		ColumnExpr("u.phone AS user_phone").
 		ColumnExpr("s.id AS shipment_id").
 		ColumnExpr("s.firstname AS shipment_firstname").
 		ColumnExpr("s.lastname AS shipment_lastname").
@@ -46,9 +41,9 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 		ColumnExpr("s.province AS shipment_province").
 		Join("LEFT JOIN users AS u ON u.id = o.user_id").
 		Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id")
-
-	if req.Status != "" {
-		query.Where("o.status ILIKE ?", "%"+req.Status+"%")
+	// เงื่อนไขการค้นหา
+	if req.Search != "" {
+		query.Where("o.status ILIKE ?", "%"+req.Search+"%")
 	}
 
 	total, err := query.Count(ctx)
@@ -56,11 +51,13 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 		return nil, 0, err
 	}
 
+	// ดึงข้อมูลพร้อม pagination
 	err = query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
 	if err != nil {
 		return nil, 0, err
 	}
 
+	// ส่ง response กลับ
 	return resp, total, nil
 }
 

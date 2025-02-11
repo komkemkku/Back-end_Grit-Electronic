@@ -1,12 +1,12 @@
 package requests
 
 type OrderRequest struct {
-	Page      int64  `json:"page"`
-	Size      int64  `json:"size"`
-	Search    string `json:"search"`
-	Status    string `json:"status"`               // ฟิลด์สำหรับค้นหาตาม status
-	StartDate string `json:"start_date,omitempty"` // วันที่เริ่มต้น
-	EndDate   string `json:"end_date,omitempty"`
+	Page      int64  `from:"page"`
+	Size      int64  `from:"size"`
+	Search    string `from:"search"`
+	Status    string `from:"status"`               // ฟิลด์สำหรับค้นหาตาม status
+	StartDate string `from:"start_date,omitempty"` // วันที่เริ่มต้น
+	EndDate   string `from:"end_date,omitempty"`
 }
 
 type OrderIdRequest struct {
