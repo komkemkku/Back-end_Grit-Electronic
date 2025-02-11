@@ -21,7 +21,7 @@ type OrderResponses struct {
 	ShipmentSubDistrict string    `json:"shipment_sub_district"`
 	ShipmentDistrict    string    `json:"shipment_district"`
 	ShipmentProvince    string    `json:"shipment_province"`
-	CreatedAt           time.Time `json:"created_at"` // เก็บค่าเป็น time.Time
+	CreatedAt           time.Time `json:"created_at"` // เก็บค่าเป็น int64
 	UpdatedAt           time.Time `json:"updated_at"`
 }
 

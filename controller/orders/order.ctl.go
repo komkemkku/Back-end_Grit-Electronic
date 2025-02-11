@@ -28,20 +28,20 @@ func CreateOrder(c *gin.Context) {
 	response.Success(c, data)
 }
 
-func DeleteOrder(c *gin.Context) {
-	id := requests.OrderIdRequest{}
-	if err := c.BindUri(&id); err != nil {
-		response.BadRequest(c, err.Error())
-		return
-	}
-	err := DeleteOrderService(c, int64(id.ID))
-	if err != nil {
-		response.InternalError(c, err.Error())
-		return
-	}
+// func DeleteOrder(c *gin.Context) {
+// 	id := requests.OrderIdRequest{}
+// 	if err := c.BindUri(&id); err != nil {
+// 		response.BadRequest(c, err.Error())
+// 		return
+// 	}
+// 	err := DeleteOrderService(c, int64(id.ID))
+// 	if err != nil {
+// 		response.InternalError(c, err.Error())
+// 		return
+// 	}
 
-	response.Success(c, "delete successfully")
-}
+// 	response.Success(c, "delete successfully")
+// }
 
 func GetOrderByID(c *gin.Context) {
 
