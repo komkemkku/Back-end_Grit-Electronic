@@ -3,15 +3,22 @@ package model
 import "time"
 
 type Paginate struct {
-	Page  int64
-	Size  int64
-	Total int64
-	Categories int
+	Page       int64
+	Size       int64
+	Total      int64
 }
 
+// type Paginated struct {
+// 	Page      int64
+// 	Size      int64
+// 	Total     int64
+// 	Search    string
+// 	Status    string
+// 	StartDate time.Time
+// 	EndDate   time.Time
+// }
+
 // model/paginate.go หรือไฟล์ที่คุณประกาศ struct Paginate
-
-
 
 type CreateUpdateUnixTimestamp struct {
 	CreateUnixTimestamp

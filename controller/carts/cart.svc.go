@@ -43,7 +43,8 @@ func GetByIdCartService(ctx context.Context, userID int64) (*response.CartRespon
 					'product', json_build_object(
 						'id', p.id,
 						'name', p.name,
-						'price', p.price
+						'price', p.price,
+						'image', p.image
 					),
 					'total_product_amount', ci.total_product_amount
 				) ORDER BY ci.id ASC

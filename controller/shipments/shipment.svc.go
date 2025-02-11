@@ -32,6 +32,10 @@ func ListShipmentService(ctx context.Context, req requests.ShipmentRequest) ([]r
 		query.Where("s.firstname LIKE ?", "%"+req.Search+"%")
 	}
 
+	if req.UserID != 0 {
+		query.Where("s.user_id = ?", req.UserID)
+	}
+
 	total, err := query.Count(ctx)
 	if err != nil {
 		return nil, 0, err

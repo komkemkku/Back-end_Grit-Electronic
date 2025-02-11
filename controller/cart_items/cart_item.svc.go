@@ -29,6 +29,7 @@ func ListCartItemService(ctx context.Context, req requests.CartItemRequest) ([]r
 		ColumnExpr("p.id AS product__id").
 		ColumnExpr("p.name AS product__name").
 		ColumnExpr("p.price AS product__price").
+		ColumnExpr("p.image AS product__image").
 		Join("LEFT JOIN products AS p ON p.id = ci.product_id")
 
 	query.Order("ci.id ASC")
@@ -66,6 +67,7 @@ func GetByIdCartItemService(ctx context.Context, id int64) (*response.CartItemRe
 		ColumnExpr("p.id AS product__id").
 		ColumnExpr("p.name AS product__name").
 		ColumnExpr("p.price AS product__price").
+		ColumnExpr("p.image AS product__image").
 		Join("LEFT JOIN products AS p ON p.id = ci.product_id").
 		Where("ci.id = ?", id).
 		Scan(ctx, cart_item)
