@@ -59,6 +59,7 @@ func GetShipmentByID(c *gin.Context) {
 }
 
 func ShipmenttList(c *gin.Context) {
+	
 	req := requests.ShipmentRequest{}
 	if err := c.BindQuery(&req); err != nil {
 		response.BadRequest(c, err.Error())

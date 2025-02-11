@@ -10,6 +10,7 @@ type SystemBanks struct {
 	AccountName   string `bun:"account_name"`
 	AccountNumber string `bun:"account_number"`
 	Description   string `bun:"description"`
+	Image         string `bun:"image"`
 	IsActive      bool   `bun:"is_active"`
 
 	CreateUnixTimestamp

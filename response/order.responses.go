@@ -1,11 +1,14 @@
 package response
 
+import "time"
+
 type OrderResponses struct {
 	ID                  int       `json:"id"`
 	UserID              int       `json:"user_id"`
 	Username            string    `json:"username"` // เพิ่มฟิลด์นี้
 	UserFirstname       string    `json:"firstname"`
 	UserLastname        string    `json:"lastname"`
+	UserPhone           string    `json:"phone"`
 	TotalPrice          float64   `json:"total_price"`
 	TotalAmount         int       `json:"total_amount"`
 	Status              string    `json:"status"`
@@ -34,7 +37,7 @@ type OrderRespOrderDetail struct {
 	Images          []int64                 `json:"images"`
 	Payment         PaymentRespOrderDetail  `bun:"payment"`
 	SystemBank      SystemBankRespPayment   `bun:"system_bank"`
-	ImageSystemBank ImageSystemBankResp     `bun:"imagesystembank"`
+	ImageSystemBank ImageSystemBankResp     `bun:"image"`
 	Shipment        ShipmentRespOrderDetail `bun:"shipment"`
 	Created_at      int64                   `json:"created_at"`
 	Updated_at      int64                   `json:"updated_at"`

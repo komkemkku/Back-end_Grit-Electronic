@@ -11,6 +11,7 @@ type Products struct {
 	Price       float64 `bun:"price"`
 	Description string  `bun:"description"`
 	Stock       int     `bun:"stock"`
+	Image       string  `bun:"image"`
 	IsActive    bool    `bun:"is_active"`
 
 	CreateUnixTimestamp

@@ -26,10 +26,10 @@ func ListShipmentService(ctx context.Context, req requests.ShipmentRequest) ([]r
 	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("shipments AS s").
-		Column("s.id", "s.firstname", "s.lastname", "s.address", "s.zip_code", "s.sub_district", "s.district", "s.province", "s.status", "s.created_at", "s.updated_at")
+		Column("s.id", "s.user_id", "s.firstname", "s.lastname", "s.address", "s.zip_code", "s.sub_district", "s.district", "s.province", "s.status", "s.created_at", "s.updated_at")
 
 	if req.Search != "" {
-		query.Where("s.zip_code LIKE ?", "%"+req.Search+"%")
+		query.Where("s.firstname LIKE ?", "%"+req.Search+"%")
 	}
 
 	total, err := query.Count(ctx)
@@ -58,7 +58,7 @@ func GetByIdShipmentService(ctx context.Context, id int64) (*response.ShipmentRe
 
 	err = db.NewSelect().
 		TableExpr("shipments AS s").
-		Column("s.id", "s.firstname", "s.lastname", "s.address", "s.zip_code", "s.sub_district", "s.district", "s.province", "s.status", "s.created_at", "s.updated_at").
+		Column("s.id", "s.user_id", "s.firstname", "s.lastname", "s.address", "s.zip_code", "s.sub_district", "s.district", "s.province", "s.status", "s.created_at", "s.updated_at").
 		Where("s.id = ?", id).Scan(ctx, shipment)
 
 	if err != nil {
@@ -71,7 +71,7 @@ func CreateShipmentService(ctx context.Context, req requests.ShipmentCreateReque
 
 	zipcodeInt, err := strconv.Atoi(req.ZipCode)
 	if err != nil {
-		return nil, fmt.Errorf("invalid zipcode value: %v", err) // จัดการข้อผิดพลาด
+		return nil, fmt.Errorf("invalid zipcode value: %v", err)
 	}
 
 	// เพิ่ม

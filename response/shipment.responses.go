@@ -1,6 +1,5 @@
 package response
 
-
 // type ShipmentResponses struct {
 // 	ID          int    `bun:"shipment_id" json:"id"`
 // 	Firstname   string `bun:"shipment_firstname" json:"firstname"`
@@ -17,6 +16,7 @@ package response
 
 type ShipmentResponses struct {
 	ID          int    `json:"id"`
+	UserID      int    `json:"user_id"`
 	Firstname   string `json:"firstname"`
 	Lastname    string `json:"lastname"`
 	Address     string `json:"address"`

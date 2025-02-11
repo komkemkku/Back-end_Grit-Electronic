@@ -11,20 +11,22 @@ type SystemBankIdRequest struct {
 }
 
 type SystemBankCreateRequest struct {
-	BankName        string `json:"bank_name"`
-	AccountName     string `json:"account_name"`
-	AccountNumber   string `json:"account_number"`
-	Description     string `json:"description"`
-	ImageSystemBank string `json:"image_system_bank"`
-	IsActive        bool   `json:"is_active"`
+	BankName      string `json:"bank_name"`
+	AccountName   string `json:"account_name"`
+	AccountNumber string `json:"account_number"`
+	Description   string `json:"description"`
+	Image         string `json:"image"`
+	// ImageSystemBank string `json:"image_system_bank"`
+	IsActive bool `json:"is_active"`
 }
 
 type SystemBankUpdateRequest struct {
-	ID              int    `json:"id"`
-	BankName        string `json:"bank_name"`
-	AccountName     string `json:"account_name"`
-	AccountNumber   string `json:"account_number"`
-	Description     string `json:"description"`
-	ImageSystemBank string `json:"image_system_bank"`
-	IsActive        bool   `json:"is_active"`
+	ID            int    `json:"id"`
+	BankName      string `json:"bank_name"`
+	AccountName   string `json:"account_name"`
+	AccountNumber string `json:"account_number"`
+	Description   string `json:"description"`
+	Image         string `json:"image"`
+	// ImageSystemBank string `json:"image_system_bank"`
+	IsActive bool `json:"is_active"`
 }
