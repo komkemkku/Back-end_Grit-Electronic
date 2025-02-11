@@ -47,9 +47,8 @@ func CreateWishlist(c *gin.Context) {
 		return
 	}
 
-	// เรียกใช้ Service
 	if err := CreateWishlistsService(c.Request.Context(), req); err != nil {
-		response.InternalError(c, "Failed to create wishlist: "+err.Error())
+		response.InternalError(c, err.Error())
 		return
 	}
 
@@ -88,25 +87,25 @@ func DeleteWishlists(c *gin.Context) {
 	response.Success(c, "delete successfully")
 }
 
-func UpdateWishlists(c *gin.Context) {
-	id := requests.WishlistsIdRequest{}
-	if err := c.BindUri(&id); err != nil {
-		response.BadRequest(c, err.Error())
-		return
-	}
+// func UpdateWishlists(c *gin.Context) {
+// 	id := requests.WishlistsIdRequest{}
+// 	if err := c.BindUri(&id); err != nil {
+// 		response.BadRequest(c, err.Error())
+// 		return
+// 	}
 
-	req := requests.WishlistsUpdateRequest{}
+// 	req := requests.WishlistsUpdateRequest{}
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, err.Error())
-		return
-	}
+// 	if err := c.ShouldBindJSON(&req); err != nil {
+// 		response.BadRequest(c, err.Error())
+// 		return
+// 	}
 
-	data, err := UpdateWishlistsService(c, int64(id.ID), req)
-	if err != nil {
-		response.InternalError(c, err.Error())
-		return
+// 	data, err := UpdateWishlistsService(c, int64(id.ID), req)
+// 	if err != nil {
+// 		response.InternalError(c, err.Error())
+// 		return
 
-	}
-	response.Success(c, data)
-}
+// 	}
+// 	response.Success(c, data)
+// }

@@ -6,12 +6,12 @@ func Models() []any {
 	return []any{
 
 		(*model.Users)(nil),
-		(*model.Roles)(nil),
-		(*model.Permissions)(nil),
-		(*model.RolePermissions)(nil),
+		// (*model.Roles)(nil),
+		// (*model.Permissions)(nil),
+		// (*model.RolePermissions)(nil),
 		(*model.Admins)(nil),
 		(*model.AdminLogs)(nil),
-		(*model.AdminRoles)(nil),
+		// (*model.AdminRoles)(nil),
 		(*model.Products)(nil),
 		(*model.Categories)(nil),
 		(*model.SystemBanks)(nil),

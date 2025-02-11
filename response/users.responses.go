@@ -26,6 +26,11 @@ type UserRespCart struct {
 	Username string `json:"username"`
 }
 
+type UserRespShipment struct {
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+}
+
 type UserRespOrderDetail struct {
 	ID        int    `json:"id"`
 	Firstname string `json:"firstname"`

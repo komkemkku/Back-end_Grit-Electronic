@@ -82,7 +82,7 @@ func main() {
 	r.GET("/wish/:id", wishlist.GetWishlistByID)
 	r.GET("/wish", wishlist.Wishlist)
 	r.DELETE("/wish/:id", wishlist.DeleteWishlists)
-	r.PATCH("/wish/:id", wishlist.UpdateWishlists)
+	// r.PATCH("/wish/:id", wishlist.UpdateWishlists)
 
 	// Cart
 	r.POST("/cart/create", carts.AddCart)
@@ -107,7 +107,7 @@ func main() {
 	r.GET("/review/:id", reviews.GetReviewByID)
 	r.GET("/review", reviews.ReviewList)
 	r.DELETE("/review/:id", reviews.DeleteReview)
-	r.PATCH("/review/:id", reviews.UpdateReview)
+	r.PATCH("/review/:id", md, reviews.UpdateReview)
 
 	// Admin
 	r.POST("/admin/create", admins.CreateAdmin)

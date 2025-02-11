@@ -78,16 +78,18 @@ func GetReviewByID(c *gin.Context) {
 	response.Success(c, data)
 }
 
+
 func UpdateReview(c *gin.Context) {
 
+	user := c.GetInt("user_id")
 	id := requests.ReviewIdRequest{}
-
 	if err := c.BindUri(&id); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
 
 	req := requests.ReviewUpdateRequest{}
+	req.UserID = user
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
@@ -101,3 +103,4 @@ func UpdateReview(c *gin.Context) {
 	}
 	response.Success(c, data)
 }
+

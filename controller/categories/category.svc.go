@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
-	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/image"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
@@ -25,10 +24,10 @@ func ListCategoryService(ctx context.Context, req requests.CategoryRequest) ([]r
 	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("categories AS c").
-		Column("c.id", "c.name", "c.is_active", "c.created_at", "c.updated_at").
-		ColumnExpr("json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description) AS image").
-		Join("LEFT JOIN images AS i ON i.ref_id = c.id AND i.type = 'categories'").
-		GroupExpr("c.id, i.id, i.ref_id, i.type, i.description")
+		Column("c.id", "c.name", "c.is_active", "c.image", "c.created_at", "c.updated_at")
+		// ColumnExpr("json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description) AS image").
+		// Join("LEFT JOIN images AS i ON i.ref_id = c.id AND i.type = 'categories'").
+		// GroupExpr("c.id, i.id, i.ref_id, i.type, i.description")
 
 	// query.Where("c.is_active = ?", true)
 
@@ -61,10 +60,10 @@ func GetByIdCategoryService(ctx context.Context, id int64) (*response.CategoryRe
 	category := &response.CategoryResponses{}
 
 	err = db.NewSelect().TableExpr("categories AS c").
-		Column("c.id", "c.name", "c.is_active", "c.created_at", "c.updated_at").
-		ColumnExpr("json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description) AS image").
-		Join("LEFT JOIN images AS i ON i.ref_id = c.id AND i.type = 'categories'").
-		GroupExpr("c.id, i.id, i.ref_id, i.type, i.description").
+		Column("c.id", "c.name", "c.is_active", "c.image", "c.created_at", "c.updated_at").
+		// ColumnExpr("json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description) AS image").
+		// Join("LEFT JOIN images AS i ON i.ref_id = c.id AND i.type = 'categories'").
+		// GroupExpr("c.id, i.id, i.ref_id, i.type, i.description").
 		Where("c.id = ?", id).Scan(ctx, category)
 	if err != nil {
 		return nil, err
@@ -89,6 +88,7 @@ func CreateCategoryService(ctx context.Context, req requests.CategoryCreateReque
 	// เพิ่ม
 	category := &model.Categories{
 		Name:     req.Name,
+		Image:    req.Image,
 		IsActive: req.IsActive,
 	}
 	category.SetCreatedNow()
@@ -99,16 +99,16 @@ func CreateCategoryService(ctx context.Context, req requests.CategoryCreateReque
 		return nil, err
 	}
 
-	img := requests.ImageCreateRequest{
-		RefID:       category.ID,
-		Type:        "categories",
-		Description: req.ImageCategories,
-	}
+	// img := requests.ImageCreateRequest{
+	// 	RefID:       category.ID,
+	// 	Type:        "categories",
+	// 	Description: req.ImageCategories,
+	// }
 
-	_, err = image.CreateImageService(ctx, img)
-	if err != nil {
-		return nil, err
-	}
+	// _, err = image.CreateImageService(ctx, img)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return category, nil
 
@@ -133,6 +133,7 @@ func UpdateCategoryService(ctx context.Context, id int64, req requests.CategoryU
 
 	// อัปเดตข้อมูลหมวดหมู่
 	category.Name = req.Name
+	category.Image = req.Image
 	category.IsActive = req.IsActive
 	category.SetUpdateNow()
 
@@ -141,42 +142,41 @@ func UpdateCategoryService(ctx context.Context, id int64, req requests.CategoryU
 		return nil, err
 	}
 
-	// ตรวจสอบว่ามีรูปภาพเดิมอยู่หรือไม่
-	imgExists, err := db.NewSelect().
-		TableExpr("images").
-		Where("ref_id = ? AND type = 'categories'", category.ID).
-		Exists(ctx)
-	if err != nil {
-		return nil, err
-	}
+	// // ตรวจสอบว่ามีรูปภาพเดิมอยู่หรือไม่
+	// imgExists, err := db.NewSelect().
+	// 	TableExpr("images").
+	// 	Where("ref_id = ? AND type = 'categories'", category.ID).
+	// 	Exists(ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	if imgExists {
-		// อัปเดตรูปภาพเดิม
-		_, err = db.NewUpdate().
-			TableExpr("images").
-			Set("description = ?", req.ImageCategories).
-			Where("ref_id = ? AND type = 'categories'", category.ID).
-			Exec(ctx)
-		if err != nil {
-			return nil, errors.New("failed to update category image")
-		}
-	} else {
-		// ถ้ายังไม่มีรูปภาพ ให้เพิ่มใหม่
-		img := requests.ImageCreateRequest{
-			RefID:       category.ID,
-			Type:        "categories",
-			Description: req.ImageCategories,
-		}
+	// if imgExists {
+	// 	// อัปเดตรูปภาพเดิม
+	// 	_, err = db.NewUpdate().
+	// 		TableExpr("images").
+	// 		Set("description = ?", req.ImageCategories).
+	// 		Where("ref_id = ? AND type = 'categories'", category.ID).
+	// 		Exec(ctx)
+	// 	if err != nil {
+	// 		return nil, errors.New("failed to update category image")
+	// 	}
+	// } else {
+	// 	// ถ้ายังไม่มีรูปภาพ ให้เพิ่มใหม่
+	// 	img := requests.ImageCreateRequest{
+	// 		RefID:       category.ID,
+	// 		Type:        "categories",
+	// 		Description: req.ImageCategories,
+	// 	}
 
-		_, err = image.CreateImageService(ctx, img)
-		if err != nil {
-			return nil, errors.New("failed to create category image")
-		}
-	}
+	// 	_, err = image.CreateImageService(ctx, img)
+	// 	if err != nil {
+	// 		return nil, errors.New("failed to create category image")
+	// 	}
+	// }
 
 	return category, nil
 }
-
 
 func DeleteCategoryService(ctx context.Context, categoryID int64) error {
 	exists, err := db.NewSelect().
@@ -192,14 +192,14 @@ func DeleteCategoryService(ctx context.Context, categoryID int64) error {
 		return errors.New("category not found")
 	}
 
-	// ลบรูปภาพที่เกี่ยวข้องกับหมวดหมู่
-	_, err = db.NewDelete().
-		TableExpr("images").
-		Where("ref_id = ? AND type = 'categories'", categoryID).
-		Exec(ctx)
-	if err != nil {
-		return errors.New("failed to delete category images")
-	}
+	// // ลบรูปภาพที่เกี่ยวข้องกับหมวดหมู่
+	// _, err = db.NewDelete().
+	// 	TableExpr("images").
+	// 	Where("ref_id = ? AND type = 'categories'", categoryID).
+	// 	Exec(ctx)
+	// if err != nil {
+	// 	return errors.New("failed to delete category images")
+	// }
 
 	// ลบหมวดหมู่จากฐานข้อมูล
 	_, err = db.NewDelete().

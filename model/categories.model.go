@@ -7,6 +7,7 @@ type Categories struct {
 
 	ID       int    `bun:",type:serial,autoincrement,pk"`
 	Name     string `bun:"name"`
+	Image    string `bun:"image"`
 	IsActive bool   `bun:"is_active"`
 
 	CreateUnixTimestamp

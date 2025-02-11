@@ -12,22 +12,24 @@ type ProductIdRequest struct {
 }
 
 type ProductCreateRequest struct {
-	CategoryID   int     `json:"category_id"`
-	Name         string  `json:"name"`
-	Price        float64 `json:"price"`
-	Description  string  `json:"description"`
-	Stock        int     `json:"stock"`
-	ImageProduct string  `json:"image_product"`
-	IsActive     bool    `json:"is_active"`
+	CategoryID  int     `json:"category_id"`
+	Name        string  `json:"name"`
+	Price       float64 `json:"price"`
+	Description string  `json:"description"`
+	Stock       int     `json:"stock"`
+	Image       string  `json:"image"`
+	// ImageProduct string  `json:"image_product"`
+	IsActive bool `json:"is_active"`
 }
 
 type ProductUpdateRequest struct {
-	Id           int     `json:"id"`
-	CategoryID   int     `json:"category_id"`
-	Name         string  `json:"name"`
-	Price        float64 `json:"price"`
-	Description  string  `json:"description"`
-	Stock        int     `json:"stock"`
-	ImageProduct string  `json:"image_product"`
-	IsActive     bool    `json:"is_active"`
+	Id          int     `json:"id"`
+	CategoryID  int     `json:"category_id"`
+	Name        string  `json:"name"`
+	Price       float64 `json:"price"`
+	Description string  `json:"description"`
+	Stock       int     `json:"stock"`
+	Image       string  `json:"image"`
+	// ImageProduct string  `json:"image_product"`
+	IsActive bool `json:"is_active"`
 }

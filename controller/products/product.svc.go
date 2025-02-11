@@ -2,12 +2,10 @@ package products
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"time"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
-	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/image"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
@@ -26,18 +24,17 @@ func ListProductService(ctx context.Context, req requests.ProductRequest) ([]res
 
 	query := db.NewSelect().
 		TableExpr("products AS p").
-		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.is_active", "p.created_at", "p.updated_at", "p.deleted_at").
+		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.image", "p.is_active", "p.created_at", "p.updated_at", "p.deleted_at").
 		ColumnExpr("c.id AS category__id").
 		ColumnExpr("c.name AS category__name").
 		ColumnExpr("COALESCE(json_agg(json_build_object('id', r.id, 'description', r.description, 'rating', r.rating, 'username', u.username)) FILTER (WHERE r.id IS NOT NULL), '[]') AS reviews").
-		ColumnExpr("COALESCE(json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description), '{}'::json) AS image").
+		// ColumnExpr("COALESCE(json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description), '{}'::json) AS image").
 		Join("LEFT JOIN categories AS c ON c.id = p.category_id").
 		Join("LEFT JOIN reviews AS r ON r.product_id = p.id").
 		Join("LEFT JOIN users AS u ON u.id = r.user_id").
-		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'").
+		// Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'").
 		Where("p.deleted_at IS NULL").
-		// Where("p.is_active IS true").
-		GroupExpr("p.id, c.id, i.id, i.ref_id, i.type, i.description")
+		GroupExpr("p.id, c.id")
 
 	// **เพิ่มเงื่อนไขกรองประเภทสินค้า**
 	if req.CategoryID > 0 {
@@ -82,18 +79,17 @@ func GetByIdProductService(ctx context.Context, id int64) (*response.ProductDeta
 
 	// ดึงข้อมูลสินค้า พร้อมรีวิวและรูปภาพ
 	err = db.NewSelect().TableExpr("products AS p").
-		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.is_active", "p.created_at", "p.updated_at", "p.deleted_at").
+		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.image", "p.is_active", "p.created_at", "p.updated_at", "p.deleted_at").
 		ColumnExpr("c.id AS category__id").
 		ColumnExpr("c.name AS category__name").
 		ColumnExpr("COALESCE(json_agg(json_build_object('id', r.id, 'description', r.description, 'rating', r.rating, 'username', u.username)) FILTER (WHERE r.id IS NOT NULL), '[]') AS reviews").
-		ColumnExpr("COALESCE(json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description), '{}'::json) AS image").
+		// ColumnExpr("COALESCE(json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description), '{}'::json) AS image").
 		Join("LEFT JOIN categories AS c ON c.id = p.category_id").
 		Join("LEFT JOIN reviews AS r ON r.product_id = p.id").
 		Join("LEFT JOIN users AS u ON u.id = r.user_id").
-		Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'").
+		// Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'").
 		Where("p.deleted_at IS NULL").
-		// Where("p.is_active IS true").
-		GroupExpr("p.id, c.id, i.id, i.ref_id, i.type, i.description").
+		GroupExpr("p.id, c.id").
 		Where("p.id = ?", id).
 		Scan(ctx, product)
 
@@ -136,6 +132,7 @@ func CreateProductService(ctx context.Context, req requests.ProductCreateRequest
 		Price:       float64(req.Price),
 		Description: req.Description,
 		Stock:       int(req.Stock),
+		Image:       req.Image,
 		CategoryID:  int(req.CategoryID),
 		IsActive:    req.IsActive,
 	}
@@ -147,16 +144,16 @@ func CreateProductService(ctx context.Context, req requests.ProductCreateRequest
 		return nil, err
 	}
 
-	img := requests.ImageCreateRequest{
-		RefID:       product.ID,
-		Type:        "product_main",
-		Description: req.ImageProduct,
-	}
+	// img := requests.ImageCreateRequest{
+	// 	RefID:       product.ID,
+	// 	Type:        "product_main",
+	// 	Description: req.ImageProduct,
+	// }
 
-	_, err = image.CreateImageService(ctx, img)
-	if err != nil {
-		return nil, err
-	}
+	// _, err = image.CreateImageService(ctx, img)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return product, nil
 
@@ -183,6 +180,7 @@ func UpdateProductService(ctx context.Context, id int, req requests.ProductUpdat
 	product.Price = float64(req.Price)
 	product.Stock = int(req.Stock)
 	product.Description = req.Description
+	product.Image = req.Image
 	product.IsActive = req.IsActive
 	product.CategoryID = int(req.CategoryID)
 	product.SetUpdateNow()
@@ -193,41 +191,41 @@ func UpdateProductService(ctx context.Context, id int, req requests.ProductUpdat
 		return nil, err
 	}
 
-	// อัปเดตรูปภาพสินค้า
-	if req.ImageProduct != "" {
-		image := &model.Images{}
-		err = db.NewSelect().
-			Model(image).
-			Where("ref_id = ? AND type = 'product_main'", id).
-			Scan(ctx)
+	// // อัปเดตรูปภาพสินค้า
+	// if req.ImageProduct != "" {
+	// 	image := &model.Images{}
+	// 	err = db.NewSelect().
+	// 		Model(image).
+	// 		Where("ref_id = ? AND type = 'product_main'", id).
+	// 		Scan(ctx)
 
-		if err != nil && errors.Is(err, sql.ErrNoRows) {
-			// หากไม่มีรูปภาพ ให้เพิ่มใหม่
-			image = &model.Images{
-				RefID:       id,
-				Type:        "product_main",
-				Description: req.ImageProduct,
-			}
-			image.SetCreatedNow()
-			image.SetUpdateNow()
+	// 	if err != nil && errors.Is(err, sql.ErrNoRows) {
+	// 		// หากไม่มีรูปภาพ ให้เพิ่มใหม่
+	// 		image = &model.Images{
+	// 			RefID:       id,
+	// 			Type:        "product_main",
+	// 			Description: req.ImageProduct,
+	// 		}
+	// 		image.SetCreatedNow()
+	// 		image.SetUpdateNow()
 
-			_, err = db.NewInsert().Model(image).Exec(ctx)
-			if err != nil {
-				return nil, errors.New("failed to create image")
-			}
-		} else if err == nil {
-			// หากมีรูปภาพอยู่แล้ว อัปเดตข้อมูล
-			image.Description = req.ImageProduct
-			image.SetUpdateNow()
+	// 		_, err = db.NewInsert().Model(image).Exec(ctx)
+	// 		if err != nil {
+	// 			return nil, errors.New("failed to create image")
+	// 		}
+	// 	} else if err == nil {
+	// 		// หากมีรูปภาพอยู่แล้ว อัปเดตข้อมูล
+	// 		image.Description = req.ImageProduct
+	// 		image.SetUpdateNow()
 
-			_, err = db.NewUpdate().Model(image).Where("id = ?", image.ID).Exec(ctx)
-			if err != nil {
-				return nil, errors.New("failed to Update image")
-			}
-		} else {
-			return nil, errors.New("failed to check product image")
-		}
-	}
+	// 		_, err = db.NewUpdate().Model(image).Where("id = ?", image.ID).Exec(ctx)
+	// 		if err != nil {
+	// 			return nil, errors.New("failed to Update image")
+	// 		}
+	// 	} else {
+	// 		return nil, errors.New("failed to check product image")
+	// 	}
+	// }
 
 	return product, nil
 }
