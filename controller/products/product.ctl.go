@@ -70,7 +70,6 @@ func ProductList(c *gin.Context) {
 		Page:  req.Page,
 		Size:  req.Size,
 		Total: int64(total),
-		Categories: req.CategoryID,
 	}
 
 	response.SuccessWithPaginate(c, data, paginate)

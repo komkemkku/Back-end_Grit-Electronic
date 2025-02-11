@@ -26,8 +26,8 @@ func ListWishlistsService(ctx context.Context, req requests.WishlistsRequest) ([
 		// Join("LEFT JOIN products p ON p.id = w.product_id").
 		Column(
 			"w.id",
-			"w.price_per_product",
-			"w.amount_per_product",
+			// "w.price_per_product",
+			// "w.amount_per_product",
 			"w.created_at",
 			"w.updated_at",
 		).
@@ -35,8 +35,8 @@ func ListWishlistsService(ctx context.Context, req requests.WishlistsRequest) ([
 		ColumnExpr("u.username AS user__username").
 		ColumnExpr("p.id AS product__id").
 		ColumnExpr("p.name AS product__name").
-		ColumnExpr("p.description AS product__description").
-		ColumnExpr("p.price AS product__price").
+		// ColumnExpr("p.description AS product__description").
+		// ColumnExpr("p.price AS product__price").
 		Join("LEFT JOIN users u ON u.id = w.user_id").
 		Join("LEFT JOIN products p ON p.id = w.product_id")
 
@@ -73,8 +73,8 @@ func GetByIdWishlistsService(ctx context.Context, id int64) (*response.WishlistR
 		// Join("LEFT JOIN products p ON p.id = w.product_id").
 		Column(
 			"w.id",
-			"w.price_per_product",
-			"w.amount_per_product",
+			// "w.price_per_product",
+			// "w.amount_per_product",
 			"w.created_at",
 			"w.updated_at",
 		).
@@ -82,8 +82,8 @@ func GetByIdWishlistsService(ctx context.Context, id int64) (*response.WishlistR
 		ColumnExpr("u.username AS user__username").
 		ColumnExpr("p.id AS product__id").
 		ColumnExpr("p.name AS product__name").
-		ColumnExpr("p.description AS product__description").
-		ColumnExpr("p.price AS product__price").
+		// ColumnExpr("p.description AS product__description").
+		// ColumnExpr("p.price AS product__price").
 		Join("LEFT JOIN users u ON u.id = w.user_id").
 		Join("LEFT JOIN products p ON p.id = w.product_id").Where("w.id = ?", id).Scan(ctx, wish)
 	if err != nil {

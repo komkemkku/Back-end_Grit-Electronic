@@ -36,6 +36,7 @@ type ProductRespCart struct {
 	ID          int     `json:"id"`
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
+	Image       string  `json:"image"`
 	Price       float64 `json:"price"`
 }
 
@@ -43,6 +44,7 @@ type ProductRespCartItem struct {
 	ID    int     `json:"id"`
 	Name  string  `json:"name"`
 	Price float64 `json:"price"`
+	Image string  `json:"image"`
 }
 
 type ProductRespReview struct {
@@ -50,7 +52,7 @@ type ProductRespReview struct {
 	Name string `json:"name"`
 }
 
-// type ProductDetail struct {
-//     ProductID   int    `json:"product_id"`
-//     ProductName string `json:"product_name"`
-// }
+type ProductRespOrder struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}

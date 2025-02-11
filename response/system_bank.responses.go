@@ -19,4 +19,5 @@ type SystemBankRespPayment struct {
 	AccountName   string `json:"account_name"`
 	AccountNumber string `json:"account_number"`
 	Description   string `json:"description"`
+	Image         string `json:"image"`
 }
