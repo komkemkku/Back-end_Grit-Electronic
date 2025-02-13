@@ -3,28 +3,51 @@ package response
 import "time"
 
 type OrderResponses struct {
-	ID                  int       `json:"id"`
-	UserID              int       `json:"user_id"`
-	Username            string    `json:"username"`
-	UserFirstname       string    `json:"firstname"`
-	UserLastname        string    `json:"lastname"`
-	UserPhone           string    `json:"phone"`
-	PaymentID           int       `json:"payment_id"`
-	ShipmentID          int       `json:"shipment_id"`
-	ShipmentFirstname   string    `json:"shipment_firstname"`
-	ShipmentLastname    string    `json:"shipment_lastname"`
-	ShipmentAddress     string    `json:"shipment_address"`
-	ShipmentZipCode     string    `json:"shipment_zip_code"`
-	ShipmentSubDistrict string    `json:"shipment_sub_district"`
-	ShipmentDistrict    string    `json:"shipment_district"`
-	ShipmentProvince    string    `json:"shipment_province"`
-	TotalPrice          float64   `json:"total_price"`
-	TotalAmount         int       `json:"total_amount"`
-	TrackingNumber      string    `json:"tracking_number"`
-	Status              string    `json:"status"`
-	CreatedAt           time.Time `json:"created_at"`
-	UpdatedAt           time.Time `json:"updated_at"`
+	ID                   int64     `json:"id"`
+	UserID               int64     `json:"user_id"`
+	Username             string    `json:"username"`
+	UserFirstname        string    `json:"firstname"`
+	UserLastname         string    `json:"lastname"`
+	UserPhone            string    `json:"phone"`
+	PaymentID            string    `json:"payment_id"`
+	ShipmentID           int64     `json:"shipment_id"`
+	ShipmentFirstname    string    `json:"shipment_firstname"`
+	ShipmentLastname     string    `json:"shipment_lastname"`
+	ShipmentAddress      string    `json:"shipment_address"`
+	ShipmentZipCode      string    `json:"shipment_zip_code"`
+	ShipmentSubDistrict  string    `json:"shipment_sub_district"`
+	ShipmentDistrict     string    `json:"shipment_district"`
+	ShipmentProvince     string    `json:"shipment_province"`
+	TotalPrice           float64   `json:"total_price"`
+	TotalAmount          int       `json:"total_amount"`
+	Status               string    `json:"status"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
 }
+
+// type OrderResponses struct {
+// 	ID                  int       `json:"id"`
+// 	UserID              int       `json:"user_id"`
+// 	Username            string    `json:"username"`
+// 	UserFirstname       string    `json:"firstname"`
+// 	UserLastname        string    `json:"lastname"`
+// 	UserPhone           string    `json:"phone"`
+// 	PaymentID           int       `json:"payment_id"`
+// 	ShipmentID          int       `json:"shipment_id"`
+// 	ShipmentFirstname   string    `json:"shipment_firstname"`
+// 	ShipmentLastname    string    `json:"shipment_lastname"`
+// 	ShipmentAddress     string    `json:"shipment_address"`
+// 	ShipmentZipCode     string    `json:"shipment_zip_code"`
+// 	ShipmentSubDistrict string    `json:"shipment_sub_district"`
+// 	ShipmentDistrict    string    `json:"shipment_district"`
+// 	ShipmentProvince    string    `json:"shipment_province"`
+// 	TotalPrice          float64   `json:"total_price"`
+// 	TotalAmount         int       `json:"total_amount"`
+// 	TrackingNumber      string    `json:"tracking_number"`
+// 	Status              string    `json:"status"`
+// 	CreatedAt           time.Time `json:"created_at"`
+// 	UpdatedAt           time.Time `json:"updated_at"`
+// }
 
 type OrderRespOrderDetail struct {
 	ID             int                     `json:"id"`
