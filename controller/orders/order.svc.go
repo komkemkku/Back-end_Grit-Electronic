@@ -25,6 +25,16 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 	// สร้าง slice สำหรับ response
 	resp := []response.OrderResponses{}
 
+	var startUnix, endUnix int64
+
+	if req.StartDate > 0 {
+		startUnix = req.StartDate
+	}
+
+	if req.EndDate > 0 {
+		endUnix = req.EndDate
+	}
+
 	// สร้าง CASE WHEN เพื่อกำหนดลำดับของ status
 	caseStatement := "CASE " +
 		"WHEN o.status = 'pending' THEN 1 " +
@@ -39,8 +49,8 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 	query := db.NewSelect().
 		TableExpr("orders AS o").
 		Column("o.id", "o.user_id", "o.payment_id", "o.total_price", "o.total_amount", "o.status").
-		ColumnExpr("to_timestamp(o.created_at) AS created_at").
-		ColumnExpr("to_timestamp(o.updated_at) AS updated_at").
+		ColumnExpr("floor(EXTRACT(EPOCH FROM to_timestamp(o.created_at)))::bigint AS created_at").
+		ColumnExpr("floor(EXTRACT(EPOCH FROM to_timestamp(o.updated_at)))::bigint AS updated_at").
 		ColumnExpr("u.username").
 		ColumnExpr("u.firstname AS user_firstname").
 		ColumnExpr("u.lastname AS user_lastname").
@@ -61,10 +71,20 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 		query.Where("u.firstname ILIKE ? OR u.lastname ILIKE ?", "%"+req.Search+"%", "%"+req.Search+"%")
 	}
 
-	// กรองตามช่วงวันที่เริ่มต้นและสิ้นสุด
-	if req.StartDate != "" && req.EndDate != "" {
-		query.Where("o.created_at BETWEEN ? AND ?", req.StartDate, req.EndDate)
-	}	
+	if req.Status != "" {
+		query.Where("o.status = ?", req.Status)
+	}
+
+	// กรองตามช่วงวันที่ (Unix Timestamp)
+	if startUnix > 0 && endUnix > 0 {
+		if startUnix == endUnix {
+			query.Where("DATE(TO_TIMESTAMP(o.created_at)) = DATE(TO_TIMESTAMP(?))", startUnix)
+		} else {
+			query.Where("o.created_at BETWEEN EXTRACT(EPOCH FROM TO_TIMESTAMP(?)) AND EXTRACT(EPOCH FROM TO_TIMESTAMP(?))", startUnix, endUnix)
+		}
+	} else if startUnix > 0 {
+		query.Where("DATE(TO_TIMESTAMP(o.created_at)) = DATE(TO_TIMESTAMP(?))", startUnix)
+	}
 
 	// เพิ่มเงื่อนไขการเรียงข้อมูลตามลำดับ status และวันที่สร้างล่าสุด
 	query.OrderExpr(fmt.Sprintf("%s, o.status DESC", caseStatement))
@@ -75,7 +95,7 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 		return nil, 0, err
 	}
 
-	//  
+	//
 	if total == 0 {
 		return nil, 0, nil
 	}
@@ -85,33 +105,28 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 	if err != nil {
 		return nil, 0, err
 	}
-  
-	return resp, total, nil
-  }
 
+	return resp, total, nil
+}
 
 func ListOrderUserPendingService(ctx context.Context, req requests.OrderUserRequest) ([]response.OrderResponses, int, error) {
 	return ListOrderUserServiceByStatus(ctx, req, "pending")
 }
 
-
 func ListOrderUserPrepareService(ctx context.Context, req requests.OrderUserRequest) ([]response.OrderResponses, int, error) {
 	return ListOrderUserServiceByStatus(ctx, req, "prepare")
 }
-
 
 func ListOrderUserShipService(ctx context.Context, req requests.OrderUserRequest) ([]response.OrderResponses, int, error) {
 	return ListOrderUserServiceByStatus(ctx, req, "ship")
 }
 
-
 func ListOrderUserSuccessService(ctx context.Context, req requests.OrderUserRequest) ([]response.OrderResponses, int, error) {
 	return ListOrderUserServiceByStatus(ctx, req, "success")
 }
 
-
 func ListOrderUserFailedService(ctx context.Context, req requests.OrderUserRequest) ([]response.OrderResponses, int, error) {
-	
+
 	return ListOrderUserServiceByStatus(ctx, req, "failed")
 }
 
@@ -119,35 +134,33 @@ func ListOrderUserCancelledService(ctx context.Context, req requests.OrderUserRe
 	return ListOrderUserServiceByStatus(ctx, req, "cancelled ")
 }
 
-
 func ListOrderUserHistoryService(ctx context.Context, req requests.OrderUserRequest) ([]response.OrderResponses, int, error) {
-    var allResponses []response.OrderResponses
-    total := 0
+	var allResponses []response.OrderResponses
+	total := 0
 
-    successOrders, successTotal, err := ListOrderUserServiceByStatus(ctx, req, "success")
-    if err != nil {
-        return nil, 0, err
-    }
-    allResponses = append(allResponses, successOrders...)
-    total += successTotal
+	successOrders, successTotal, err := ListOrderUserServiceByStatus(ctx, req, "success")
+	if err != nil {
+		return nil, 0, err
+	}
+	allResponses = append(allResponses, successOrders...)
+	total += successTotal
 
-    failedOrders, failedTotal, err := ListOrderUserServiceByStatus(ctx, req, "failed")
-    if err != nil {
-        return nil, 0, err
-    }
-    allResponses = append(allResponses, failedOrders...)
-    total += failedTotal
+	failedOrders, failedTotal, err := ListOrderUserServiceByStatus(ctx, req, "failed")
+	if err != nil {
+		return nil, 0, err
+	}
+	allResponses = append(allResponses, failedOrders...)
+	total += failedTotal
 
-    cancelledOrders, cancelledTotal, err := ListOrderUserServiceByStatus(ctx, req, "cancelled")
-    if err != nil {
-        return nil, 0, err
-    }
-    allResponses = append(allResponses, cancelledOrders...)
-    total += cancelledTotal
+	cancelledOrders, cancelledTotal, err := ListOrderUserServiceByStatus(ctx, req, "cancelled")
+	if err != nil {
+		return nil, 0, err
+	}
+	allResponses = append(allResponses, cancelledOrders...)
+	total += cancelledTotal
 
-    return allResponses, total, nil
+	return allResponses, total, nil
 }
-
 
 // ฟังก์ชันที่ใช้ร่วมกันสำหรับการกรองตามสถานะ
 func ListOrderUserServiceByStatus(ctx context.Context, req requests.OrderUserRequest, status string) ([]response.OrderResponses, int, error) {
@@ -184,7 +197,6 @@ func ListOrderUserServiceByStatus(ctx context.Context, req requests.OrderUserReq
 		Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id").
 		Where("o.status = ?", status) // กรองตามสถานะที่กำหนด
 
-
 	if req.Search != "" {
 		query.Where("o.status ILIKE ?", "%"+req.Search+"%")
 	}
@@ -206,8 +218,7 @@ func ListOrderUserServiceByStatus(ctx context.Context, req requests.OrderUserReq
 	return resp, total, nil
 }
 
-
-  func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRespOrderDetail, error) {
+func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRespOrderDetail, error) {
 	// 1) ตรวจสอบว่าคำสั่งซื้อนั้นมีอยู่ในฐานข้อมูลหรือไม่
 	exists, err := db.NewSelect().
 		Table("orders").
@@ -283,7 +294,6 @@ func ListOrderUserServiceByStatus(ctx context.Context, req requests.OrderUserReq
 
 	return order, nil
 }
-  
 
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
 	tx, err := db.BeginTx(ctx, nil)

@@ -5,8 +5,8 @@ type OrderRequest struct {
 	Size      int64  `form:"size"`
 	Search    string `form:"search"`
 	Status    string `form:"status"`
-	StartDate string `form:"start,omitempty"`
-	EndDate   string `form:"end,omitempty"`
+	StartDate int64  `form:"start_date"`
+	EndDate   int64  `form:"end_date"`
 }
 
 type OrderUserRequest struct {
