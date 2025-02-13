@@ -29,7 +29,7 @@ type OrderResponses struct {
 type OrderRespOrderDetail struct {
 	ID             int                     `json:"id"`
 	User           UserRespOrderDetail     `bun:"user"`
-	Products       []ProductRespOrder      `json:"product"`
+	Products       []string      `json:"product"`
 	Payment        PaymentRespOrderDetail  `bun:"payment"`
 	SystemBank     SystemBankRespPayment   `bun:"system_bank"`
 	Shipment       ShipmentRespOrderDetail `bun:"shipment"`
@@ -39,4 +39,9 @@ type OrderRespOrderDetail struct {
 	Status         string                  `json:"status"`
 	Created_at     int64                   `json:"created_at"`
 	Updated_at     int64                   `json:"updated_at"`
+}
+
+type OrderRespReport struct {
+	ID         int   `json:"id"`
+	Created_at int64 `json:"created_at"`
 }

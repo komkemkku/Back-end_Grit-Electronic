@@ -22,8 +22,6 @@ func ListWishlistsService(ctx context.Context, req requests.WishlistsRequest) ([
 
 	query := db.NewSelect().
 		TableExpr("wishlists w").
-		// Join("LEFT JOIN users u ON u.id = w.user_id").
-		// Join("LEFT JOIN products p ON p.id = w.product_id").
 		Column(
 			"w.id",
 			// "w.price_per_product",
@@ -35,8 +33,8 @@ func ListWishlistsService(ctx context.Context, req requests.WishlistsRequest) ([
 		ColumnExpr("u.username AS user__username").
 		ColumnExpr("p.id AS product__id").
 		ColumnExpr("p.name AS product__name").
-		// ColumnExpr("p.description AS product__description").
-		// ColumnExpr("p.price AS product__price").
+		ColumnExpr("p.price AS product__price").
+		ColumnExpr("pimage AS product__image").
 		Join("LEFT JOIN users u ON u.id = w.user_id").
 		Join("LEFT JOIN products p ON p.id = w.product_id")
 

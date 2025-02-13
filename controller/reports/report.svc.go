@@ -4,6 +4,7 @@ import (
 	"context"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
 )
 
@@ -61,6 +62,57 @@ func GetDashboard(ctx context.Context) (*response.DashboardResponse, error) {
 
 	return result, nil
 
+}
+
+func GetReport(ctx context.Context, req requests.ReportRequest) ([]response.ReportReponses, int, error) {
+
+	// var Offset int64
+	// if req.Page > 0 {
+	// 	Offset = (req.Page - 1) * req.Size
+	// }
+
+	resp := []response.ReportReponses{}
+
+	// สร้าง query สำหรับดึงข้อมูลจาก order_details
+	query := db.NewSelect().
+		TableExpr("orders AS o").
+		ColumnExpr("o.id AS order_id").
+		ColumnExpr("o.created_at AS created_at").
+		ColumnExpr("o.total_price AS total_price").
+		ColumnExpr("u.username AS username").
+		ColumnExpr("od.product_name AS product_name").
+		ColumnExpr("od.total_product_amount AS amount").
+		ColumnExpr("od.total_product_price AS price").
+		Join("JOIN users AS u ON o.user_id = u.id").
+		Join("JOIN order_details AS od ON o.id = od.order_id").
+		Scan(ctx, &resp)
+
+	// ตรวจสอบหากเกิดข้อผิดพลาดใน query
+	if query != nil {
+		return nil, 0, query
+	}
+
+	// สร้าง query สำหรับหาจำนวนแถวใน order_details
+	var total int
+	countQuery := db.NewSelect().
+		TableExpr("order_details AS od").
+		Join("JOIN orders AS o ON o.id = od.order_id").
+		Join("JOIN users AS u ON o.user_id = u.id").
+		ColumnExpr("COUNT(od.id)").
+		Scan(ctx, &total)
+
+	// ตรวจสอบหากเกิดข้อผิดพลาดใน query การนับจำนวน
+	if countQuery != nil {
+		return nil, 0, countQuery
+	}
+
+	// ดำเนินการ query หลักเพื่อดึงข้อมูลที่ต้องการ
+	// err := query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
+	// if err != nil {
+	// 	return nil, 0, err
+	// }
+
+	return resp, total, nil
 }
 
 // func DashboardByCategory(ctx context.Context) ([]response.DashboardCategoryResponses, error) {

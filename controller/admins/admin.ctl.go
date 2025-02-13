@@ -1,7 +1,10 @@
 package admins
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
+	adminlogs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/admin_logs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
@@ -57,6 +60,7 @@ func GetAdminByID(c *gin.Context) {
 }
 
 func CreateAdmin(c *gin.Context) {
+	AdminID := c.GetInt("admin_id")
 	req := requests.AdminCreateRequest{}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -64,15 +68,26 @@ func CreateAdmin(c *gin.Context) {
 		return
 	}
 
-	_, err := CreateAdminService(c, req)
+	newAdmin, err := CreateAdminService(c, req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
-	response.Success(c, "Admin Create successfully")
+
+	// Log ว่ามีการสร้างแอดมิน
+	_ = adminlogs.CreateAdminLog(
+		c.Request.Context(),
+		AdminID,
+		"CREATE_ADMIN",
+		fmt.Sprintf("แอดมิน ID : %d เพิ่มแอดมินคนใหม่ ID : %d ชื่อ : %s",
+			AdminID, newAdmin.ID, newAdmin.Name),
+	)
+
+	response.Success(c, "Admin created successfully")
 }
 
 func DeleteAdmin(c *gin.Context) {
+	AdminID := c.GetInt("admin_id")
 	id := requests.AdminIdRequest{}
 	if err := c.BindUri(&id); err != nil {
 		response.BadRequest(c, err.Error())
@@ -84,10 +99,18 @@ func DeleteAdmin(c *gin.Context) {
 		return
 	}
 
+	_ = adminlogs.CreateAdminLog(
+		c.Request.Context(),
+		AdminID,
+		"DELETE_ADMIN",
+		fmt.Sprintf("แอดมิน ID : %d ลบแอดมิน ID : %d", AdminID, id.ID),
+	)
+
 	response.Success(c, "delete successfully")
 }
 
 func UpdateAdmin(c *gin.Context) {
+	AdminID := c.GetInt("admin_id")
 	id := requests.AdminIdRequest{}
 	if err := c.BindUri(&id); err != nil {
 		response.BadRequest(c, err.Error())
@@ -107,6 +130,12 @@ func UpdateAdmin(c *gin.Context) {
 		return
 	}
 
-	// ส่งข้อความ Success โดยไม่ต้องส่งข้อมูลกลับ
+	_ = adminlogs.CreateAdminLog(
+		c.Request.Context(),
+		AdminID,
+		"UPDATE_ADMIN",
+		fmt.Sprintf("แอดมิน ID : %d แก้ไขแอดมิน ID : %d", AdminID, id.ID),
+	)
+
 	response.Success(c, "Admin updated successfully")
 }

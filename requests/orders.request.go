@@ -1,12 +1,19 @@
 package requests
 
 type OrderRequest struct {
-	Page       int64  `form:"page"`
-	Size       int64  `form:"size"`
-	Search     string `form:"search"`
-	Status     string `form:"status"`
-	StartDate  string `form:"start,omitempty"`
-	EndDate    string `form:"end,omitempty"`
+	Page      int64  `form:"page"`
+	Size      int64  `form:"size"`
+	Search    string `form:"search"`
+	Status    string `form:"status"`
+	StartDate string `form:"start,omitempty"`
+	EndDate   string `form:"end,omitempty"`
+}
+
+type OrderUserRequest struct {
+	Page   int64  `form:"page"`
+	Size   int64  `form:"size"`
+	Search string `form:"search"`
+	UserID int    `form:"user_id"`
 }
 
 type OrderIdRequest struct {

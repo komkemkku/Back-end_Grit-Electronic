@@ -4,7 +4,7 @@ type ShipmentRequest struct {
 	Page   int64  `form:"page"`
 	Size   int64  `form:"size"`
 	Search string `form:"search"`
-	UserID int `form:"user_id"`
+	UserID int    `form:"user_id"`
 }
 
 type ShipmentIdRequest struct {
@@ -24,7 +24,7 @@ type ShipmentCreateRequest struct {
 }
 
 type ShipmentUpdateRequest struct {
-	ID          string `json:"id"`
+	ID          int    `json:"id"`
 	Firstname   string `json:"firstname"`
 	Lastname    string `json:"lastname"`
 	Address     string `json:"address"`

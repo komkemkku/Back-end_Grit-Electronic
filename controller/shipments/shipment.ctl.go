@@ -59,12 +59,14 @@ func GetShipmentByID(c *gin.Context) {
 }
 
 func ShipmenttList(c *gin.Context) {
-	
+
+	user := c.GetInt("user_id")
 	req := requests.ShipmentRequest{}
 	if err := c.BindQuery(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
+	req.UserID = user
 
 	data, total, err := ListShipmentService(c.Request.Context(), req)
 	if err != nil {

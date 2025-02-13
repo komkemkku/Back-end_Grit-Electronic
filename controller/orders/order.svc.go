@@ -114,12 +114,128 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 	  return nil, 0, err
 	}
   
-	// ส่ง response กลับ
 	return resp, total, nil
   }
-  
 
-func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRespOrderDetail, error) {
+
+func ListOrderUserPendingService(ctx context.Context, req requests.OrderUserRequest) ([]response.OrderResponses, int, error) {
+	return ListOrderUserServiceByStatus(ctx, req, "pending")
+}
+
+
+func ListOrderUserPrepareService(ctx context.Context, req requests.OrderUserRequest) ([]response.OrderResponses, int, error) {
+	return ListOrderUserServiceByStatus(ctx, req, "prepare")
+}
+
+
+func ListOrderUserShipService(ctx context.Context, req requests.OrderUserRequest) ([]response.OrderResponses, int, error) {
+	return ListOrderUserServiceByStatus(ctx, req, "ship")
+}
+
+
+func ListOrderUserSuccessService(ctx context.Context, req requests.OrderUserRequest) ([]response.OrderResponses, int, error) {
+	return ListOrderUserServiceByStatus(ctx, req, "success")
+}
+
+
+func ListOrderUserFailedService(ctx context.Context, req requests.OrderUserRequest) ([]response.OrderResponses, int, error) {
+	
+	return ListOrderUserServiceByStatus(ctx, req, "failed")
+}
+
+func ListOrderUserCancelledService(ctx context.Context, req requests.OrderUserRequest) ([]response.OrderResponses, int, error) {
+	return ListOrderUserServiceByStatus(ctx, req, "cancelled ")
+}
+
+
+func ListOrderUserHistoryService(ctx context.Context, req requests.OrderUserRequest) ([]response.OrderResponses, int, error) {
+    var allResponses []response.OrderResponses
+    total := 0
+
+    successOrders, successTotal, err := ListOrderUserServiceByStatus(ctx, req, "success")
+    if err != nil {
+        return nil, 0, err
+    }
+    allResponses = append(allResponses, successOrders...)
+    total += successTotal
+
+    failedOrders, failedTotal, err := ListOrderUserServiceByStatus(ctx, req, "failed")
+    if err != nil {
+        return nil, 0, err
+    }
+    allResponses = append(allResponses, failedOrders...)
+    total += failedTotal
+
+    cancelledOrders, cancelledTotal, err := ListOrderUserServiceByStatus(ctx, req, "cancelled")
+    if err != nil {
+        return nil, 0, err
+    }
+    allResponses = append(allResponses, cancelledOrders...)
+    total += cancelledTotal
+
+    return allResponses, total, nil
+}
+
+
+// ฟังก์ชันที่ใช้ร่วมกันสำหรับการกรองตามสถานะ
+func ListOrderUserServiceByStatus(ctx context.Context, req requests.OrderUserRequest, status string) ([]response.OrderResponses, int, error) {
+	if req.UserID == 0 {
+		return nil, 0, errors.New("invalid UserID")
+	}
+
+	var Offset int64
+	if req.Page > 0 {
+		Offset = (req.Page - 1) * req.Size
+	}
+
+	resp := []response.OrderResponses{}
+
+	// สร้าง query
+	query := db.NewSelect().
+		TableExpr("orders AS o").
+		Column("o.id", "o.user_id", "o.payment_id", "o.total_price", "o.total_amount", "o.status").
+		ColumnExpr("to_timestamp(o.created_at) AS created_at").
+		ColumnExpr("to_timestamp(o.updated_at) AS updated_at").
+		ColumnExpr("u.username").
+		ColumnExpr("u.firstname AS user_firstname").
+		ColumnExpr("u.lastname AS user_lastname").
+		ColumnExpr("u.phone AS user_phone").
+		ColumnExpr("s.id AS shipment_id").
+		ColumnExpr("s.firstname AS shipment_firstname").
+		ColumnExpr("s.lastname AS shipment_lastname").
+		ColumnExpr("s.address AS shipment_address").
+		ColumnExpr("s.zip_code AS shipment_zip_code").
+		ColumnExpr("s.sub_district AS shipment_sub_district").
+		ColumnExpr("s.district AS shipment_district").
+		ColumnExpr("s.province AS shipment_province").
+		Join("LEFT JOIN users AS u ON u.id = o.user_id").
+		Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id").
+		Where("o.status = ?", status) // กรองตามสถานะที่กำหนด
+
+
+	if req.Search != "" {
+		query.Where("o.status ILIKE ?", "%"+req.Search+"%")
+	}
+
+	if req.UserID != 0 {
+		query.Where("o.user_id = ?", req.UserID)
+	}
+
+	total, err := query.Count(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return resp, total, nil
+}
+
+
+  func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRespOrderDetail, error) {
 	// 1) ตรวจสอบว่าคำสั่งซื้อนั้นมีอยู่ในฐานข้อมูลหรือไม่
 	exists, err := db.NewSelect().
 		Table("orders").
@@ -174,27 +290,28 @@ func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRes
 		return nil, fmt.Errorf("failed to fetch order details: %v", err)
 	}
 
-	// // 4) ดึงชื่อสินค้าจากตาราง order_details (กรณีออเดอร์มีแค่ 1 สินค้า)
-	// //    ถ้ามีหลายสินค้าและต้องการหลายชื่อ อาจต้องปรับเป็น slice แทน
-	// var productItems []struct {
-	// 	ProductName string `bun:"product_name"`
-	// }
-	// err = db.NewSelect().
-	// 	Table("order_details").
-	// 	Column("product_name").
-	// 	Where("order_id = ?", orderID).
-	// 	Scan(ctx, &productItems)
-	// if err != nil && err != sql.ErrNoRows {
-	// 	return nil, fmt.Errorf("failed to fetch product names: %v", err)
-	// }
+	// 4) ดึงชื่อสินค้าจากตาราง order_details (กรณีออเดอร์มีแค่ 1 สินค้า)
+	//    ถ้ามีหลายสินค้าและต้องการหลายชื่อ อาจต้องปรับเป็น slice แทน
+	var productItems []struct {
+		ProductName string `bun:"product_name"`
+	}
+	err = db.NewSelect().
+		Table("order_details").
+		Column("product_name").
+		Where("order_id = ?", orderID).
+		Scan(ctx, &productItems)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, fmt.Errorf("failed to fetch product names: %v", err)
+	}
 
-	// // 5) ใส่ product_name หลายค่าใน order.Products
-	// for _, p := range productItems {
-	// 	order.Products = append(order.Products, p.ProductName)
-	// }
+	// 5) ใส่ product_name หลายค่าใน order.Products
+	for _, p := range productItems {
+		order.Products = append(order.Products, p.ProductName)
+	}
 
 	return order, nil
 }
+  
 
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
 	tx, err := db.BeginTx(ctx, nil)

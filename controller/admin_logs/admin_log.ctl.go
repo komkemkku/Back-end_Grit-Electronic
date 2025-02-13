@@ -28,3 +28,22 @@ func AdminLogList(c *gin.Context) {
 
 	response.SuccessWithPaginate(c, data, paginate)
 }
+
+func CreateAdminLogs(c *gin.Context) {
+    req := requests.AdminLogCreateRequest{}
+
+    if err := c.ShouldBindJSON(&req); err != nil {
+        response.BadRequest(c, err.Error())
+        return
+    }
+
+    err := CreateAdminLog(c.Request.Context(), req.AdminID, req.Action, req.Description)
+    if err != nil {
+        response.InternalError(c, err.Error())
+        return
+    }
+
+    // ส่งข้อความตอบกลับเมื่อสำเร็จ
+    response.Success(c, "Admin log created successfully")
+}
+
