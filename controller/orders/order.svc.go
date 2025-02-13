@@ -19,105 +19,76 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 
 	var Offset int64
 	if req.Page > 0 {
-	  Offset = (req.Page - 1) * req.Size
+		Offset = (req.Page - 1) * req.Size
 	}
-  
+
 	// สร้าง slice สำหรับ response
 	resp := []response.OrderResponses{}
-  
+
 	// สร้าง CASE WHEN เพื่อกำหนดลำดับของ status
 	caseStatement := "CASE " +
-	  "WHEN o.status = 'pending' THEN 1 " +
-	  "WHEN o.status = 'prepare' THEN 2 " +
-	  "WHEN o.status = 'ship' THEN 3 " +
-	  "WHEN o.status = 'success' THEN 4 " +
-	  "WHEN o.status = 'failed' THEN 5 " +
-	  "WHEN o.status = 'cancelled' THEN 6 " +
-	  "ELSE 7 END"
-  
+		"WHEN o.status = 'pending' THEN 1 " +
+		"WHEN o.status = 'prepare' THEN 2 " +
+		"WHEN o.status = 'ship' THEN 3 " +
+		"WHEN o.status = 'success' THEN 4 " +
+		"WHEN o.status = 'failed' THEN 5 " +
+		"WHEN o.status = 'cancelled' THEN 6 " +
+		"ELSE 7 END"
+
 	// สร้าง query
 	query := db.NewSelect().
-	  TableExpr("orders AS o").
-	  Column("o.id", "o.user_id", "o.payment_id", "o.total_price", "o.total_amount", "o.status").
-	  ColumnExpr("to_timestamp(o.created_at) AS created_at").
-	  ColumnExpr("to_timestamp(o.updated_at) AS updated_at").
-	  ColumnExpr("u.username").
-	  ColumnExpr("u.firstname AS user_firstname").
-	  ColumnExpr("u.lastname AS user_lastname").
-	  ColumnExpr("u.phone AS user_phone").
-	  ColumnExpr("s.id AS shipment_id").
-	  ColumnExpr("s.firstname AS shipment_firstname").
-	  ColumnExpr("s.lastname AS shipment_lastname").
-	  ColumnExpr("s.address AS shipment_address").
-	  ColumnExpr("s.zip_code AS shipment_zip_code").
-	  ColumnExpr("s.sub_district AS shipment_sub_district").
-	  ColumnExpr("s.district AS shipment_district").
-	  ColumnExpr("s.province AS shipment_province").
-	  Join("LEFT JOIN users AS u ON u.id = o.user_id").
-	  Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id")
-  
-	// กรองตาม status
-	// if len(req.Status) > 0 {
-	//   statusPlaceholders := make([]string, len(req.Status))
-	//   for i, status := range req.Status {
-	// 	statusPlaceholders[i] = fmt.Sprintf("o.status = '%s'", string(status))
-	//   }
-	//   query.Where(fmt.Sprintf("(%s)", strings.Join(statusPlaceholders, " OR ")))
-	// }
-  
+		TableExpr("orders AS o").
+		Column("o.id", "o.user_id", "o.payment_id", "o.total_price", "o.total_amount", "o.status").
+		ColumnExpr("to_timestamp(o.created_at) AS created_at").
+		ColumnExpr("to_timestamp(o.updated_at) AS updated_at").
+		ColumnExpr("u.username").
+		ColumnExpr("u.firstname AS user_firstname").
+		ColumnExpr("u.lastname AS user_lastname").
+		ColumnExpr("u.phone AS user_phone").
+		ColumnExpr("s.id AS shipment_id").
+		ColumnExpr("s.firstname AS shipment_firstname").
+		ColumnExpr("s.lastname AS shipment_lastname").
+		ColumnExpr("s.address AS shipment_address").
+		ColumnExpr("s.zip_code AS shipment_zip_code").
+		ColumnExpr("s.sub_district AS shipment_sub_district").
+		ColumnExpr("s.district AS shipment_district").
+		ColumnExpr("s.province AS shipment_province").
+		Join("LEFT JOIN users AS u ON u.id = o.user_id").
+		Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id")
+
 	// กรองตามคำค้นหาหรือ search ที่ชื่อผู้ใช้ (firstname หรือ lastname)
 	if req.Search != "" {
-	  query.Where("u.firstname ILIKE ? OR u.lastname ILIKE ?", "%"+req.Search+"%", "%"+req.Search+"%")
+		query.Where("u.firstname ILIKE ? OR u.lastname ILIKE ?", "%"+req.Search+"%", "%"+req.Search+"%")
 	}
 
-	if req.Status != "" {
-		query.Where("o.status = ?", req.Status)
-	}
-	
-  
 	// กรองตามช่วงวันที่เริ่มต้นและสิ้นสุด
 	if req.StartDate != "" && req.EndDate != "" {
-	  query.Where("o.created_at BETWEEN ? AND ?", req.StartDate, req.EndDate)
-	}
-  
+		query.Where("o.created_at BETWEEN ? AND ?", req.StartDate, req.EndDate)
+	}	
+
 	// เพิ่มเงื่อนไขการเรียงข้อมูลตามลำดับ status และวันที่สร้างล่าสุด
 	query.OrderExpr(fmt.Sprintf("%s, o.status DESC", caseStatement))
-  
-	
-  
-	// กรองตาม status และช่วงวันที่สำหรับนับจำนวน
-	// if len(req.Status) > 0 {
-	//   statusPlaceholders := make([]string, len(req.Status))
-	//   for i, status := range req.Status {
-	// 	statusPlaceholders[i] = fmt.Sprintf("o.status = '%s'", string(status))
-	//   }
-	//   countQuery.Where(fmt.Sprintf("(%s)", strings.Join(statusPlaceholders, " OR ")))
-	// }
-  
-	// if req.StartDate != "" && req.EndDate != "" {
-	//   countQuery.Where("o.created_at BETWEEN ? AND ?", req.StartDate, req.EndDate)
-	// }
-  
-	// if req.Search != "" {
-	//   countQuery.Where("o.payment_id ILIKE ? OR o.user_id::text ILIKE ? OR u.firstname ILIKE ? OR u.lastname ILIKE ?", "%"+req.Search+"%", "%"+req.Search+"%", "%"+req.Search+"%", "%"+req.Search+"%")
-	// }
 
-  
+	// นับจำนวนทั้งหมด
 	total, err := query.Count(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
-  
+
+	//  
+	if total == 0 {
+		return nil, 0, nil
+	}
+
 	// ดึงข้อมูลพร้อม pagination โดยใช้ offset และ limit
 	err = query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
 	if err != nil {
-	  return nil, 0, err
+		return nil, 0, err
 	}
-  
+
 	// ส่ง response กลับ
 	return resp, total, nil
-  }
-  
+}
 
 func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRespOrderDetail, error) {
 	// 1) ตรวจสอบว่าคำสั่งซื้อนั้นมีอยู่ในฐานข้อมูลหรือไม่
@@ -319,30 +290,30 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 		return nil, fmt.Errorf("failed to fetch order: %v", err)
 	}
 
-	// ตรวจสอบว่ากรณีเรากำลังจะเปลี่ยนไปเป็น cancelled แต่สถานะปัจจุบันเป็น "shipping" หรือ "shipped"
+	// ตรวจสอบว่ากรณีเรากำลังจะเปลี่ยนไปเป็น cancelled แต่สถานะปัจจุบันเป็น "ship" หรือ "shipped"
 	// ถ้าใช่ ให้ return error ไม่ให้ทำงานต่อ
-	if (order.Status == "shipping" || order.Status == "shipped") && req.Status == "cancelled" {
-		return nil, errors.New("cannot cancel an order that is in shipping or already shipped")
+	if (order.Status == "ship" || order.Status == "success") && req.Status == "cancelled" {
+		return nil, errors.New("cannot cancel an order that is in ship or already shipped")
 	}
 
 	// 3) อัปเดต Status ตาม request
 	order.Status = req.Status
 	order.SetUpdateNow() // ฟังก์ชันกำหนด updated_at ใน struct
 
-	// 4) ถ้าสถานะเป็น "shipping" ให้บันทึก TrackingNumber ด้วย
-	if req.Status == "shipping" {
+	// // 4) ถ้าสถานะเป็น "ship" ให้บันทึก TrackingNumber ด้วย
+	if req.Status == "ship" {
 		// ตรวจสอบว่า TrackingNumber ถูกตั้งค่าหรือไม่
 		if req.TrackingNumber == "" {
-			return nil, errors.New("tracking number must be provided when the order is shipping")
+			return nil, errors.New("tracking number must be provided when the order is ship")
 		}
 		order.TrackingNumber = req.TrackingNumber
 		_, err = db.NewUpdate().Model(order).Column("status", "tracking_number", "updated_at").Where("id = ?", id).Exec(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update order: %v", err)
 		}
-	} else if req.Status != "shipping" && req.TrackingNumber != "" {
-		// ถ้าสถานะไม่ใช่ "shipping" จะไม่สามารถอัปเดต TrackingNumber ได้
-		return nil, errors.New("cannot set tracking number when order status is not shipping")
+	} else if req.Status != "ship" && req.TrackingNumber != "" {
+		// ถ้าสถานะไม่ใช่ "ship" จะไม่สามารถอัปเดต TrackingNumber ได้
+		return nil, errors.New("cannot set tracking number when order status is not ship")
 	} else {
 		// ถ้าเป็นสถานะอื่น ๆ ก็อัปเดตเฉพาะ status และ updated_at
 		_, err = db.NewUpdate().
