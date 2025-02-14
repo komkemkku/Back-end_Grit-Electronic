@@ -5,8 +5,8 @@ type OrderRequest struct {
 	Size      int64  `form:"size"`
 	Search    string `form:"search"`
 	Status    string `form:"status"`
-	StartDate int64  `form:"start_date"`
-	EndDate   int64  `form:"end_date"`
+	StartDate int64  `form:"start"`
+	EndDate   int64  `form:"end"`
 }
 
 type OrderUserRequest struct {
@@ -21,9 +21,11 @@ type OrderIdRequest struct {
 }
 
 type OrderCreateRequest struct {
-	UserID     int `json:"user_id"`
-	PaymentID  int `json:"payment_id"`
-	ShipmentID int `json:"shipment_id"`
+	UserID       int    `json:"user_id"`
+	PaymentID    int    `json:"payment_id"`
+	ShipmentID   int    `json:"shipment_id"`
+	PaymentDate  string `json:"payment_date"`
+	SystemBankID int    `json:"system_bank_id"`
 	// CartID     int    `json:"cart_id"`
 	// Status     string `json:"status"`
 }

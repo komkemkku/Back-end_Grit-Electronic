@@ -3,6 +3,7 @@ package products
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
@@ -104,13 +105,14 @@ func GetByIdProductService(ctx context.Context, id int64) (*response.ProductDeta
 func CreateProductService(ctx context.Context, req requests.ProductCreateRequest) (*model.Products, error) {
 
 	// ตรวจสอบว่า category_id มีอยู่ในระบบหรือไม่
-	ex, err := db.NewSelect().TableExpr("categories").Where("id =?", req.CategoryID).Exists(ctx)
+	ex, err := db.NewSelect().TableExpr("categories").Where("id = ?", req.CategoryID).Exists(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("database error: %v", err)
 	}
 	if !ex {
-		return nil, errors.New("categories not found")
+		return nil, fmt.Errorf("categories not found for ID: %d", req.CategoryID)
 	}
+
 
 	// ตรวจสอบว่าสินค้าชื่อนี้มีอยู่แล้วหรือไม่
 	productExists, err := db.NewSelect().
@@ -143,17 +145,6 @@ func CreateProductService(ctx context.Context, req requests.ProductCreateRequest
 	if err != nil {
 		return nil, err
 	}
-
-	// img := requests.ImageCreateRequest{
-	// 	RefID:       product.ID,
-	// 	Type:        "product_main",
-	// 	Description: req.ImageProduct,
-	// }
-
-	// _, err = image.CreateImageService(ctx, img)
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	return product, nil
 

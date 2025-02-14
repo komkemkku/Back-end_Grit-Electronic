@@ -21,18 +21,23 @@ func CreateCategory(c *gin.Context) {
 
 	data, err := CreateCategoryService(c, req)
 	if err != nil {
+		logMessage := fmt.Sprintf("แอดมิน ID: %d ล้มเหลวในการเพิ่มประเภทสินค้า: %s เนื่องจากข้อผิดพลาด: %v", AdminID, req.Name, err)
+		_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "CREATE_CATEGORY_FAILED", logMessage)
+
 		response.InternalError(c, err.Error())
 		return
 	}
-	logMessage := fmt.Sprintf("แอดมิน ID : %d เพิ่มประเภทสินค้า : %s", AdminID, req.Name)
-	_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "CREATE_CATEGORIES", logMessage)
+
+	logMessage := fmt.Sprintf("แอดมิน ID: %d เพิ่มประเภทสินค้า: %s สำเร็จ", AdminID, req.Name)
+	_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "CREATE_CATEGORY_SUCCESS", logMessage)
 
 	response.Success(c, data)
 }
 
-func DeleteCeategory(c *gin.Context) {
+func DeleteCategory(c *gin.Context) {
 	id := requests.CategoryIdRequest{}
 	AdminID := c.GetInt("admin_id")
+
 	if err := c.BindUri(&id); err != nil {
 		response.BadRequest(c, err.Error())
 		return
@@ -40,19 +45,26 @@ func DeleteCeategory(c *gin.Context) {
 
 	category, err := GetByIdCategoryService(c, int64(id.ID))
 	if err != nil {
-		response.InternalError(c, err.Error())
+		logMessage := fmt.Sprintf("แอดมิน ID: %d ล้มเหลวในการลบประเภทสินค้า ID: %d เนื่องจากไม่พบข้อมูล", AdminID, id.ID)
+		_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "DELETE_CATEGORY_FAILED", logMessage)
+
+		response.InternalError(c, "Category not found")
 		return
 	}
 
 	err = DeleteCategoryService(c, int64(id.ID))
 	if err != nil {
+		logMessage := fmt.Sprintf("แอดมิน ID: %d ล้มเหลวในการลบประเภทสินค้า: %s เนื่องจากข้อผิดพลาด: %v", AdminID, category.Name, err)
+		_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "DELETE_CATEGORY_FAILED", logMessage)
+
 		response.InternalError(c, err.Error())
 		return
 	}
-	logMessage := fmt.Sprintf("แอดมิน ID : %d ลบประเภทสินค้า : %s", AdminID, category.Name)
-	_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "DELETE_CATEGORIES", logMessage)
 
-	response.Success(c, "delete successfully")
+	logMessage := fmt.Sprintf("แอดมิน ID: %d ลบประเภทสินค้า: %s สำเร็จ", AdminID, category.Name)
+	_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "DELETE_CATEGORY_SUCCESS", logMessage)
+
+	response.Success(c, "Delete successfully")
 }
 
 func GetCategoryByID(c *gin.Context) {
@@ -95,6 +107,7 @@ func CategoryList(c *gin.Context) {
 func UpdateCategory(c *gin.Context) {
 	id := requests.CategoryIdRequest{}
 	AdminID := c.GetInt("admin_id")
+
 	if err := c.BindUri(&id); err != nil {
 		response.BadRequest(c, err.Error())
 		return
@@ -106,19 +119,29 @@ func UpdateCategory(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
+
+	// ดึงข้อมูลประเภทสินค้าก่อนอัปเดต
 	category, err := GetByIdCategoryService(c, int64(id.ID))
 	if err != nil {
+		logMessage := fmt.Sprintf("แอดมิน ID: %d ล้มเหลวในการแก้ไขประเภทสินค้า ID: %d เนื่องจากไม่พบข้อมูล", AdminID, id.ID)
+		_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "UPDATE_CATEGORY_FAILED", logMessage)
+
+		response.InternalError(c, "Category not found")
+		return
+	}
+
+	// อัปเดตประเภทสินค้า
+	data, err := UpdateCategoryService(c, int64(id.ID), req)
+	if err != nil {
+		logMessage := fmt.Sprintf("แอดมิน ID: %d ล้มเหลวในการแก้ไขประเภทสินค้า: %s เนื่องจากข้อผิดพลาด: %v", AdminID, category.Name, err)
+		_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "UPDATE_CATEGORY_FAILED", logMessage)
+
 		response.InternalError(c, err.Error())
 		return
 	}
 
-	data, err := UpdateCategoryService(c, int64(id.ID), req)
-	if err != nil {
-		response.InternalError(c, err.Error())
-		return
-	}
-	logMessage := fmt.Sprintf("แอดมิน ID : %d แก้ไขชื่อประเภทสินค้า : %s", AdminID, category.Name)
-	_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "UPDATE_CATEGORIES", logMessage)
+	logMessage := fmt.Sprintf("แอดมิน ID: %d แก้ไขประเภทสินค้า: %s เป็น: %s", AdminID, category.Name, req.Name)
+	_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "UPDATE_CATEGORY_SUCCESS", logMessage)
 
 	response.Success(c, data)
 }

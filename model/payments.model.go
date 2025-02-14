@@ -7,12 +7,13 @@ type Payments struct {
 
 	ID            int     `bun:",type:serial,autoincrement,pk"`
 	SystemBankID  int     `bun:"system_bank_id"`
-	Price         float64 `bun:"price"`
-	UpdatedBy     int     `bun:"updated_by"`
-	BankName      string  `bun:"bank_name"`
-	AccountName   string  `bun:"account_name"`
-	AccountNumber string  `bun:"account_number"`
-	Status        string  `bun:"status"`
+	// Price         float64 `bun:"price"`
+	// UpdatedBy     int     `bun:"updated_by"`
+	Date          string  `bun:"date"`
+	// BankName      string  `bun:"bank_name"`
+	// AccountName   string  `bun:"account_name"`
+	// AccountNumber string  `bun:"account_number"`
+	// Status        string  `bun:"status"`
 
 	CreateUnixTimestamp
 	UpdateUnixTimestamp

@@ -11,11 +11,9 @@ import (
 )
 
 func CreateOrder(c *gin.Context) {
-
 	user := c.GetInt("user_id")
 
 	req := requests.OrderCreateRequest{}
-
 	req.UserID = user
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -28,8 +26,13 @@ func CreateOrder(c *gin.Context) {
 		response.InternalError(c, err.Error())
 		return
 	}
-	logMessage := fmt.Sprintf("ผู้ใช้งาน ID : %d สั่งซื้อสินค้า", user)
-	_ = adminlogs.CreateAdminLog(c.Request.Context(), user, "CREATE_CATEGORIES", logMessage)
+
+	// บันทึก Log สำหรับคำสั่งซื้อที่สร้างขึ้น
+	logMessage := fmt.Sprintf("ผู้ใช้งาน ID: %d ได้ทำการสั่งซื้อสินค้า หมายเลขคำสั่งซื้อ #%d", req.UserID, data.ID)
+	if err := adminlogs.CreateAdminLog(c.Request.Context(), user, "CREATE_ORDER", logMessage); err != nil {
+		fmt.Println("Failed to create admin log:", err)
+	}
+
 	response.Success(c, data)
 }
 
@@ -123,6 +126,30 @@ func OrderUserPendingList(c *gin.Context) {
 	req.UserID = user
 
 	data, total, err := ListOrderUserPendingService(c.Request.Context(), req)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+
+	paginate := model.Paginate{
+		Page:  req.Page,
+		Size:  req.Size,
+		Total: int64(total),
+	}
+
+	response.SuccessWithPaginate(c, data, paginate)
+}
+
+func OrderUserPaidList(c *gin.Context) {
+	user := c.GetInt("user_id")
+	req := requests.OrderUserRequest{}
+	if err := c.BindQuery(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+	req.UserID = user
+
+	data, total, err := ListOrderUserPaidService(c.Request.Context(), req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -289,6 +316,7 @@ func OrderUserHistoryList(c *gin.Context) {
 func UpdateOrder(c *gin.Context) {
 	id := requests.OrderIdRequest{}
 	AdminID := c.GetInt("admin_id")
+
 	if err := c.BindUri(&id); err != nil {
 		response.BadRequest(c, err.Error())
 		return
@@ -306,8 +334,14 @@ func UpdateOrder(c *gin.Context) {
 		response.InternalError(c, err.Error())
 		return
 	}
-	logMessage := fmt.Sprintf("แอดมิน ID : %d แก้ไขสถานะ : %s", AdminID, req.Status)
-	_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "CREATE_CATEGORIES", logMessage)
+
+	// ไม่บันทึก Log หากสถานะถูกเปลี่ยนเป็น "success"
+	if req.Status != "success" {
+		logMessage := fmt.Sprintf("แอดมิน ID: %d แก้ไขสถานะคำสั่งซื้อหมายเลข #%d เป็น: %s", AdminID, id.ID, req.Status)
+		if err := adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "UPDATE_ORDER", logMessage); err != nil {
+			fmt.Println("Failed to create admin log:", err)
+		}
+	}
 
 	response.Success(c, data)
 }

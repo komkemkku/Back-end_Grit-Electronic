@@ -2,7 +2,6 @@ package adminlogs
 
 import (
 	"context"
-	"log"
 
 	config "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
@@ -32,9 +31,6 @@ func ListAdminLogsService(ctx context.Context, req requests.AdminLogRequest) ([]
 		endUnix = req.EndDate
 	}
 
-	// ตรวจสอบค่าที่ได้รับ
-	log.Printf("Filtering logs from %d to %d\n", startUnix, endUnix)
-
 	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("admin_logs AS al").
@@ -44,7 +40,7 @@ func ListAdminLogsService(ctx context.Context, req requests.AdminLogRequest) ([]
 		Join("LEFT JOIN admins as a ON a.id = al.admin_id")
 
 	if req.Search != "" {
-		query.Where("a.name ILIKE ?", "%"+req.Search+"%")
+		query.Where("al.description ILIKE ?", "%"+req.Search+"%")
 	}
 
 	// กรองตามช่วงวันที่ (Unix Timestamp)
@@ -52,7 +48,7 @@ func ListAdminLogsService(ctx context.Context, req requests.AdminLogRequest) ([]
 		if startUnix == endUnix {
 			query.Where("DATE(TO_TIMESTAMP(al.created_at)) = DATE(TO_TIMESTAMP(?))", startUnix)
 		} else {
-			query.Where("al.created_at BETWEEN EXTRACT(EPOCH FROM TO_TIMESTAMP(?)) AND EXTRACT(EPOCH FROM TO_TIMESTAMP(?))", startUnix, endUnix)
+			query.Where("al.created_at >= ? AND al.created_at <= ?", startUnix, endUnix)
 		}
 	} else if startUnix > 0 {
 		query.Where("DATE(TO_TIMESTAMP(al.created_at)) = DATE(TO_TIMESTAMP(?))", startUnix)
@@ -64,7 +60,7 @@ func ListAdminLogsService(ctx context.Context, req requests.AdminLogRequest) ([]
 	}
 
 	// Execute query
-	err = query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
+	err = query.OrderExpr("al.created_at desc").Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
 	if err != nil {
 		return nil, 0, err
 	}

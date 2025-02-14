@@ -41,13 +41,13 @@ func Report(c *gin.Context) {
 	response.SuccessWithPaginate(c, data, paginate)
 }
 
-// func DashboardTotalByCategory(c *gin.Context) {
+func DashboardTotalByCategory(c *gin.Context) {
 
-// 	data, err := DashboardByCategory(c)
-// 	if err != nil {
-// 		response.InternalError(c, err.Error())
-// 		return
-// 	}
-// 	response.Success(c, data)
+	data, err := DashboardByCategory(c)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+	response.Success(c, data)
 
-// }
+}

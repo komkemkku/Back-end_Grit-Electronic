@@ -49,20 +49,20 @@ func main() {
 	md := middlewares.AuthMiddleware()
 
 	// User
-	r.POST("/user/create", users.CreateUser)
-	r.GET("/user", users.UserList)
-	r.GET("/user/:id", users.GetUserByID)
-	r.DELETE("/user/:id", users.DeleteUser)
-	r.PATCH("/user/:id", users.UpdateUser)
+	r.POST("/user/create", md, users.CreateUser)
+	r.GET("/user", md, users.UserList)
+	r.GET("/user/:id", md, users.GetUserByID)
+	r.DELETE("/user/:id", md, users.DeleteUser)
+	r.PATCH("/user/:id", md, users.UpdateUser)
 
 	// Get Info
 	r.GET("/user/info", md, users.GetInfoUser)
 	r.GET("/admin/info", md, admins.GetInfoAdmin)
 
 	// Product
-	r.POST("/product/create", md, products.CreateProduct)
-	r.GET("/product/:id", md, products.GetProductByID)
-	r.GET("/product", md, products.ProductList)
+	r.POST("/product/create",md, products.CreateProduct)
+	r.GET("/product/:id", products.GetProductByID)
+	r.GET("/product", products.ProductList)
 	r.DELETE("/product/:id", md, products.DeleteProduct)
 	r.PATCH("/product/:id", md, products.UpdateProduct)
 
@@ -72,14 +72,15 @@ func main() {
 
 	// Order
 	r.POST("/order/create", md, orders.CreateOrder)
-	r.GET("/order/:id", orders.GetOrderByID)
-	r.GET("/order", orders.OrderList)
+	r.GET("/order/:id", md, orders.GetOrderByID)
+	r.GET("/order", md, orders.OrderList)
 	// r.GET("/order/user", md, orders.OrderUserList)
 	//r.DELETE("/order/:id", orders.DeleteOrder)
 	r.PATCH("/order/:id", md, orders.UpdateOrder)
 
 	// Order User
 	r.GET("/order/pending", md, orders.OrderUserPendingList)
+	r.GET("/order/paid", md, orders.OrderUserPaidList)
 	r.GET("/order/prepare", md, orders.OrderUserPrepareList)
 	r.GET("/order/ship", md, orders.OrderUserShipList)
 	r.GET("/order/success", md, orders.OrderUserSuccessList)
@@ -87,20 +88,19 @@ func main() {
 	r.GET("/order/cancelled", md, orders.OrderUserCancelledList)
 	r.GET("/order/history", md, orders.OrderUserHistoryList)
 
-
 	// Wishlist
 	r.POST("/wish/create", md, wishlist.CreateWishlist)
-	r.GET("/wish/:id", wishlist.GetWishlistByID)
-	r.GET("/wish", wishlist.Wishlist)
-	r.DELETE("/wish/:id", wishlist.DeleteWishlists)
+	r.GET("/wish/:id", md, wishlist.GetWishlistByID)
+	r.GET("/wish", md, wishlist.Wishlist)
+	r.DELETE("/wish/:id", md, wishlist.DeleteWishlists)
 	// r.PATCH("/wish/:id", wishlist.UpdateWishlists)
 
 	// Cart
 	r.POST("/cart/create", carts.AddCart)
 	r.GET("/cart", md, carts.GetCartByID)
 	// r.GET("/cart", carts.CartList)
-	r.DELETE("/cart/:id", carts.DeleteCart)
-	r.PATCH("/cart/:id", carts.UpdateCart)
+	r.DELETE("/cart/:id", md, carts.DeleteCart)
+	r.PATCH("/cart/:id", md, carts.UpdateCart)
 
 	// CartItem
 	r.POST("/cartitem/create", md, cartitems.CreateCartItem)
@@ -115,20 +115,20 @@ func main() {
 
 	// Review
 	r.POST("/review/create", md, reviews.CreateReview)
-	r.GET("/review/:id", reviews.GetReviewByID)
-	r.GET("/review", reviews.ReviewList)
-	r.DELETE("/review/:id", reviews.DeleteReview)
+	r.GET("/review/:id", md, reviews.GetReviewByID)
+	r.GET("/review", md, reviews.ReviewList)
+	r.DELETE("/review/:id", md, reviews.DeleteReview)
 	r.PATCH("/review/:id", md, reviews.UpdateReview)
 
 	// Admin
 	r.POST("/admin/create", md, admins.CreateAdmin)
-	r.GET("/admin/:id", admins.GetAdminByID)
-	r.GET("/admin", admins.AdmintList)
+	r.GET("/admin/:id", md, admins.GetAdminByID)
+	r.GET("/admin", md, admins.AdmintList)
 	r.DELETE("/admin/:id", md, admins.DeleteAdmin)
 	r.PATCH("/admin/:id", md, admins.UpdateAdmin)
 
 	// Admin_log
-	r.GET("/adminlog", adminlogs.AdminLogList)
+	r.GET("/adminlog", md, adminlogs.AdminLogList)
 
 	// System bank
 	r.POST("/system/create", md, systembank.CreateSystembank)
@@ -139,15 +139,15 @@ func main() {
 
 	// Category
 	r.POST("/category/create", md, categories.CreateCategory)
-	r.GET("/category/:id", md, categories.GetCategoryByID)
-	r.GET("/category", md, categories.CategoryList)
-	r.DELETE("/category/:id", md, categories.DeleteCeategory)
+	r.GET("/category/:id", categories.GetCategoryByID)
+	r.GET("/category", categories.CategoryList)
+	r.DELETE("/category/:id", md, categories.DeleteCategory)
 	r.PATCH("/category/:id", md, categories.UpdateCategory)
 
 	// Shipment
-	r.POST("/shipment/create", md, shipments.CreateShipment)
+	r.POST("/shipment/create", shipments.CreateShipment)
 	r.GET("/shipment/:id", shipments.GetShipmentByID)
-	r.GET("/shipment", md, shipments.ShipmenttList)
+	r.GET("/shipment", shipments.ShipmenttList)
 	r.DELETE("/shipment/:id", shipments.DeleteShipment)
 	r.PATCH("/shipment/:id", shipments.UpdateShipment)
 
@@ -156,12 +156,12 @@ func main() {
 	r.GET("/payment/:id", payments.GetPaymentByID)
 	r.GET("/payment", payments.PaymentList)
 	r.DELETE("/payment/:id", payments.DeletePayment)
-	r.PATCH("/payment/:id", payments.UpdatePayment)
+	r.PATCH("/payment/:id", md, payments.UpdatePayment)
 
 	// Dashboard
-	r.GET("/dashboard", reports.Dashboard)
-	r.GET("/report", reports.Report)
-	// r.GET("/dashboard/category", reports.DashboardTotalByCategory)
+	r.GET("/dashboard", md, reports.Dashboard)
+	r.GET("/report", md, reports.Report)
+	r.GET("/dashboard/category", md, reports.DashboardTotalByCategory)
 
 	r.Run()
 

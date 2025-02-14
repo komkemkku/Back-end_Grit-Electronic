@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
-	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/image"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
@@ -95,12 +94,8 @@ func GetByIdPaymentService(ctx context.Context, id int64) (*response.PaymentResp
 func CreatePaymentService(ctx context.Context, req requests.PaymentCreateRequest) (*model.Payments, error) {
 
 	payment := &model.Payments{
-		Price:         float64(req.Price),
-		SystemBankID:  req.SystemBankID,
-		Status:        req.Status,
-		BankName:      req.BankName,
-		AccountName:   req.AccountName,
-		AccountNumber: req.AccountNumber,
+		SystemBankID: req.SystemBankID,
+		Date:         req.Date,
 	}
 	payment.SetCreatedNow()
 	payment.SetUpdateNow()
@@ -110,16 +105,16 @@ func CreatePaymentService(ctx context.Context, req requests.PaymentCreateRequest
 		return nil, err
 	}
 
-	img := requests.ImageCreateRequest{
-		RefID:       payment.ID,
-		Type:        "payment_slip",
-		Description: req.PaymentSlip,
-	}
+	// img := requests.ImageCreateRequest{
+	// 	RefID:       payment.ID,
+	// 	Type:        "payment_slip",
+	// 	Description: req.PaymentSlip,
+	// }
 
-	_, err = image.CreateImageService(ctx, img)
-	if err != nil {
-		return nil, err
-	}
+	// _, err = image.CreateImageService(ctx, img)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return payment, nil
 
@@ -143,13 +138,14 @@ func UpdatePaymentService(ctx context.Context, id int64, req requests.PaymentUpd
 	}
 
 	// อัปเดตข้อมูลใน Payment
-	payment.Price = float64(req.Price)
-	payment.UpdatedBy = req.UpdatedBy
-	payment.SystemBankID = req.SystemBankID
-	payment.Status = req.Status
-	payment.BankName = req.BankName
-	payment.AccountName = req.AccountName
-	payment.AccountNumber = req.AccountNumber
+	payment.Date = req.Date
+	// payment.Price = float64(req.Price)
+	// payment.UpdatedBy = req.UpdatedBy
+	// payment.SystemBankID = req.SystemBankID
+	// payment.Status = req.Status
+	// payment.BankName = req.BankName
+	// payment.AccountName = req.AccountName
+	// payment.AccountNumber = req.AccountNumber
 	payment.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(payment).Where("id = ?", id).Exec(ctx)
@@ -157,42 +153,41 @@ func UpdatePaymentService(ctx context.Context, id int64, req requests.PaymentUpd
 		return nil, err
 	}
 
-	// ตรวจสอบว่ารูปภาพที่เกี่ยวข้องมีอยู่หรือไม่
-	exists, err := db.NewSelect().
-		TableExpr("images").
-		Where("ref_id = ? AND type = 'payment_slip'", payment.ID).
-		Exists(ctx)
-	if err != nil {
-		return nil, err
-	}
+	// // ตรวจสอบว่ารูปภาพที่เกี่ยวข้องมีอยู่หรือไม่
+	// exists, err := db.NewSelect().
+	// 	TableExpr("images").
+	// 	Where("ref_id = ? AND type = 'payment_slip'", payment.ID).
+	// 	Exists(ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	if exists {
-		// ถ้ามีรูปภาพอยู่แล้ว ให้อัปเดตข้อมูลเดิม
-		_, err = db.NewUpdate().
-			TableExpr("images").
-			Set("description = ?", req.PaymentSlip).
-			Where("ref_id = ? AND type = 'payment_slip'", payment.ID).
-			Exec(ctx)
-		if err != nil {
-			return nil, errors.New("failed to update payment slip")
-		}
-	} else {
-		// ถ้าไม่มีรูปภาพ ให้สร้างใหม่
-		img := requests.ImageCreateRequest{
-			RefID:       payment.ID,
-			Type:        "payment_slip",
-			Description: req.PaymentSlip,
-		}
+	// if exists {
+	// 	// ถ้ามีรูปภาพอยู่แล้ว ให้อัปเดตข้อมูลเดิม
+	// 	_, err = db.NewUpdate().
+	// 		TableExpr("images").
+	// 		Set("description = ?", req.PaymentSlip).
+	// 		Where("ref_id = ? AND type = 'payment_slip'", payment.ID).
+	// 		Exec(ctx)
+	// 	if err != nil {
+	// 		return nil, errors.New("failed to update payment slip")
+	// 	}
+	// } else {
+	// 	// ถ้าไม่มีรูปภาพ ให้สร้างใหม่
+	// 	img := requests.ImageCreateRequest{
+	// 		RefID:       payment.ID,
+	// 		Type:        "payment_slip",
+	// 		Description: req.PaymentSlip,
+	// 	}
 
-		_, err = image.CreateImageService(ctx, img)
-		if err != nil {
-			return nil, errors.New("failed to create payment slip")
-		}
-	}
+	// 	_, err = image.CreateImageService(ctx, img)
+	// 	if err != nil {
+	// 		return nil, errors.New("failed to create payment slip")
+	// 	}
+	// }
 
 	return payment, nil
 }
-
 
 func DeletePaymentService(ctx context.Context, id int64) error {
 	// ตรวจสอบว่ามี Payment อยู่หรือไม่
@@ -222,4 +217,3 @@ func DeletePaymentService(ctx context.Context, id int64) error {
 
 	return nil
 }
-

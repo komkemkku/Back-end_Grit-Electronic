@@ -34,7 +34,7 @@ func ListWishlistsService(ctx context.Context, req requests.WishlistsRequest) ([
 		ColumnExpr("p.id AS product__id").
 		ColumnExpr("p.name AS product__name").
 		ColumnExpr("p.price AS product__price").
-		ColumnExpr("pimage AS product__image").
+		ColumnExpr("p.image AS product__image").
 		Join("LEFT JOIN users u ON u.id = w.user_id").
 		Join("LEFT JOIN products p ON p.id = w.product_id")
 

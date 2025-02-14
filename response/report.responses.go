@@ -8,8 +8,8 @@ type DashboardResponse struct {
 }
 
 type DashboardCategoryResponses struct {
-	Category   string  `json:"category"`
-	TotalSales float64 `json:"totalsales"`
+    Category   string  `json:"category"`   
+    TotalSales float64 `json:"total_sales"`
 }
 
 type ReportReponses struct {
