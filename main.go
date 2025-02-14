@@ -159,9 +159,9 @@ func main() {
 	r.PATCH("/payment/:id", md, payments.UpdatePayment)
 
 	// Dashboard
-	r.GET("/dashboard", md, reports.Dashboard)
-	r.GET("/report", md, reports.Report)
-	r.GET("/dashboard/category", md, reports.DashboardTotalByCategory)
+	r.GET("/dashboard", reports.Dashboard)
+	r.GET("/report", reports.Report)
+	r.GET("/dashboard/category", reports.DashboardTotalByCategory)
 
 	r.Run()
 

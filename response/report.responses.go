@@ -7,9 +7,15 @@ type DashboardResponse struct {
 	TotalCancelled int     `json:"totalcancelled"`
 }
 
+type ProductSales struct {
+    ProductName string  `json:"product_name"`
+    TotalSales  float64 `json:"total_sales"`
+}
 type DashboardCategoryResponses struct {
-    Category   string  `json:"category"`   
-    TotalSales float64 `json:"total_sales"`
+    Category string         `json:"category"`
+    Year     int            `json:"year"`
+    Month    string         `json:"month"`
+    Products []ProductSales `json:"products"`
 }
 
 type ReportReponses struct {

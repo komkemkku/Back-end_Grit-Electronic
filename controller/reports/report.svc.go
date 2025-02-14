@@ -2,6 +2,7 @@ package reports
 
 import (
 	"context"
+	"time"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
@@ -134,40 +135,70 @@ func GetReport(ctx context.Context, req requests.ReportRequest) ([]response.Repo
 	return resp, total, nil
 }
 
-func DashboardByCategory(ctx context.Context) ([]response.DashboardCategoryResponses, error) {
+func DashboardByCategory(ctx context.Context, req requests.ReportRequest) ([]response.DashboardCategoryResponses, int, error) {
+	// สร้างแผนที่สำหรับเก็บยอดขายตามประเภทสินค้า
+	categorySales := make([]response.DashboardCategoryResponses, 0)
 
-	// สร้าง slice สำหรับเก็บผลลัพธ์
-	var categorySales []response.DashboardCategoryResponses
-
-	// Query ดึงข้อมูลยอดขายของสินค้าในแต่ละประเภท
+	// สร้าง SQL Query เพื่อดึงข้อมูลจากฐานข้อมูล
 	rows, err := db.NewSelect().
-		ColumnExpr("od.product_name AS category, SUM(od.total_product_amount * od.total_product_price) AS total_sales").
-		TableExpr("order_details AS od").
-		Join("JOIN orders AS o ON od.order_id = o.id"). // เชื่อม order_details กับ orders
-		Where("o.status = ?", "success").
-		GroupExpr("od.product_name").  // รวมยอดขายตามชื่อสินค้า
-		OrderExpr("total_sales DESC"). // เรียงยอดขายจากมากไปน้อย
-		Rows(ctx)
+		ColumnExpr("p.category, EXTRACT(YEAR FROM o.order_date) AS year, EXTRACT(MONTH FROM o.order_date) AS month, p.product_name, SUM(oi.quantity * oi.price) AS total_sales").
+		Table("order_items AS oi").
+		Join("products AS p ON oi.product_id = p.product_id").
+		Join("orders AS o ON oi.order_id = o.order_id").
+		Where("o.status = ?", "shipped").
+		Group("p.category, EXTRACT(YEAR FROM o.order_date), EXTRACT(MONTH FROM o.order_date), p.product_name"). // เพิ่มการกลุ่มข้อมูลตามปีและเดือน
+		Order("month").
+		Rows(ctx) // ใช้ ctx แทน c
 
 	if err != nil {
-		return nil, err
+		// หากเกิดข้อผิดพลาดในการดึงข้อมูลจากฐานข้อมูล
+		return nil, 500, err
 	}
 	defer rows.Close()
 
-	// ดึงข้อมูลจาก rows และแปลงเป็น response
+	// แปลงข้อมูลจาก rows มาเป็น slice ของ DashboardCategoryResponses
 	for rows.Next() {
 		var category string
+		var productName string
+		var year int
+		var month int
 		var totalSales float64
-
-		if err := rows.Scan(&category, &totalSales); err != nil {
-			return nil, err
+		if err := rows.Scan(&category, &year, &month, &productName, &totalSales); err != nil {
+			return nil, 500, err
 		}
 
-		categorySales = append(categorySales, response.DashboardCategoryResponses{
-			Category:   category,
-			TotalSales: totalSales,
-		})
+		// แปลงเดือนจากตัวเลขเป็นชื่อเดือน
+		monthName := time.Month(month).String()
+
+		// ค้นหาหมวดหมู่สินค้าที่มีอยู่ใน categorySales หรือเพิ่มใหม่
+		var categoryFound bool
+		for i := range categorySales {
+			if categorySales[i].Category == category && categorySales[i].Month == monthName && categorySales[i].Year == year {
+				categorySales[i].Products = append(categorySales[i].Products, response.ProductSales{
+					ProductName: productName,
+					TotalSales:  totalSales,
+				})
+				categoryFound = true
+				break
+			}
+		}
+
+		// ถ้าไม่พบหมวดหมู่สินค้าภายในเดือนนั้นๆ ให้เพิ่มใหม่
+		if !categoryFound {
+			categorySales = append(categorySales, response.DashboardCategoryResponses{
+				Category: category,
+				Year:     year,
+				Month:    monthName, // เก็บชื่อเดือน
+				Products: []response.ProductSales{
+					{
+						ProductName: productName,
+						TotalSales:  totalSales,
+					},
+				},
+			})
+		}
 	}
 
-	return categorySales, nil
+	// ส่งผลลัพธ์กลับมา
+	return categorySales, 200, nil
 }
