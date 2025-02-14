@@ -87,7 +87,6 @@ func main() {
 	r.GET("/order/cancelled", md, orders.OrderUserCancelledList)
 	r.GET("/order/history", md, orders.OrderUserHistoryList)
 
-
 	// Wishlist
 	r.POST("/wish/create", md, wishlist.CreateWishlist)
 	r.GET("/wish/:id", wishlist.GetWishlistByID)
@@ -161,7 +160,7 @@ func main() {
 	// Dashboard
 	r.GET("/dashboard", reports.Dashboard)
 	r.GET("/report", reports.Report)
-	// r.GET("/dashboard/category", reports.DashboardTotalByCategory)
+	r.GET("/dashboard/category", reports.DashboardTotalByCategory)
 
 	r.Run()
 

@@ -21,9 +21,10 @@ type OrderIdRequest struct {
 }
 
 type OrderCreateRequest struct {
-	UserID     int `json:"user_id"`
-	PaymentID  int `json:"payment_id"`
-	ShipmentID int `json:"shipment_id"`
+	UserID      int    `json:"user_id"`
+	PaymentID   int    `json:"payment_id"`
+	ShipmentID  int    `json:"shipment_id"`
+	PaymentDate string `json:"payment_date"`
 	// CartID     int    `json:"cart_id"`
 	// Status     string `json:"status"`
 }
