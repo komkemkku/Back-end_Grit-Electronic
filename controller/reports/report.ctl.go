@@ -42,23 +42,25 @@ func Report(c *gin.Context) {
 }
 
 func DashboardTotalByCategory(c *gin.Context) {
-    // สร้าง ReportRequest จากข้อมูลใน query parameters หรือ body
-    var req requests.ReportRequest
-    if err := c.BindQuery(&req); err != nil {
-        response.BadRequest(c, err.Error())
-        return
-    }
+	// สร้าง ReportRequest จากข้อมูลใน query parameters หรือ body
+	req := requests.ReportRequest{}
+	if err := c.BindQuery(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
 
-    // เรียกฟังก์ชัน DashboardByCategory พร้อมทั้งส่ง parameters ที่จำเป็น
-    data, _, err := DashboardByCategory(c.Request.Context(), req) // ใช้แค่ 2 ตัวแปร
-    if err != nil {
-        response.InternalError(c, err.Error())
-        return
-    }
-	response.Success(c, data)
+	// เรียกฟังก์ชัน DashboardlistCategorye พร้อมทั้งส่ง parameters ที่จำเป็น
+	data, total, err := DashboardlistCategorye(c, req) // ส่ง context (c) และ req ไปด้วย
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+	paginate := model.Paginate{
+		Page:  req.Page,
+		Size:  req.Size,
+		Total: int64(total),
+	}
+
+	// ส่งข้อมูลกลับไปยังผู้ใช้
+	response.SuccessWithPaginate(c, data, paginate)
 }
-
-
-
-
-

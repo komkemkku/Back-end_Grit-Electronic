@@ -8,9 +8,11 @@ type DashboardResponse struct {
 }
 
 type ProductSales struct {
-    ProductName string  `json:"product_name"`
-    TotalSales  float64 `json:"total_sales"`
+    ProductName string  `json:"product_name"` // ชื่อผลิตภัณฑ์
+    TotalSales  float64 `json:"total_sales"`  // ยอดขายรวม
+    Quantity    int     `json:"quantity"`     // จำนวนที่ขาย
 }
+
 type DashboardCategoryResponses struct {
     Category string         `json:"category"`
     Year     int            `json:"year"`

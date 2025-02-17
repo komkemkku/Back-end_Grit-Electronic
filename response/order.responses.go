@@ -52,6 +52,10 @@ type OrderRespOrderDetail struct {
 	User     UserRespOrderDetail    `bun:"user"`
 	Products []ProductInfo          `json:"products"` // แก้จาก []string เป็น []ProductInfo
 	Payment  PaymentRespOrderDetail `bun:"payment"`
+	ID       int                    `json:"id"`
+	User     UserRespOrderDetail    `bun:"user"`
+	Products []ProductInfo          `json:"products"` // แก้จาก []string เป็น []ProductInfo
+	Payment  PaymentRespOrderDetail `bun:"payment"`
 	// SystemBank     SystemBankRespPayment   `bun:"system_bank"`
 	Shipment       ShipmentRespOrderDetail `bun:"shipment"`
 	TotalAmount    int                     `json:"total_amount"`

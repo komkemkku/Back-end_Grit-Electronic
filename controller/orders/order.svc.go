@@ -298,6 +298,7 @@ func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRes
 	}
 
 	// 4) ดึงข้อมูลสินค้า (product_name, price, image, total_product_amount)
+	// 4) ดึงข้อมูลสินค้า (product_name, price, image, total_product_amount)
 	var productItems []response.ProductInfo
 	err = db.NewSelect().
 		TableExpr("order_details AS od").
@@ -321,7 +322,20 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 		return nil, fmt.Errorf("failed to start transaction: %v", err)
 	}
 	defer tx.Rollback()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start transaction: %v", err)
+	}
+	defer tx.Rollback()
 
+	// 1. ดึงข้อมูลตะกร้าสินค้า
+	var cartID int64
+	if err := tx.NewSelect().Table("carts").Column("id").Where("user_id = ?", req.UserID).Scan(ctx, &cartID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("no cart found for user_id: %d", req.UserID)
+		}
+		return nil, fmt.Errorf("failed to find cart: %v", err)
+	}
 	// 1. ดึงข้อมูลตะกร้าสินค้า
 	var cartID int64
 	if err := tx.NewSelect().Table("carts").Column("id").Where("user_id = ?", req.UserID).Scan(ctx, &cartID); err != nil {
@@ -429,6 +443,7 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 		return nil, fmt.Errorf("failed to commit transaction: %v", err)
 	}
 
+	return order, nil
 	return order, nil
 }
 

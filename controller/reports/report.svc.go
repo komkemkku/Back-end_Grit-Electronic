@@ -135,60 +135,85 @@ func GetReport(ctx context.Context, req requests.ReportRequest) ([]response.Repo
 	return resp, total, nil
 }
 
-func DashboardByCategory(ctx context.Context, req requests.ReportRequest) ([]response.DashboardCategoryResponses, int, error) {
-	// สร้างแผนที่สำหรับเก็บยอดขายตามประเภทสินค้า
+func DashboardlistCategorye(ctx context.Context, req requests.ReportRequest) ([]response.DashboardCategoryResponses, int, error) {
 	categorySales := make([]response.DashboardCategoryResponses, 0)
 
-	// สร้าง SQL Query เพื่อดึงข้อมูลจากฐานข้อมูล
-	rows, err := db.NewSelect().
-		ColumnExpr("p.category, EXTRACT(YEAR FROM o.order_date) AS year, EXTRACT(MONTH FROM o.order_date) AS month, p.product_name, SUM(oi.quantity * oi.price) AS total_sales").
-		Table("order_items AS oi").
-		Join("products AS p ON oi.product_id = p.product_id").
-		Join("orders AS o ON oi.order_id = o.order_id").
-		Where("o.status = ?", "shipped").
-		Group("p.category, EXTRACT(YEAR FROM o.order_date), EXTRACT(MONTH FROM o.order_date), p.product_name"). // เพิ่มการกลุ่มข้อมูลตามปีและเดือน
-		Order("month").
-		Rows(ctx) // ใช้ ctx แทน c
+	// เริ่มต้นการคิวรีข้อมูล
+	query := db.NewSelect().
+    TableExpr("order_details AS od"). // ใช้ตารางที่ถูกต้อง
+    ColumnExpr("c.category_name, EXTRACT(YEAR FROM TO_TIMESTAMP(o.created_at)) AS year, EXTRACT(MONTH FROM TO_TIMESTAMP(o.created_at)) AS month, p.product_name, SUM(o.total_price) AS total_sales").
+    Join("JOIN products p ON p.id = od.product_code"). // ใช้คอลัมน์ที่ถูกต้อง
+    Join("JOIN categories c ON c.id = p.category_id").
+    Join("JOIN orders o ON o.id = od.order_id").
+    Where("o.status = ?", "success").
+    Group("c.category_name, year, month, p.product_name")
 
+	// กรองตามเดือน
+	if req.Month != "" {
+		query.Where("(TRIM(TO_CHAR(TO_TIMESTAMP(o.created_at), 'Month')) ILIKE ? OR "+
+			"TO_CHAR(TO_TIMESTAMP(o.created_at), 'Mon') ILIKE ? OR "+
+			"TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = ? OR "+"CASE "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '01' THEN 'มกราคม' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '02' THEN 'กุมภาพันธ์' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '03' THEN 'มีนาคม' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '04' THEN 'เมษายน' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '05' THEN 'พฤษภาคม' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '06' THEN 'มิถุนายน' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '07' THEN 'กรกฎาคม' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '08' THEN 'สิงหาคม' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '09' THEN 'กันยายน' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '10' THEN 'ตุลาคม' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '11' THEN 'พฤศจิกายน' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '12' THEN 'ธันวาคม' "+
+			"END ILIKE ?)", req.Month, req.Month, req.Month, req.Month)
+	}
+
+	// กรองตามปี
+	if req.Year > 0 {
+		query.Where("EXTRACT(YEAR FROM TO_TIMESTAMP(o.created_at)) = ?", req.Year)
+	}
+
+	// ดึงข้อมูลจากฐานข้อมูล
+	rows, err := query.Rows(ctx)
 	if err != nil {
-		// หากเกิดข้อผิดพลาดในการดึงข้อมูลจากฐานข้อมูล
-		return nil, 500, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
-	// แปลงข้อมูลจาก rows มาเป็น slice ของ DashboardCategoryResponses
+	// ทำการประมวลผลข้อมูลที่ดึงมา
 	for rows.Next() {
 		var category string
+		var yearFloat, monthFloat float64
 		var productName string
-		var year int
-		var month int
 		var totalSales float64
-		if err := rows.Scan(&category, &year, &month, &productName, &totalSales); err != nil {
-			return nil, 500, err
+
+		if err := rows.Scan(&category, &yearFloat, &monthFloat, &productName, &totalSales); err != nil {
+			return nil, 0, err
 		}
 
-		// แปลงเดือนจากตัวเลขเป็นชื่อเดือน
+		year := int(yearFloat)
+		month := int(monthFloat)
 		monthName := time.Month(month).String()
 
-		// ค้นหาหมวดหมู่สินค้าที่มีอยู่ใน categorySales หรือเพิ่มใหม่
-		var categoryFound bool
-		for i := range categorySales {
-			if categorySales[i].Category == category && categorySales[i].Month == monthName && categorySales[i].Year == year {
-				categorySales[i].Products = append(categorySales[i].Products, response.ProductSales{
+		// ตรวจสอบว่า Category, Year และ Month นี้มีข้อมูลอยู่แล้วในผลลัพธ์หรือไม่
+		var found bool
+		for i, cat := range categorySales {
+			if cat.Category == category && cat.Year == year && cat.Month == monthName {
+				categorySales[i].Products = append(cat.Products, response.ProductSales{
 					ProductName: productName,
 					TotalSales:  totalSales,
 				})
-				categoryFound = true
+				found = true
 				break
 			}
 		}
 
-		// ถ้าไม่พบหมวดหมู่สินค้าภายในเดือนนั้นๆ ให้เพิ่มใหม่
-		if !categoryFound {
+		// ถ้าไม่พบให้เพิ่มข้อมูลใหม่
+		if !found {
 			categorySales = append(categorySales, response.DashboardCategoryResponses{
 				Category: category,
 				Year:     year,
-				Month:    monthName, // เก็บชื่อเดือน
+				Month:    monthName,
 				Products: []response.ProductSales{
 					{
 						ProductName: productName,
@@ -199,6 +224,6 @@ func DashboardByCategory(ctx context.Context, req requests.ReportRequest) ([]res
 		}
 	}
 
-	// ส่งผลลัพธ์กลับมา
-	return categorySales, 200, nil
+	return categorySales, len(categorySales), nil
 }
+
