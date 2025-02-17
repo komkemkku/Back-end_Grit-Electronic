@@ -256,7 +256,6 @@ func ListOrderUserServiceByStatus(ctx context.Context, req requests.OrderUserReq
 
 func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRespOrderDetail, error) {
 	// 1) ตรวจสอบว่าคำสั่งซื้อนั้นมีอยู่หรือไม่
-	// 1) ตรวจสอบว่าคำสั่งซื้อนั้นมีอยู่หรือไม่
 	exists, err := db.NewSelect().
 		Table("orders").
 		Where("id = ?", orderID).
@@ -271,7 +270,6 @@ func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRes
 	// 2) สร้าง response object
 	order := &response.OrderRespOrderDetail{}
 
-	// 3) ดึงข้อมูลหลักของ order
 	// 3) ดึงข้อมูลหลักของ order
 	err = db.NewSelect().
 		TableExpr("orders AS o").
@@ -299,30 +297,18 @@ func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRes
 		return nil, fmt.Errorf("failed to fetch order details: %v", err)
 	}
 
-	// 4) ดึงข้อมูลสินค้า (product_id, product_name, price, total_product_amount)
-	var productItems []response.ProductInfo
-	// 4) ดึงข้อมูลสินค้า (product_id, product_name, price, total_product_amount)
+	// 4) ดึงข้อมูลสินค้า (product_name, price, image, total_product_amount)
 	var productItems []response.ProductInfo
 	err = db.NewSelect().
 		TableExpr("order_details AS od").
 		ColumnExpr("p.id AS product_id, od.product_name, p.image, p.price, od.total_product_amount").
-		Join("JOIN products AS p ON p.name = od.product_name"). // เปลี่ยนจาก product_id → product_name
-		Where("od.order_id = ?", orderID).
-		TableExpr("order_details AS od").
-		ColumnExpr("p.id AS product_id, od.product_name, p.image, p.price, od.total_product_amount").
-		Join("JOIN products AS p ON p.name = od.product_name"). // เปลี่ยนจาก product_id → product_name
+		Join("JOIN products AS p ON p.name = od.product_name"). // ✅ ใช้ product_name แทน product_id
 		Where("od.order_id = ?", orderID).
 		Scan(ctx, &productItems)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch product details: %v", err)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch product details: %v", err)
 	}
 
-	// 5) เพิ่มสินค้าลงใน response
-	order.Products = productItems
 	// 5) เพิ่มสินค้าลงใน response
 	order.Products = productItems
 
@@ -330,20 +316,20 @@ func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRes
 }
 
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
-    tx, err := db.BeginTx(ctx, nil)
-    if err != nil {
-        return nil, fmt.Errorf("failed to start transaction: %v", err)
-    }
-    defer tx.Rollback()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start transaction: %v", err)
+	}
+	defer tx.Rollback()
 
-    // 1. ดึงข้อมูลตะกร้าสินค้า
-    var cartID int64
-    if err := tx.NewSelect().Table("carts").Column("id").Where("user_id = ?", req.UserID).Scan(ctx, &cartID); err != nil {
-        if errors.Is(err, sql.ErrNoRows) {
-            return nil, fmt.Errorf("no cart found for user_id: %d", req.UserID)
-        }
-        return nil, fmt.Errorf("failed to find cart: %v", err)
-    }
+	// 1. ดึงข้อมูลตะกร้าสินค้า
+	var cartID int64
+	if err := tx.NewSelect().Table("carts").Column("id").Where("user_id = ?", req.UserID).Scan(ctx, &cartID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("no cart found for user_id: %d", req.UserID)
+		}
+		return nil, fmt.Errorf("failed to find cart: %v", err)
+	}
 
 	// 2. บันทึกข้อมูลการชำระเงินในตาราง payments ก่อน
 	payment := &model.Payments{
@@ -443,11 +429,8 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 		return nil, fmt.Errorf("failed to commit transaction: %v", err)
 	}
 
-    return order, nil
+	return order, nil
 }
-
-
-
 
 func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateRequest) (*model.Orders, error) {
 	// 1) เช็กว่า Order นี้มีอยู่ในฐานข้อมูลหรือไม่
