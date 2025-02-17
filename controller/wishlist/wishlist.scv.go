@@ -12,8 +12,8 @@ import (
 
 var db = configs.Database()
 
-func ListWishlistsService(ctx context.Context, req requests.WishlistsRequest) ([]response.WishlistResponses, int, error) {
-	var resp []response.WishlistResponses
+func ListWishlistsService(ctx context.Context, req requests.WishlistsRequest) ([]response.WishListByUser, int, error) {
+	var resp []response.WishListByUser
 
 	var Offset int64
 	if req.Page > 0 {
@@ -22,21 +22,10 @@ func ListWishlistsService(ctx context.Context, req requests.WishlistsRequest) ([
 
 	query := db.NewSelect().
 		TableExpr("wishlists w").
-		Column(
-			"w.id",
-			// "w.price_per_product",
-			// "w.amount_per_product",
-			"w.created_at",
-			"w.updated_at",
-		).
-		ColumnExpr("u.id AS user__id").
-		ColumnExpr("u.username AS user__username").
-		ColumnExpr("p.id AS product__id").
-		ColumnExpr("p.name AS product__name").
-		ColumnExpr("p.price AS product__price").
-		ColumnExpr("p.image AS product__image").
+		ColumnExpr("p.id AS product__id, p.name AS product__name, p.price AS product__price, p.image AS product__image").
 		Join("LEFT JOIN users u ON u.id = w.user_id").
-		Join("LEFT JOIN products p ON p.id = w.product_id")
+		Join("LEFT JOIN products p ON p.id = w.product_id").
+		Where("w.user_id = ?", req.UserID) // แสดงเฉพาะ Wishlist ของผู้ใช้ที่ร้องขอ
 
 	if req.Search != "" {
 		query.Where("p.name ILIKE ?", "%"+req.Search+"%")
@@ -55,40 +44,39 @@ func ListWishlistsService(ctx context.Context, req requests.WishlistsRequest) ([
 	return resp, total, nil
 }
 
-func GetByIdWishlistsService(ctx context.Context, id int64) (*response.WishlistResponses, error) {
+// func GetByIdWishlistsService(ctx context.Context, id int, userID int) ([]response.WishListByUser, error) {
+// 	// ตรวจสอบว่า Wishlist มีอยู่หรือไม่ และเป็นของผู้ใช้ที่ร้องขอหรือไม่
+// 	exists, err := db.NewSelect().
+// 		TableExpr("wishlists AS w").
+// 		Where("w.id = ? AND w.user_id = ?", id, userID).
+// 		Exists(ctx)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	if !exists {
+// 		return nil, errors.New("wishlist not found or unauthorized")
+// 	}
 
-	ex, err := db.NewSelect().TableExpr("wishlists").Where("id = ?", id).Exists(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if !ex {
-		return nil, errors.New("wish not found")
-	}
-	wish := &response.WishlistResponses{}
+// 	// ใช้ Slice ปกติ ไม่ต้องใช้ Pointer
+// 	wish := []response.WishListByUser{}
 
-	err = db.NewSelect().TableExpr("wishlists w").
-		// Join("LEFT JOIN users u ON u.id = w.user_id").
-		// Join("LEFT JOIN products p ON p.id = w.product_id").
-		Column(
-			"w.id",
-			// "w.price_per_product",
-			// "w.amount_per_product",
-			"w.created_at",
-			"w.updated_at",
-		).
-		ColumnExpr("u.id AS user__id").
-		ColumnExpr("u.username AS user__username").
-		ColumnExpr("p.id AS product__id").
-		ColumnExpr("p.name AS product__name").
-		// ColumnExpr("p.description AS product__description").
-		// ColumnExpr("p.price AS product__price").
-		Join("LEFT JOIN users u ON u.id = w.user_id").
-		Join("LEFT JOIN products p ON p.id = w.product_id").Where("w.id = ?", id).Scan(ctx, wish)
-	if err != nil {
-		return nil, err
-	}
-	return wish, nil
-}
+// 	// ดึงข้อมูล Wishlist พร้อม Join ตารางที่เกี่ยวข้อง
+// 	err = db.NewSelect().
+// 		TableExpr("wishlists AS w").
+// 		Column("w.id", "w.created_at", "w.updated_at").
+// 		ColumnExpr("u.id AS user__id, u.username AS user__username").
+// 		ColumnExpr("p.id AS product__id, p.name AS product__name").
+// 		Join("LEFT JOIN users AS u ON u.id = w.user_id").
+// 		Join("LEFT JOIN products AS p ON p.id = w.product_id").
+// 		Where("w.id = ? AND w.user_id = ?", id, userID).
+// 		Scan(ctx, &wish)
+
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return wish, nil
+// }
 
 func CreateWishlistsService(ctx context.Context, req requests.WishlistsAddRequest) error {
 	// ตรวจสอบว่ามีสินค้านั้นในฐานข้อมูลหรือไม่
@@ -156,57 +144,57 @@ func DeleteWishlistsService(ctx context.Context, id int64) error {
 	return nil
 }
 
-// func UpdateWishlistsService(ctx context.Context, id int64, req requests.WishlistsUpdateRequest) (*model.Wishlists, error) {
-// 	// ตรวจสอบว่า Wishlist มีอยู่ในระบบหรือไม่
-// 	exists, err := db.NewSelect().
-// 		TableExpr("wishlists").
-// 		Where("id = ?", id).
-// 		Exists(ctx)
+func UpdateWishlistsService(ctx context.Context, userID int64, productID int64) (*model.Wishlists, error) {
+	// ตรวจสอบว่าสินค้าอยู่ในระบบหรือไม่
+	productExists, err := db.NewSelect().
+		TableExpr("products").
+		Where("id = ?", productID).
+		Exists(ctx)
 
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to check wishlist existence: %v", err)
-// 	}
+	if err != nil {
+		return nil, errors.New("failed to check product")
+	}
 
-// 	if !exists {
-// 		return nil, fmt.Errorf("wishlist with id %d not found", id)
-// 	}
+	if !productExists {
+		return nil, errors.New("product not found")
+	}
 
-// 	// ตรวจสอบว่า product_id มีอยู่ในระบบหรือไม่
-// 	productExists, err := db.NewSelect().
-// 		TableExpr("products").
-// 		Where("id = ?", req.ProductID).
-// 		Exists(ctx)
+	// ตรวจสอบว่าสินค้านี้อยู่ใน Wishlist ของผู้ใช้หรือไม่
+	wishlist := &model.Wishlists{}
+	wishExists, err := db.NewSelect().
+		Model(wishlist).
+		Where("user_id = ? AND product_id = ?", userID, productID).
+		Exists(ctx)
 
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to check product existence: %v", err)
-// 	}
+	if err != nil {
+		return nil, errors.New("failed to check wishlist")
+	}
 
-// 	if !productExists {
-// 		return nil, fmt.Errorf("product with id %d not found", req.ProductID)
-// 	}
+	if wishExists {
+		// ถ้ากดถูกใจอยู่แล้ว ให้ลบออกจาก Wishlist
+		_, err = db.NewDelete().
+			TableExpr("wishlists").
+			Where("user_id = ? AND product_id = ?", userID, productID).
+			Exec(ctx)
 
-// 	// ดึงข้อมูล Wishlist
-// 	wishlist := &model.Wishlists{}
-// 	err = db.NewSelect().
-// 		Model(wishlist).
-// 		Where("id = ?", id).
-// 		Scan(ctx)
+		if err != nil {
+			return nil, errors.New("failed to remove from wishlist")
+		}
 
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to retrieve wishlist: %v", err)
-// 	}
+		return nil, nil
+	} else {
+		// ถ้ายังไม่ได้กด ให้เพิ่มสินค้าเข้า Wishlist
+		newWish := &model.Wishlists{
+			UserID:    int(userID),
+			ProductID: int(productID),
+		}
+		newWish.SetCreatedNow()
 
-// 	// อัปเดต Wishlist
-// 	wishlist.SetUpdateNow()
+		_, err = db.NewInsert().Model(newWish).Exec(ctx)
+		if err != nil {
+			return nil, errors.New("failed to add to wishlist")
+		}
 
-// 	_, err = db.NewUpdate().
-// 		Model(wishlist).
-// 		Where("id = ?", id).
-// 		Exec(ctx)
-
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to update wishlist: %v", err)
-// 	}
-
-// 	return wishlist, nil
-// }
+		return newWish, nil
+	}
+}

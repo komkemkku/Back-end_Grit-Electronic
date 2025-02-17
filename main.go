@@ -13,6 +13,7 @@ import (
 	cartitems "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/cart_items"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/carts"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/categories"
+	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/image"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/orders"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/payments"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/products"
@@ -24,7 +25,6 @@ import (
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/wishlist"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/middlewares"
 
-	// "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/middlewares"
 	"github.com/spf13/cobra"
 )
 
@@ -49,7 +49,7 @@ func main() {
 	md := middlewares.AuthMiddleware()
 
 	// User
-	r.POST("/user/create", md, users.CreateUser)
+	r.POST("/user/create", users.CreateUser)
 	r.GET("/user", md, users.UserList)
 	r.GET("/user/:id", md, users.GetUserByID)
 	r.DELETE("/user/:id", md, users.DeleteUser)
@@ -60,7 +60,7 @@ func main() {
 	r.GET("/admin/info", md, admins.GetInfoAdmin)
 
 	// Product
-	r.POST("/product/create",md, products.CreateProduct)
+	r.POST("/product/create", md, products.CreateProduct)
 	r.GET("/product/:id", products.GetProductByID)
 	r.GET("/product", products.ProductList)
 	r.DELETE("/product/:id", md, products.DeleteProduct)
@@ -87,13 +87,14 @@ func main() {
 	r.GET("/order/failed", md, orders.OrderUserFailedList)
 	r.GET("/order/cancelled", md, orders.OrderUserCancelledList)
 	r.GET("/order/history", md, orders.OrderUserHistoryList)
+	r.PATCH("/order/ship/:id", md, orders.UpdateShipOrder)
 
 	// Wishlist
 	r.POST("/wish/create", md, wishlist.CreateWishlist)
-	r.GET("/wish/:id", md, wishlist.GetWishlistByID)
+	// r.GET("/wish", md, wishlist.GetWishlistByID)
 	r.GET("/wish", md, wishlist.Wishlist)
 	r.DELETE("/wish/:id", md, wishlist.DeleteWishlists)
-	// r.PATCH("/wish/:id", wishlist.UpdateWishlists)
+	r.PATCH("/wish/:id", wishlist.UpdateWishlists)
 
 	// Cart
 	r.POST("/cart/create", carts.AddCart)
@@ -157,6 +158,11 @@ func main() {
 	r.GET("/payment", payments.PaymentList)
 	r.DELETE("/payment/:id", payments.DeletePayment)
 	r.PATCH("/payment/:id", md, payments.UpdatePayment)
+
+	// banner
+	r.GET("/banner", md, image.BannerList)
+	r.POST("/banner/create", md, image.CreateImageBanner)
+	r.DELETE("/banner/:id", md, image.DeleteImageBanner)
 
 	// Dashboard
 	r.GET("/dashboard", reports.Dashboard)

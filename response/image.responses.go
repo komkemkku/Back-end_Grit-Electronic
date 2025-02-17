@@ -1,5 +1,12 @@
 package response
 
+type ImageBanner struct {
+	ID         int    `json:"id"`
+	Type       string `json:"type"`
+	Banner     string `json:"banner"`
+	Created_at int64  `json:"created_at"`
+}
+
 type ImageProductDetailResp struct {
 	ID          int    `json:"id"`
 	RefID       int    `json:"ref_id"`

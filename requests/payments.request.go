@@ -10,16 +10,6 @@ type PaymentIdRequest struct {
 	ID int `uri:"id"`
 }
 
-// type PaymentCreateRequest struct {
-// 	Price         int    `json:"price"`
-// 	SystemBankID  int    `json:"system_bank_id"`
-// 	BankName      string `json:"bank_name"`
-// 	AccountName   string `json:"account_name"`
-// 	AccountNumber string `json:"account_number"`
-// 	PaymentSlip   string `json:"payment_slip"`
-// 	Status        string `json:"status"`
-// }
-
 type PaymentCreateRequest struct {
 	Price        int    `json:"price"`
 	SystemBankID int    `json:"system_bank_id"`
@@ -29,12 +19,4 @@ type PaymentCreateRequest struct {
 type PaymentUpdateRequest struct {
 	Id   int    `json:"id"`
 	Date string `json:"date"`
-	// Price         int    `json:"price"`
-	// UpdatedBy     int    `json:"updated_by"`
-	// SystemBankID  int    `json:"system_bank_id"`
-	// BankName      string `json:"bank_name"`
-	// AccountName   string `json:"account_name"`
-	// AccountNumber string `json:"account_number"`
-	// PaymentSlip   string `json:"payment_slip"`
-	// Status        string `json:"status"`
 }

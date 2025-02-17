@@ -26,16 +26,11 @@ type OrderCreateRequest struct {
 	ShipmentID   int    `json:"shipment_id"`
 	PaymentDate  string `json:"payment_date"`
 	SystemBankID int    `json:"system_bank_id"`
-	// CartID     int    `json:"cart_id"`
-	// Status     string `json:"status"`
 }
 
 type OrderUpdateRequest struct {
-	// ID         int    `json:"id"`
-	// UserID     int    `json:"user_id"`
-	// PaymentID  int    `json:"payment_id"`
-	// ShipmentID int    `json:"shipment_id"`
-	// CartID     int    `json:"cart_id"`
+	ID             int    `json:"id"`
+	ShipmentID     int    `json:"shipment_id"`
 	Status         string `json:"status"`
-	TrackingNumber string `json:"tracking_number"` // เพิ่มฟิลด์นี้
+	TrackingNumber string `json:"tracking_number"`
 }

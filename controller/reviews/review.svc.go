@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
-	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/image"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
@@ -126,20 +125,6 @@ func CreateReviewService(ctx context.Context, req requests.ReviewCreateRequest) 
 		return nil, errors.New("failed to insert")
 	}
 
-	// เพิ่มรูปภาพสำหรับรีวิว
-	for _, image := range req.ImageReview {
-		img := &model.Images{
-			RefID:       review.ID,
-			Type:        "review_image",
-			Description: image,
-		}
-
-		_, err := db.NewInsert().Model(img).Exec(ctx)
-		if err != nil {
-			return nil, errors.New("failed to insert image")
-		}
-	}
-
 	return review, nil
 }
 
@@ -192,33 +177,6 @@ func UpdateReviewService(ctx context.Context, id int, req requests.ReviewUpdateR
 			return nil, errors.New("failed to delete old review images")
 		}
 
-		// เพิ่มรูปภาพใหม่
-		for _, image := range req.ImageReview {
-			img := &model.Images{
-				RefID:       review.ID,
-				Type:        "review_image",
-				Description: image,
-			}
-
-			_, err := db.NewInsert().Model(img).Exec(ctx)
-			if err != nil {
-				return nil, errors.New("failed to insert image")
-			}
-		}
-	} else {
-		// ถ้าไม่มีรูปภาพ ให้สร้างใหม่
-		for _, images := range req.ImageReview {
-			img := requests.ImageCreateRequest{
-				RefID:       review.ID,
-				Type:        "review_image",
-				Description: images,
-			}
-
-			_, err = image.CreateImageService(ctx, img)
-			if err != nil {
-				return nil, errors.New("failed to create review slip")
-			}
-		}
 	}
 
 	return review, nil

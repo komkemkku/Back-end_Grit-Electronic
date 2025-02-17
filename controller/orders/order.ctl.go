@@ -345,3 +345,36 @@ func UpdateOrder(c *gin.Context) {
 
 	response.Success(c, data)
 }
+
+func UpdateShipOrder(c *gin.Context) {
+	id := requests.OrderIdRequest{}
+	user := c.GetInt("user_id")
+
+	if err := c.BindUri(&id); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	req := requests.OrderUpdateRequest{}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	data, err := UpdateShipOrderService(c, int(id.ID), req)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+
+	// ไม่บันทึก Log หากสถานะถูกเปลี่ยนเป็น "success"
+	if req.Status != "success" {
+		logMessage := fmt.Sprintf("ผู้ใช้งาน ID: %d แก้ไขช่องทางจัดส่งคำสั่งซื้อหมายเลข #%d", user, id.ID)
+		if err := adminlogs.CreateAdminLog(c.Request.Context(), user, "UPDATE_ORDER", logMessage); err != nil {
+			fmt.Println("Failed to create admin log:", err)
+		}
+	}
+
+	response.Success(c, data)
+}

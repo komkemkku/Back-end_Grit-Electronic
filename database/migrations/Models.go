@@ -15,7 +15,7 @@ func Models() []any {
 		// (*model.Products)(nil),
 		// (*model.Categories)(nil),
 		// (*model.SystemBanks)(nil),
-		(*model.Payments)(nil),
+		// (*model.Payments)(nil),
 		// (*model.Reviews)(nil),
 		// (*model.Wishlists)(nil),
 		// (*model.Carts)(nil),
@@ -23,7 +23,7 @@ func Models() []any {
 		// (*model.OrderDetail)(nil),
 		// (*model.CartItem)(nil),
 		// (*model.Notifications)(nil),
-		// (*model.Images)(nil),
+		(*model.Images)(nil),
 		// (*model.Shipments)(nil),
 
 	}

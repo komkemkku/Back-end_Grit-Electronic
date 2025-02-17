@@ -182,42 +182,6 @@ func UpdateProductService(ctx context.Context, id int, req requests.ProductUpdat
 		return nil, err
 	}
 
-	// // อัปเดตรูปภาพสินค้า
-	// if req.ImageProduct != "" {
-	// 	image := &model.Images{}
-	// 	err = db.NewSelect().
-	// 		Model(image).
-	// 		Where("ref_id = ? AND type = 'product_main'", id).
-	// 		Scan(ctx)
-
-	// 	if err != nil && errors.Is(err, sql.ErrNoRows) {
-	// 		// หากไม่มีรูปภาพ ให้เพิ่มใหม่
-	// 		image = &model.Images{
-	// 			RefID:       id,
-	// 			Type:        "product_main",
-	// 			Description: req.ImageProduct,
-	// 		}
-	// 		image.SetCreatedNow()
-	// 		image.SetUpdateNow()
-
-	// 		_, err = db.NewInsert().Model(image).Exec(ctx)
-	// 		if err != nil {
-	// 			return nil, errors.New("failed to create image")
-	// 		}
-	// 	} else if err == nil {
-	// 		// หากมีรูปภาพอยู่แล้ว อัปเดตข้อมูล
-	// 		image.Description = req.ImageProduct
-	// 		image.SetUpdateNow()
-
-	// 		_, err = db.NewUpdate().Model(image).Where("id = ?", image.ID).Exec(ctx)
-	// 		if err != nil {
-	// 			return nil, errors.New("failed to Update image")
-	// 		}
-	// 	} else {
-	// 		return nil, errors.New("failed to check product image")
-	// 	}
-	// }
-
 	return product, nil
 }
 
@@ -241,15 +205,6 @@ func DeleteProductService(ctx context.Context, productID int64) error {
 		Exec(ctx)
 	if err != nil {
 		return errors.New("failed to update product as deleted")
-	}
-
-	// ลบรูปภาพของสินค้า
-	_, err = db.NewDelete().
-		TableExpr("images").
-		Where("ref_id = ? AND type = 'product_main'", productID).
-		Exec(ctx)
-	if err != nil {
-		return errors.New("failed to delete product images")
 	}
 
 	return nil

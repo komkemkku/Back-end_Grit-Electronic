@@ -5,12 +5,9 @@ import "github.com/uptrace/bun"
 type Images struct {
 	bun.BaseModel `bun:"table:images"`
 
-	ID          int    `bun:",type:serial,autoincrement,pk"`
-	RefID       int    `bun:"ref_id"`
-	Type        string `bun:"type"`
-	Description string `bun:"description"`
+	ID     int    `bun:",type:serial,autoincrement,pk"`
+	Type   string `bun:"type"`
+	Banner string `bun:"banner"`
 
 	CreateUnixTimestamp
-	UpdateUnixTimestamp
-	SoftDelete
 }

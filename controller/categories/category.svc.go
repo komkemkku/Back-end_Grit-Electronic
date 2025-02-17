@@ -21,15 +21,13 @@ func ListCategoryService(ctx context.Context, req requests.CategoryRequest) ([]r
 
 	resp := []response.CategoryResponses{}
 
-	// สร้าง query
+	// สร้าง query พร้อมกับนับจำนวนสินค้าภายในประเภทนั้น ๆ
 	query := db.NewSelect().
 		TableExpr("categories AS c").
-		Column("c.id", "c.name", "c.is_active", "c.image", "c.created_at", "c.updated_at")
-		// ColumnExpr("json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description) AS image").
-		// Join("LEFT JOIN images AS i ON i.ref_id = c.id AND i.type = 'categories'").
-		// GroupExpr("c.id, i.id, i.ref_id, i.type, i.description")
-
-	// query.Where("c.is_active = ?", true)
+		Column("c.id", "c.name", "c.image", "c.is_active", "c.created_at", "c.updated_at").
+		ColumnExpr("COALESCE(COUNT(p.id), 0) AS total_products").
+		Join("LEFT JOIN products AS p ON p.category_id = c.id AND p.is_active = TRUE AND p.deleted_at IS NULL").
+		GroupExpr("c.id")
 
 	if req.Search != "" {
 		query.Where("c.name ILIKE ?", "%"+req.Search+"%")
@@ -50,21 +48,30 @@ func ListCategoryService(ctx context.Context, req requests.CategoryRequest) ([]r
 }
 
 func GetByIdCategoryService(ctx context.Context, id int64) (*response.CategoryResponses, error) {
-	ex, err := db.NewSelect().TableExpr("categories").Where("id = ?", id).Exists(ctx)
+	// ตรวจสอบว่าหมวดหมู่มีอยู่หรือไม่
+	exists, err := db.NewSelect().
+		Table("categories").
+		Where("id = ?", id).
+		Exists(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if !ex {
+	if !exists {
 		return nil, errors.New("category not found")
 	}
+
 	category := &response.CategoryResponses{}
 
-	err = db.NewSelect().TableExpr("categories AS c").
-		Column("c.id", "c.name", "c.is_active", "c.image", "c.created_at", "c.updated_at").
-		// ColumnExpr("json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description) AS image").
-		// Join("LEFT JOIN images AS i ON i.ref_id = c.id AND i.type = 'categories'").
-		// GroupExpr("c.id, i.id, i.ref_id, i.type, i.description").
-		Where("c.id = ?", id).Scan(ctx, category)
+	// ดึงข้อมูลหมวดหมู่พร้อมจำนวนสินค้า
+	err = db.NewSelect().
+		TableExpr("categories AS c").
+		Column("c.id", "c.name", "c.image", "c.is_active", "c.created_at", "c.updated_at").
+		ColumnExpr("COALESCE(COUNT(p.id), 0) AS total_products").
+		Join("LEFT JOIN products AS p ON p.category_id = c.id AND p.is_active = TRUE AND p.deleted_at IS NULL").
+		Where("c.id = ?", id).
+		GroupExpr("c.id").
+		Scan(ctx, category)
+
 	if err != nil {
 		return nil, err
 	}
