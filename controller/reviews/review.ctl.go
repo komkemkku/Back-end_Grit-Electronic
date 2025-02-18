@@ -30,21 +30,22 @@ func ReviewList(c *gin.Context) {
 }
 
 func CreateReview(c *gin.Context) {
+	userID := c.GetInt("user_id")
 
-	user := c.GetInt("user_id")
 	req := requests.ReviewCreateRequest{}
-	req.UserID = user
+	req.UserID = userID
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
 
-	data, err := CreateReviewService(c, req)
+	data, err := CreateReviewService(c.Request.Context(), req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
+
 	response.Success(c, data)
 }
 
@@ -64,9 +65,14 @@ func DeleteReview(c *gin.Context) {
 }
 
 func GetReviewByID(c *gin.Context) {
+	user := c.GetInt("user_id")
 	id := requests.ReviewIdRequest{}
 	if err := c.BindUri(&id); err != nil {
 		response.BadRequest(c, err.Error())
+		return
+	}
+	if user != 0 {
+		response.BadRequest(c, "unauthorized")
 		return
 	}
 
@@ -77,7 +83,6 @@ func GetReviewByID(c *gin.Context) {
 	}
 	response.Success(c, data)
 }
-
 
 func UpdateReview(c *gin.Context) {
 
@@ -103,4 +108,3 @@ func UpdateReview(c *gin.Context) {
 	}
 	response.Success(c, data)
 }
-

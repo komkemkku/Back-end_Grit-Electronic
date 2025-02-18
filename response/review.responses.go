@@ -18,7 +18,6 @@ type ReviewResponses struct {
 	Product     string            `bun:"product" json:"product"`
 	Rating      int               `bun:"rating" json:"rating"`
 	Description string            `bun:"description" json:"description"`
-	ImageReview []ImageReviewResp `bun:"image"`
 	CreatedAt   string            `bun:"created_at" json:"created_at"`
 	UpdatedAt   string            `bun:"updated_at" json:"updated_at"`
 }

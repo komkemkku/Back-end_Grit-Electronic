@@ -298,6 +298,66 @@ func GetByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRes
 	}
 
 	// 4) ดึงข้อมูลสินค้า (product_name, price, image, total_product_amount)
+	var productItems []response.ProductInfo
+	err = db.NewSelect().
+		TableExpr("order_details AS od").
+		ColumnExpr("p.id AS product_id, od.product_name, p.image, p.price, od.total_product_amount").
+		Join("JOIN products AS p ON p.name = od.product_name").
+		Where("od.order_id = ?", orderID).
+		Scan(ctx, &productItems)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch product details: %v", err)
+	}
+
+	// 5) เพิ่มสินค้าลงใน response
+	order.Products = productItems
+
+	return order, nil
+}
+
+func GetUserByIdOrderService(ctx context.Context, orderID int64) (*response.OrderRespOrderDetail, error) {
+	// 1) ตรวจสอบว่าคำสั่งซื้อนั้นมีอยู่หรือไม่
+	exists, err := db.NewSelect().
+		Table("orders").
+		Where("id = ?", orderID).
+		Exists(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("database query error: %w", err)
+	}
+	if !exists {
+		return nil, errors.New("order not found")
+	}
+
+	// 2) สร้าง response object
+	order := &response.OrderRespOrderDetail{}
+
+	// 3) ดึงข้อมูลหลักของ order
+	err = db.NewSelect().
+		TableExpr("orders AS o").
+		Column("o.id", "o.total_price", "o.total_amount", "o.status", "o.tracking_number", "o.created_at", "o.updated_at").
+		ColumnExpr("u.id AS user__id").
+		ColumnExpr("u.firstname AS user__firstname").
+		ColumnExpr("u.lastname AS user__lastname").
+		ColumnExpr("u.phone AS user__phone").
+		ColumnExpr("py.id AS payment__id").
+		ColumnExpr("py.date AS payment__date").
+		ColumnExpr("s.id AS shipment__id").
+		ColumnExpr("s.firstname AS shipment__firstname").
+		ColumnExpr("s.lastname AS shipment__lastname").
+		ColumnExpr("s.address AS shipment__address").
+		ColumnExpr("s.zip_code AS shipment__zip_code").
+		ColumnExpr("s.sub_district AS shipment__sub_district").
+		ColumnExpr("s.district AS shipment__district").
+		ColumnExpr("s.province AS shipment__province").
+		Join("LEFT JOIN users AS u ON u.id = o.user_id").
+		Join("LEFT JOIN payments AS py ON py.id = o.payment_id").
+		Join("LEFT JOIN shipments AS s ON s.id = o.shipment_id").
+		Where("o.id = ?", orderID).
+		Scan(ctx, order)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch order details: %v", err)
+	}
+
 	// 4) ดึงข้อมูลสินค้า (product_name, price, image, total_product_amount)
 	var productItems []response.ProductInfo
 	err = db.NewSelect().
@@ -322,20 +382,7 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 		return nil, fmt.Errorf("failed to start transaction: %v", err)
 	}
 	defer tx.Rollback()
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to start transaction: %v", err)
-	}
-	defer tx.Rollback()
 
-	// 1. ดึงข้อมูลตะกร้าสินค้า
-	var cartID int64
-	if err := tx.NewSelect().Table("carts").Column("id").Where("user_id = ?", req.UserID).Scan(ctx, &cartID); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("no cart found for user_id: %d", req.UserID)
-		}
-		return nil, fmt.Errorf("failed to find cart: %v", err)
-	}
 	// 1. ดึงข้อมูลตะกร้าสินค้า
 	var cartID int64
 	if err := tx.NewSelect().Table("carts").Column("id").Where("user_id = ?", req.UserID).Scan(ctx, &cartID); err != nil {
@@ -444,7 +491,6 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 	}
 
 	return order, nil
-	return order, nil
 }
 
 func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateRequest) (*model.Orders, error) {
@@ -475,7 +521,7 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 
 	// 3) อัปเดต Status ตาม request
 	order.Status = req.Status
-	order.ShipmentID = req.ShipmentID
+	// order.ShipmentID = req.ShipmentID
 	order.SetUpdateNow()
 
 	// // 4) ถ้าสถานะเป็น "ship" ให้บันทึก TrackingNumber ด้วย

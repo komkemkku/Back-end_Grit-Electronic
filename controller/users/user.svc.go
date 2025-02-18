@@ -45,22 +45,34 @@ func ListUserService(ctx context.Context, req requests.UserRequest) ([]response.
 	return resp, total, nil
 }
 
-func GetByIdUserService(ctx context.Context, ID int) (*model.Users, error) {
-	ex, err := db.NewSelect().TableExpr("users").Where("id=?", ID).Exists(ctx)
+func GetByIdUserService(ctx context.Context, ID int) (*response.UserResponses, error) {
+	ex, err := db.NewSelect().Table("users").Where("id = ?", ID).Exists(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if !ex {
 		return nil, errors.New("user not found")
 	}
-	user := &model.Users{}
 
-	err = db.NewSelect().Model(user).Where("id = ?", ID).Scan(ctx)
+	user := &response.UserResponses{}
+
+	err = db.NewSelect().
+		TableExpr("users AS u").
+		Column("u.id", "u.username", "u.firstname", "u.lastname", "u.email", "u.phone", "u.created_at", "u.updated_at").
+		ColumnExpr("s.id AS shipment__id, s.firstname AS shipment__firstname, s.lastname AS shipment__lastname, "+
+			"s.address AS shipment__address, s.zip_code AS shipment__zip_code, "+
+			"s.sub_district AS shipment__sub_district, s.district AS shipment__district, s.province AS shipment__province").
+		Join("LEFT JOIN shipments AS s ON u.id = s.user_id").
+		Where("u.id = ?", ID).
+		Scan(ctx, user)
+
 	if err != nil {
 		return nil, err
 	}
+
 	return user, nil
 }
+
 
 func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*model.Users, error) {
 

@@ -23,8 +23,9 @@ func Models() []any {
 		// (*model.OrderDetail)(nil),
 		// (*model.CartItem)(nil),
 		// (*model.Notifications)(nil),
-		(*model.Images)(nil),
+		// (*model.Images)(nil),
 		// (*model.Shipments)(nil),
+		(*model.Report)(nil),
 
 	}
 }
