@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
@@ -550,7 +549,65 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 		}
 	}
 
-	// 5) ถ้าสถานะเป็น "cancelled" ให้คืนสินค้าเข้าคลัง
+	// 5) ถ้าสถานะเป็น "success" ให้บันทึกข้อมูลลงในตาราง report
+if order.Status == "success" {
+    // ดึงรายละเอียดคำสั่งซื้อที่เกี่ยวข้อง
+    var orderDetails []struct {
+        ProductID   int64  `bun:"product_id"`
+        ProductName string `bun:"product_name"`
+        Amount      int64  `bun:"total_product_amount"`
+    }
+
+    // JOIN order_details กับ products เพื่อให้ได้ product_id
+    err := db.NewSelect().
+        TableExpr("order_details AS od").
+        Join("JOIN products AS p ON od.product_name = p.name"). // JOIN เพื่อให้ได้ product_id
+        ColumnExpr("p.id AS product_id, od.product_name, od.total_product_amount").
+        Where("od.order_id = ?", order.ID).
+        Scan(ctx, &orderDetails)
+
+    if err != nil {
+        return nil, fmt.Errorf("failed to fetch order details: %v", err)
+    }
+
+    // ดึงข้อมูลสินค้าและประเภทสินค้า
+    for _, item := range orderDetails {
+        var product model.Products
+        if err := db.NewSelect().
+            Model(&product).
+            Where("id = ?", item.ProductID).
+            Scan(ctx); err != nil {
+            return nil, fmt.Errorf("failed to fetch product for product_id %d: %v", item.ProductID, err)
+        }
+
+        // ดึงข้อมูลประเภทสินค้า
+        var category model.Categories
+        if err := db.NewSelect().
+            Model(&category).
+            Where("id = ?", product.CategoryID).
+            Scan(ctx); err != nil {
+            return nil, fmt.Errorf("failed to fetch category for product_id %d: %v", item.ProductID, err)
+        }
+
+        // บันทึกข้อมูลลงในตาราง report
+        report := &model.Report{
+            ProductID:   product.ID,
+            ProductName: item.ProductName,
+            Date:        time.Now().Unix(),                    // แปลงวันที่เป็น Unix timestamp
+            TotalPrice:  product.Price * float64(item.Amount), // แปลง Amount เป็น float64 ก่อนคูณ
+            TotalAmount: int(item.Amount),                     // แปลงเป็น int ถ้าจำเป็น
+            Status:      order.Status,
+        }
+
+        // บันทึกข้อมูลลงใน database
+        _, err := db.NewInsert().Model(report).Exec(ctx)
+        if err != nil {
+            return nil, fmt.Errorf("failed to insert report record: %v", err)
+        }
+    }
+}
+
+	// 6) ถ้าสถานะเป็น "cancelled" ให้คืนสินค้าเข้าคลัง
 	if order.Status == "cancelled" {
 		// ดึงรายละเอียดคำสั่งซื้อที่เกี่ยวข้อง
 		var orderDetails []struct {
@@ -564,8 +621,6 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 			Scan(ctx, &orderDetails); err != nil {
 			return nil, fmt.Errorf("failed to fetch order details for cancellation: %v", err)
 		}
-
-		log.Printf("%v", orderDetails)
 
 		// คืนสินค้าในกรณีที่ยกเลิกคำสั่งซื้อ
 		for _, item := range orderDetails {
