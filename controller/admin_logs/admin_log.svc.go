@@ -40,7 +40,7 @@ func ListAdminLogsService(ctx context.Context, req requests.AdminLogRequest) ([]
 		Join("LEFT JOIN admins as a ON a.id = al.admin_id")
 
 	if req.Search != "" {
-		query.Where("al.description ILIKE ?", "%"+req.Search+"%")
+		query.Where("al.description ILIKE ? OR a.name ILIKE ?", "%"+req.Search+"%", "%"+req.Search+"%")
 	}
 
 	// กรองตามช่วงวันที่ (Unix Timestamp)

@@ -94,7 +94,8 @@ func main() {
 	// r.GET("/wish", md, wishlist.GetWishlistByID)
 	r.GET("/wish", md, wishlist.Wishlist)
 	r.DELETE("/wish/:id", md, wishlist.DeleteWishlists)
-	r.PATCH("/wish/:id", wishlist.UpdateWishlists)
+	r.PATCH("/wish/update", md, wishlist.UpdateWishlists)
+	r.GET("/wish/status", md, wishlist.GetWishlistStatus)
 
 	// Cart
 	r.POST("/cart/create", carts.AddCart)
@@ -116,7 +117,7 @@ func main() {
 
 	// Review
 	r.POST("/review/create", md, reviews.CreateReview)
-	r.GET("/review/:id", md, reviews.GetReviewByID)
+	r.GET("/review/user", md, reviews.GetReviewByID)
 	r.GET("/review", md, reviews.ReviewList)
 	r.DELETE("/review/:id", md, reviews.DeleteReview)
 	r.PATCH("/review/:id", md, reviews.UpdateReview)
@@ -148,7 +149,7 @@ func main() {
 	// Shipment
 	r.POST("/shipment/create", shipments.CreateShipment)
 	r.GET("/shipment/:id", shipments.GetShipmentByID)
-	r.GET("/shipment", shipments.ShipmenttList)
+	r.GET("/shipment", md, shipments.ShipmenttList)
 	r.DELETE("/shipment/:id", shipments.DeleteShipment)
 	r.PATCH("/shipment/:id", shipments.UpdateShipment)
 

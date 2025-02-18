@@ -1,14 +1,26 @@
 package response
 
 type UserResponses struct {
-	ID         int    `json:"id"`
-	Firstname  string `json:"firstname"`
-	Lastname   string `json:"lastname"`
-	Username   string `json:"username"`
-	Email      string `json:"email"`
-	Phone      string `json:"phone"`
-	Created_at int64  `json:"create_at"`
-	Updated_at string `json:"updated_at"`
+	ID        int       `json:"id"`
+	Username  string    `json:"username"`
+	Firstname string    `json:"firstname"`
+	Lastname  string    `json:"lastname"`
+	Email     string    `json:"email"`
+	Phone     string    `json:"phone"`
+	CreatedAt int64     `json:"created_at"`
+	UpdatedAt int64     `json:"updated_at"`
+	Shipment  *Shipment `json:"shipment,omitempty"`
+}
+
+type Shipment struct {
+	ID          int    `json:"id"`
+	Firstname   string `json:"firstname"`
+	Lastname    string `json:"lastname"`
+	Address     string `json:"address"`
+	ZipCode     string `json:"zip_code"`
+	SubDistrict string `json:"sub_district"`
+	District    string `json:"district"`
+	Province    string `json:"province"`
 }
 
 type UserRespReview struct {

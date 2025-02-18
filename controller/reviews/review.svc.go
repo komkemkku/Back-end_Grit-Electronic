@@ -29,10 +29,8 @@ func ListReviewService(ctx context.Context, req requests.ReviewRequest) ([]respo
 		ColumnExpr("r.description AS description").
 		ColumnExpr("r.created_at AS created_at").
 		ColumnExpr("r.updated_at AS updated_at").
-		ColumnExpr("COALESCE(json_agg(json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description)) FILTER (WHERE i.id IS NOT NULL), '[]') AS image").
 		Join("LEFT JOIN products AS p ON p.id = r.product_id").
 		Join("LEFT JOIN users AS u ON u.id = r.user_id").
-		Join("LEFT JOIN images AS i ON i.ref_id = r.id AND i.type = 'review_image'").
 		GroupExpr("r.id, u.id, p.id")
 
 	if req.Search != "" {
@@ -49,10 +47,6 @@ func ListReviewService(ctx context.Context, req requests.ReviewRequest) ([]respo
 		return nil, 0, err
 	}
 
-	// for i := range resp {
-	// 	resp[i].ImageReview = []string{}
-	// }
-
 	return resp, total, nil
 }
 
@@ -66,7 +60,8 @@ func GetByIdReviewService(ctx context.Context, id int64) (*response.ReviewRespon
 	}
 	review := &response.ReviewResponses{}
 
-	err = db.NewSelect().TableExpr("reviews AS r").
+	err = db.NewSelect().
+		TableExpr("reviews AS r").
 		ColumnExpr("r.id AS id").
 		ColumnExpr("u.username AS \"user\"").
 		ColumnExpr("p.name AS product").
@@ -74,10 +69,8 @@ func GetByIdReviewService(ctx context.Context, id int64) (*response.ReviewRespon
 		ColumnExpr("r.description AS description").
 		ColumnExpr("r.created_at AS created_at").
 		ColumnExpr("r.updated_at AS updated_at").
-		ColumnExpr("COALESCE(json_agg(json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description)) FILTER (WHERE i.id IS NOT NULL), '[]') AS image").
 		Join("LEFT JOIN products AS p ON p.id = r.product_id").
 		Join("LEFT JOIN users AS u ON u.id = r.user_id").
-		Join("LEFT JOIN images AS i ON i.ref_id = r.id AND i.type = 'review_image'").
 		GroupExpr("r.id, u.id, p.id").
 		Where("r.id = ?", id).Scan(ctx, review)
 	if err != nil {
@@ -92,21 +85,35 @@ func CreateReviewService(ctx context.Context, req requests.ReviewCreateRequest) 
 		return nil, errors.New("คะแนนรีวิวต้องอยู่ระหว่าง 1 ถึง 5")
 	}
 
-	// ตรวจสอบ `ProductID`
-	if req.ProductID <= 0 {
-		return nil, errors.New("product not found")
+	// ตรวจสอบว่าสินค้านี้มีอยู่ในคำสั่งซื้อของผู้ใช้หรือไม่
+	// ตรวจสอบว่าสินค้านี้มีอยู่ในคำสั่งซื้อของผู้ใช้หรือไม่
+	orderExists, err := db.NewSelect().
+		TableExpr("order_details AS od").
+		Join("JOIN orders AS o ON o.id = od.order_id").
+		Join("JOIN products AS p ON p.name = od.product_name").
+		Where("o.user_id = ? AND p.id = ?", req.UserID, req.ProductID).
+		Exists(ctx)
+
+	if err != nil {
+		return nil, errors.New("failed to check order details")
 	}
 
-	// ตรวจสอบว่าสินค้ามีอยู่ในระบบหรือไม่
-	exists, err := db.NewSelect().
-		Table("products").
-		Where("id = ?", req.ProductID).
-		Exists(ctx)
-	if err != nil {
-		return nil, errors.New("error")
+	if !orderExists {
+		return nil, errors.New("you can only review products from your order")
 	}
-	if !exists {
-		return nil, errors.New("product not found")
+
+	// ตรวจสอบว่าผู้ใช้เคยรีวิวสินค้านี้ไปแล้วหรือไม่
+	reviewExists, err := db.NewSelect().
+		Table("reviews").
+		Where("user_id = ? AND product_id = ?", req.UserID, req.ProductID).
+		Exists(ctx)
+
+	if err != nil {
+		return nil, errors.New("failed to check review status")
+	}
+
+	if reviewExists {
+		return nil, errors.New("you have already reviewed this product")
 	}
 
 	// เพิ่มรีวิวใหม่
@@ -122,7 +129,7 @@ func CreateReviewService(ctx context.Context, req requests.ReviewCreateRequest) 
 	// บันทึกข้อมูลรีวิวลงฐานข้อมูล
 	_, err = db.NewInsert().Model(review).Exec(ctx)
 	if err != nil {
-		return nil, errors.New("failed to insert")
+		return nil, errors.New("failed to insert review")
 	}
 
 	return review, nil
@@ -156,27 +163,6 @@ func UpdateReviewService(ctx context.Context, id int, req requests.ReviewUpdateR
 	_, err = db.NewUpdate().Model(review).Where("id = ?", id).Exec(ctx)
 	if err != nil {
 		return nil, err
-	}
-
-	// ตรวจสอบว่ารูปภาพที่เกี่ยวข้องมีอยู่หรือไม่
-	exists, err := db.NewSelect().
-		TableExpr("images").
-		Where("ref_id = ? AND type = 'review_image'", review.ID).
-		Exists(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if exists {
-		// ถ้ามีรูปภาพอยู่แล้ว ให้ลบภาพเก่าออกก่อน
-		_, err = db.NewDelete().
-			TableExpr("images").
-			Where("ref_id = ? AND type = 'review_image'", review.ID).
-			Exec(ctx)
-		if err != nil {
-			return nil, errors.New("failed to delete old review images")
-		}
-
 	}
 
 	return review, nil

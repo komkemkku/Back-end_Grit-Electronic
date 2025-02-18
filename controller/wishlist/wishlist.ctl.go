@@ -1,6 +1,8 @@
 package wishlist
 
 import (
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
@@ -94,25 +96,41 @@ func DeleteWishlists(c *gin.Context) {
 
 func UpdateWishlists(c *gin.Context) {
 	userID := c.GetInt("user_id")
-
-	req := requests.WishlistsUpdateRequest{}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "Invalid request: "+err.Error())
-		return
-	}
-
-	wish, err := UpdateWishlistsService(c.Request.Context(), int64(userID), int64(req.ProductID))
+	productID, err := strconv.ParseInt(c.Param("product_id"), 10, 64)
 	if err != nil {
-		response.InternalError(c, "Failed to update wishlist: "+err.Error())
+		response.BadRequest(c, "Invalid product ID")
 		return
 	}
 
-	if wish == nil {
-		// ถ้าสินค้าถูกลบออกจาก Wishlist
-		response.Success(c, "Product removed from wishlist")
-	} else {
-		// ถ้าสินค้าเพิ่มเข้า Wishlist
-		response.Success(c, wish)
+	data, message, isFavorite, err := UpdateWishlistsService(c.Request.Context(), userID, int(productID))
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
 	}
+
+	response.Success(c, gin.H{
+		"message":     message,
+		"is_favorite": isFavorite,
+		"data":        data,
+	})
 }
+
+
+func GetWishlistStatus(c *gin.Context) {
+	userID := c.GetInt("user_id")
+	productID, err := strconv.ParseInt(c.Param("product_id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid product ID")
+		return
+	}
+
+	status, err := GetWishlistStatusService(c.Request.Context(), int64(userID), productID)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+
+	response.Success(c, gin.H{"is_favorite": status})
+}
+
 
