@@ -2,6 +2,8 @@ package products
 
 import (
 	"fmt"
+	"log"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	adminlogs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/admin_logs"
@@ -10,35 +12,24 @@ import (
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
 )
 
-func CreateProduct(c *gin.Context) {
-	req := requests.ProductCreateRequest{}
-	AdminID := c.GetInt("admin_id")
 
-	if AdminID == 0 {
-		response.Unauthorized(c, "Unauthorized access")
+func GetProductByID(c *gin.Context) {
+	userID := c.GetInt("user_id")
+
+	productID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || productID <= 0 {
+		response.BadRequest(c, "Invalid product ID")
 		return
 	}
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, err.Error())
-		return
-	}
-
-	data, err := CreateProductService(c, req)
+	data, err := GetByIdProductService(c.Request.Context(), productID, int64(userID))
 	if err != nil {
-		logMessage := fmt.Sprintf("สร้างสินค้าล้มเหลว - สินค้า: %s, ข้อผิดพลาด: %s", req.Name, err.Error())
-		_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "ADD_PRODUCT_FAILED", logMessage)
-
 		response.InternalError(c, err.Error())
 		return
 	}
 
-	logMessage := fmt.Sprintf("แอดมิน ID: %d เพิ่มสินค้า: %s", AdminID, req.Name)
-	_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "ADD_PRODUCT_SUCCESS", logMessage)
-
 	response.Success(c, data)
 }
-
 
 func DeleteProduct(c *gin.Context) {
 	id := requests.ProductIdRequest{}
@@ -46,51 +37,44 @@ func DeleteProduct(c *gin.Context) {
 
 	if err := c.BindUri(&id); err != nil {
 		logMessage := fmt.Sprintf("แอดมิน ID: %d ลบสินค้าล้มเหลว - ข้อมูลไม่ถูกต้อง: %s", AdminID, err.Error())
-		_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "DELETE_PRODUCT_FAILED", logMessage)
-
-		response.BadRequest(c, err.Error())
+		if logErr := adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "DELETE_PRODUCT_FAILED", logMessage); logErr != nil {
+			log.Println("Failed to create admin log:", logErr)
+		}
+		response.BadRequest(c, "Invalid product ID")
 		return
 	}
 
-	// ดึงข้อมูลสินค้าก่อนลบ (เพื่อให้สามารถบันทึก log ได้ถูกต้อง)
-	product, err := GetByIdProductService(c, int64(id.ID))
+	product, err := GetByIdProductService(c.Request.Context(), int64(id.ID), 0) // ส่ง userID = 0 เพราะเป็นแอดมิน
 	if err != nil {
 		logMessage := fmt.Sprintf("แอดมิน ID: %d ลบสินค้าล้มเหลว - ไม่พบสินค้า ID: %d, ข้อผิดพลาด: %s", AdminID, id.ID, err.Error())
-		_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "DELETE_PRODUCT_FAILED", logMessage)
-
+		if logErr := adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "DELETE_PRODUCT_FAILED", logMessage); logErr != nil {
+			log.Println("Failed to create admin log:", logErr)
+		}
 		response.InternalError(c, err.Error())
 		return
 	}
 
-	// ลบสินค้า
-	err = DeleteProductService(c, int64(id.ID))
+	if product == nil {
+		response.NotFound(c, "Product not found")
+		return
+	}
+
+	err = DeleteProductService(c.Request.Context(), int64(id.ID))
 	if err != nil {
 		logMessage := fmt.Sprintf("แอดมิน ID: %d ลบสินค้าล้มเหลว - สินค้า: %s, ข้อผิดพลาด: %s", AdminID, product.Name, err.Error())
-		_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "DELETE_PRODUCT_FAILED", logMessage)
-
+		if logErr := adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "DELETE_PRODUCT_FAILED", logMessage); logErr != nil {
+			log.Println("Failed to create admin log:", logErr)
+		}
 		response.InternalError(c, err.Error())
 		return
 	}
 
 	logMessage := fmt.Sprintf("แอดมิน ID: %d ลบสินค้า: %s (ID: %d)", AdminID, product.Name, id.ID)
-	_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "DELETE_PRODUCT_SUCCESS", logMessage)
-
-	response.Success(c, "delete successfully")
-}
-
-func GetProductByID(c *gin.Context) {
-	id := requests.ProductIdRequest{}
-	if err := c.BindUri(&id); err != nil {
-		response.BadRequest(c, err.Error())
-		return
+	if logErr := adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "DELETE_PRODUCT_SUCCESS", logMessage); logErr != nil {
+		log.Println("Failed to create admin log:", logErr)
 	}
 
-	data, err := GetByIdProductService(c, int64(id.ID))
-	if err != nil {
-		response.InternalError(c, err.Error())
-		return
-	}
-	response.Success(c, data)
+	response.Success(c, "Product deleted successfully")
 }
 
 func ProductList(c *gin.Context) {
@@ -120,7 +104,6 @@ func UpdateProduct(c *gin.Context) {
 	AdminID := c.GetInt("admin_id")
 
 	if err := c.BindUri(&id); err != nil {
-		// บันทึก log กรณีที่ URI ไม่ถูกต้อง
 		logMessage := fmt.Sprintf("แอดมิน ID: %d แก้ไขสินค้าล้มเหลว - ข้อมูลไม่ถูกต้อง: %s", AdminID, err.Error())
 		_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "UPDATE_PRODUCT_FAILED", logMessage)
 
@@ -138,8 +121,8 @@ func UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	// ดึงข้อมูลสินค้าก่อนอัปเดต (เพื่อให้แสดงชื่อใน log)
-	product, err := GetByIdProductService(c, int64(id.ID))
+
+	product, err := GetByIdProductService(c.Request.Context(), int64(id.ID), 0)
 	if err != nil {
 		logMessage := fmt.Sprintf("แอดมิน ID: %d แก้ไขสินค้าล้มเหลว - ไม่พบสินค้า ID: %d, ข้อผิดพลาด: %s", AdminID, id.ID, err.Error())
 		_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "UPDATE_PRODUCT_FAILED", logMessage)
@@ -148,7 +131,7 @@ func UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	data, err := UpdateProductService(c, int(id.ID), req)
+	data, err := UpdateProductService(c.Request.Context(), int(id.ID), req)
 	if err != nil {
 		logMessage := fmt.Sprintf("แอดมิน ID: %d แก้ไขสินค้าล้มเหลว - สินค้า: %s, ข้อผิดพลาด: %s", AdminID, product.Name, err.Error())
 		_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "UPDATE_PRODUCT_FAILED", logMessage)
@@ -159,6 +142,39 @@ func UpdateProduct(c *gin.Context) {
 
 	logMessage := fmt.Sprintf("แอดมิน ID: %d แก้ไขสินค้า: %s (ID: %d)", AdminID, product.Name, id.ID)
 	_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "UPDATE_PRODUCT_SUCCESS", logMessage)
+
+	response.Success(c, data)
+}
+
+func CreateProduct(c *gin.Context) {
+	AdminID := c.GetInt("admin_id")
+
+	if AdminID == 0 {
+		response.Unauthorized(c, "Unauthorized access")
+		return
+	}
+
+	req := requests.ProductCreateRequest{}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	data, err := CreateProductService(c.Request.Context(), req)
+	if err != nil {
+		logMessage := fmt.Sprintf("แอดมิน ID: %d สร้างสินค้าล้มเหลว - สินค้า: %s, ข้อผิดพลาด: %s", AdminID, req.Name, err.Error())
+		if logErr := adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "ADD_PRODUCT_FAILED", logMessage); logErr != nil {
+			log.Println("Failed to create admin log:", logErr)
+		}
+
+		response.InternalError(c, err.Error())
+		return
+	}
+
+	logMessage := fmt.Sprintf("แอดมิน ID: %d เพิ่มสินค้า: %s", AdminID, req.Name)
+	if logErr := adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "ADD_PRODUCT_SUCCESS", logMessage); logErr != nil {
+		log.Println("Failed to create admin log:", logErr)
+	}
 
 	response.Success(c, data)
 }

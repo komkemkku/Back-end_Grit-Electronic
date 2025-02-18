@@ -145,18 +145,30 @@ func DeleteWishlistsService(ctx context.Context, id int64) error {
 }
 
 func UpdateWishlistsService(ctx context.Context, userID int, productID int) (*model.Wishlists, string, bool, error) {
-	var wishlistCount int
-	err := db.NewSelect().
+	// ตรวจสอบว่าสินค้าอยู่ในระบบหรือไม่
+	productExists, err := db.NewSelect().
+		Table("products").
+		Where("id = ?", productID).
+		Exists(ctx)
+
+	if err != nil {
+		return nil, "", false, errors.New("failed to check product")
+	}
+	if !productExists {
+		return nil, "", false, errors.New("invalid product ID")
+	}
+
+	// ตรวจสอบว่าสินค้านี้อยู่ใน Wishlist ของผู้ใช้หรือไม่
+	wishlistExists, err := db.NewSelect().
 		Table("wishlists").
 		Where("user_id = ? AND product_id = ?", userID, productID).
-		ColumnExpr("COUNT(*)").
-		Scan(ctx, &wishlistCount)
+		Exists(ctx)
 
 	if err != nil {
 		return nil, "", false, errors.New("failed to check wishlist")
 	}
 
-	if wishlistCount > 0 {
+	if wishlistExists {
 		// ถ้ากดถูกใจอยู่แล้ว ให้ลบออกจาก Wishlist
 		_, err = db.NewDelete().
 			Table("wishlists").
@@ -172,8 +184,8 @@ func UpdateWishlistsService(ctx context.Context, userID int, productID int) (*mo
 
 	// ถ้ายังไม่ได้กด ให้เพิ่มสินค้าเข้า Wishlist
 	newWish := &model.Wishlists{
-		UserID:    int(userID),
-		ProductID: int(productID),
+		UserID:    userID,
+		ProductID: productID,
 	}
 	newWish.SetCreatedNow()
 
@@ -184,6 +196,7 @@ func UpdateWishlistsService(ctx context.Context, userID int, productID int) (*mo
 
 	return newWish, "Product added to wishlist", true, nil
 }
+
 
 func GetWishlistStatusService(ctx context.Context, userID int64, productID int64) (bool, error) {
 	var count int
