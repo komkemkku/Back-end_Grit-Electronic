@@ -86,7 +86,6 @@ func CreateReviewService(ctx context.Context, req requests.ReviewCreateRequest) 
 	}
 
 	// ตรวจสอบว่าสินค้านี้มีอยู่ในคำสั่งซื้อของผู้ใช้หรือไม่
-	// ตรวจสอบว่าสินค้านี้มีอยู่ในคำสั่งซื้อของผู้ใช้หรือไม่
 	orderExists, err := db.NewSelect().
 		TableExpr("order_details AS od").
 		Join("JOIN orders AS o ON o.id = od.order_id").

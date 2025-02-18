@@ -96,24 +96,35 @@ func DeleteWishlists(c *gin.Context) {
 
 func UpdateWishlists(c *gin.Context) {
 	userID := c.GetInt("user_id")
-	productID, err := strconv.ParseInt(c.Param("product_id"), 10, 64)
-	if err != nil {
+
+	var req struct {
+		ProductID int `json:"product_id"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request body")
+		return
+	}
+
+	if req.ProductID <= 0 {
 		response.BadRequest(c, "Invalid product ID")
 		return
 	}
 
-	data, message, isFavorite, err := UpdateWishlistsService(c.Request.Context(), userID, int(productID))
+	data, message, isFavorite, err := UpdateWishlistsService(c.Request.Context(), userID, req.ProductID)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
 
+	// ส่ง response กลับ
 	response.Success(c, gin.H{
 		"message":     message,
 		"is_favorite": isFavorite,
 		"data":        data,
 	})
 }
+
 
 
 func GetWishlistStatus(c *gin.Context) {

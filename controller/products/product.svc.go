@@ -63,7 +63,7 @@ func ListProductService(ctx context.Context, req requests.ProductRequest) ([]res
 	return resp, total, nil
 }
 
-func GetByIdProductService(ctx context.Context, id int64) (*response.ProductDetailResponses, error) {
+func GetByIdProductService(ctx context.Context, id int64, userID int64) (*response.ProductDetailResponses, error) {
 	// ตรวจสอบว่ามีสินค้าหรือไม่
 	ex, err := db.NewSelect().
 		TableExpr("products").
@@ -78,17 +78,27 @@ func GetByIdProductService(ctx context.Context, id int64) (*response.ProductDeta
 
 	product := &response.ProductDetailResponses{}
 
+	// ตรวจสอบว่าผู้ใช้กดถูกใจสินค้าหรือไม่
+	var isFavorite bool
+	err = db.NewSelect().
+		TableExpr("wishlists").
+		ColumnExpr("COUNT(*) > 0").
+		Where("user_id = ? AND product_id = ?", userID, id).
+		Scan(ctx, &isFavorite)
+
+	if err != nil {
+		return nil, err
+	}
+
 	// ดึงข้อมูลสินค้า พร้อมรีวิวและรูปภาพ
 	err = db.NewSelect().TableExpr("products AS p").
 		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.image", "p.is_active", "p.created_at", "p.updated_at", "p.deleted_at").
 		ColumnExpr("c.id AS category__id").
 		ColumnExpr("c.name AS category__name").
 		ColumnExpr("COALESCE(json_agg(json_build_object('id', r.id, 'description', r.description, 'rating', r.rating, 'username', u.username)) FILTER (WHERE r.id IS NOT NULL), '[]') AS reviews").
-		// ColumnExpr("COALESCE(json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description), '{}'::json) AS image").
 		Join("LEFT JOIN categories AS c ON c.id = p.category_id").
 		Join("LEFT JOIN reviews AS r ON r.product_id = p.id").
 		Join("LEFT JOIN users AS u ON u.id = r.user_id").
-		// Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'").
 		Where("p.deleted_at IS NULL").
 		GroupExpr("p.id, c.id").
 		Where("p.id = ?", id).
@@ -97,6 +107,9 @@ func GetByIdProductService(ctx context.Context, id int64) (*response.ProductDeta
 	if err != nil {
 		return nil, err
 	}
+
+	// เพิ่มข้อมูลว่าผู้ใช้กดถูกใจสินค้าหรือไม่ใน response
+	product.IsFavorite = isFavorite
 
 	return product, nil
 }
