@@ -8,16 +8,17 @@ type DashboardResponse struct {
 }
 
 type ProductSales struct {
-    ProductName string  `json:"product_name"` // ชื่อผลิตภัณฑ์
-    TotalSales  float64 `json:"total_sales"`  // ยอดขายรวม
-    Quantity    int     `json:"quantity"`     // จำนวนที่ขาย
+	ProductName string  `json:"product_name"` // ชื่อผลิตภัณฑ์
+	TotalSales  float64 `json:"total_sales"`  // ยอดขายรวม
+	Quantity    int     `json:"quantity"`     // จำนวนที่ขาย
 }
 
 type DashboardCategoryResponses struct {
-    Category string         `json:"category"`
-    Year     int            `json:"year"`
-    Month    string         `json:"month"`
-    Products []ProductSales `json:"products"`
+	Category           string         `json:"category"`
+	TotalCategorySales float64        `json:"total_category_sales"`
+	Products           []ProductSales `json:"products"`
+	Month              string         `json:"month"`
+	Year               string         `json:"year"`
 }
 
 type ReportReponses struct {
