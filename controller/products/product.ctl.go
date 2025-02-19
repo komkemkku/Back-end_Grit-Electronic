@@ -3,7 +3,6 @@ package products
 import (
 	"fmt"
 	"log"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	adminlogs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/controller/admin_logs"
@@ -12,17 +11,21 @@ import (
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/response"
 )
 
-
 func GetProductByID(c *gin.Context) {
-	userID := c.GetInt("user_id")
+	id := requests.ProductIdRequest{}
 
-	productID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil || productID <= 0 {
-		response.BadRequest(c, "Invalid product ID")
+	if err := c.BindUri(&id); err != nil {
+		response.BadRequest(c, err.Error())
 		return
 	}
 
-	data, err := GetByIdProductService(c.Request.Context(), productID, int64(userID))
+	req := requests.ProductUserIDRequest{}
+	if err := c.BindQuery(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	data, err := GetByIdProductService(c.Request.Context(), id.ID, req.UserID)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
@@ -120,7 +123,6 @@ func UpdateProduct(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
-
 
 	product, err := GetByIdProductService(c.Request.Context(), int64(id.ID), 0)
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
@@ -28,12 +29,10 @@ func ListProductService(ctx context.Context, req requests.ProductRequest) ([]res
 		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.image", "p.is_active", "p.created_at", "p.updated_at", "p.deleted_at").
 		ColumnExpr("c.id AS category__id").
 		ColumnExpr("c.name AS category__name").
-		ColumnExpr("COALESCE(json_agg(json_build_object('id', r.id, 'description', r.description, 'rating', r.rating, 'username', u.username)) FILTER (WHERE r.id IS NOT NULL), '[]') AS reviews").
-		// ColumnExpr("COALESCE(json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description), '{}'::json) AS image").
+		ColumnExpr("COALESCE(json_agg(json_build_object('id', r.id, 'description', r.description, 'rating', r.rating ,'username', u.username)) FILTER (WHERE r.id IS NOT NULL), '[]') AS reviews").
 		Join("LEFT JOIN categories AS c ON c.id = p.category_id").
 		Join("LEFT JOIN reviews AS r ON r.product_id = p.id").
 		Join("LEFT JOIN users AS u ON u.id = r.user_id").
-		// Join("LEFT JOIN images AS i ON i.ref_id = p.id AND i.type = 'product_main'").
 		Where("p.deleted_at IS NULL").
 		GroupExpr("p.id, c.id")
 
@@ -78,24 +77,28 @@ func GetByIdProductService(ctx context.Context, id int64, userID int64) (*respon
 
 	product := &response.ProductDetailResponses{}
 
+	log.Println(userID)
+	log.Println(id)
+
 	// ตรวจสอบว่าผู้ใช้กดถูกใจสินค้าหรือไม่
 	var isFavorite bool
-	err = db.NewSelect().
-		TableExpr("wishlists").
-		ColumnExpr("COUNT(*) > 0").
-		Where("user_id = ? AND product_id = ?", userID, id).
-		Scan(ctx, &isFavorite)
+	if userID != 0 {
+		err = db.NewSelect().
+			TableExpr("wishlists").
+			ColumnExpr("COUNT(*) > 0").
+			Where("user_id = ? AND product_id = ?", userID, id).
+			Scan(ctx, &isFavorite)
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
 	}
-
 	// ดึงข้อมูลสินค้า พร้อมรีวิวและรูปภาพ
 	err = db.NewSelect().TableExpr("products AS p").
 		Column("p.id", "p.name", "p.price", "p.description", "p.stock", "p.image", "p.is_active", "p.created_at", "p.updated_at", "p.deleted_at").
 		ColumnExpr("c.id AS category__id").
 		ColumnExpr("c.name AS category__name").
-		ColumnExpr("COALESCE(json_agg(json_build_object('id', r.id, 'description', r.description, 'rating', r.rating, 'username', u.username)) FILTER (WHERE r.id IS NOT NULL), '[]') AS reviews").
+		ColumnExpr("COALESCE(json_agg(json_build_object('id', r.id, 'description', r.description, 'rating', r.rating, 'created_at', r.created_at, 'username', u.username) ORDER BY r.created_at DESC) FILTER (WHERE r.id IS NOT NULL), '[]') AS reviews").
 		Join("LEFT JOIN categories AS c ON c.id = p.category_id").
 		Join("LEFT JOIN reviews AS r ON r.product_id = p.id").
 		Join("LEFT JOIN users AS u ON u.id = r.user_id").
@@ -125,7 +128,6 @@ func CreateProductService(ctx context.Context, req requests.ProductCreateRequest
 	if !ex {
 		return nil, fmt.Errorf("categories not found for ID: %d", req.CategoryID)
 	}
-
 
 	// ตรวจสอบว่าสินค้าชื่อนี้มีอยู่แล้วหรือไม่
 	productExists, err := db.NewSelect().
@@ -172,6 +174,14 @@ func UpdateProductService(ctx context.Context, id int, req requests.ProductUpdat
 	if !exists {
 		return nil, errors.New("product not found")
 	}
+	// // ตรวจสอบว่า category_id มีอยู่ในระบบหรือไม่
+	// ex, err := db.NewSelect().TableExpr("categories").Where("id = ?", req.CategoryID).Exists(ctx)
+	// if err != nil {
+	// 	return nil, errors.New("categories not found")
+	// }
+	// if !ex {
+	// 	return nil, errors.New("categories not found")
+	// }
 
 	product := &model.Products{}
 	err = db.NewSelect().Model(product).Where("id = ?", id).Scan(ctx)

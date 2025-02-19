@@ -54,8 +54,8 @@ func CreateImageBannerService(ctx context.Context, req requests.ImageCreateReque
 	}
 
 	// ถ้ามีครบ 4 รูปแล้ว ไม่ให้เพิ่มใหม่
-	if imageCount >= 4 {
-		return nil, errors.New("cannot add more than 4 images")
+	if imageCount >= 6 {
+		return nil, errors.New("cannot add more than 6 images")
 	}
 
 	image := &model.Images{

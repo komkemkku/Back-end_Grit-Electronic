@@ -37,7 +37,7 @@ func ListUserService(ctx context.Context, req requests.UserRequest) ([]response.
 	}
 
 	// Execute query
-	err = query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
+	err = query.OrderExpr("u.created_at DESC").Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -73,7 +73,6 @@ func GetByIdUserService(ctx context.Context, ID int) (*response.UserResponses, e
 	return user, nil
 }
 
-
 func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*model.Users, error) {
 
 	// ตรวจสอบว่า email ซ้ำหรือไม่
@@ -88,6 +87,20 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*m
 
 	if exists {
 		return nil, errors.New("email already exists")
+	}
+
+	// ตรวจสอบว่า phone ซ้ำหรือไม่
+	exists, err = db.NewSelect().
+		TableExpr("users").
+		Where("phone = ?", req.Phone).
+		Exists(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if exists {
+		return nil, errors.New("phone already exists")
 	}
 
 	hashpassword, _ := utils.HashPassword(req.Password)

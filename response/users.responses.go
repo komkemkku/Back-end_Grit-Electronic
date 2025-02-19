@@ -9,7 +9,7 @@ type UserResponses struct {
 	Phone     string    `json:"phone"`
 	CreatedAt int64     `json:"created_at"`
 	UpdatedAt int64     `json:"updated_at"`
-	Shipment  *Shipment `json:"shipment,omitempty"`
+	Shipment  *Shipment `json:"shipment"`
 }
 
 type Shipment struct {

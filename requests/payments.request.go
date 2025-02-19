@@ -17,6 +17,5 @@ type PaymentCreateRequest struct {
 }
 
 type PaymentUpdateRequest struct {
-	Id   int    `json:"id"`
-	Date string `json:"date"`
+	Date       string `json:"date"`
 }

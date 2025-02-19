@@ -17,8 +17,6 @@ type DashboardCategoryResponses struct {
 	Category           string         `json:"category"`
 	TotalCategorySales float64        `json:"total_category_sales"`
 	Products           []ProductSales `json:"products"`
-	Month              string         `json:"month"`
-	Year               string         `json:"year"`
 }
 
 type ReportReponses struct {

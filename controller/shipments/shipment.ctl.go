@@ -1,6 +1,8 @@
 package shipments
 
 import (
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
@@ -10,6 +12,7 @@ import (
 func CreateShipment(c *gin.Context) {
 
 	user := c.GetInt("user_id")
+	log.Println(user)
 
 	req := requests.ShipmentCreateRequest{}
 

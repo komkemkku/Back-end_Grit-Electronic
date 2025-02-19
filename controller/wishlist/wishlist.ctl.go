@@ -111,21 +111,15 @@ func UpdateWishlists(c *gin.Context) {
 		return
 	}
 
-	data, message, isFavorite, err := UpdateWishlistsService(c.Request.Context(), userID, req.ProductID)
+	err := UpdateWishlistsService(c.Request.Context(), userID, req.ProductID)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
 
 	// ส่ง response กลับ
-	response.Success(c, gin.H{
-		"message":     message,
-		"is_favorite": isFavorite,
-		"data":        data,
-	})
+	response.Success(c, nil)
 }
-
-
 
 func GetWishlistStatus(c *gin.Context) {
 	userID := c.GetInt("user_id")
@@ -143,5 +137,3 @@ func GetWishlistStatus(c *gin.Context) {
 
 	response.Success(c, gin.H{"is_favorite": status})
 }
-
-

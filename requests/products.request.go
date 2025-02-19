@@ -8,7 +8,11 @@ type ProductRequest struct {
 }
 
 type ProductIdRequest struct {
-	ID int `uri:"id"`
+	ID int64 `uri:"id"`
+}
+
+type ProductUserIDRequest struct {
+	UserID int64 `form:"user_id"`
 }
 
 type ProductCreateRequest struct {

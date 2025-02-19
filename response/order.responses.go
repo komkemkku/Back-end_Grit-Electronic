@@ -68,6 +68,7 @@ type ProductInfo struct {
 	Price              float64 `json:"price"`
 	TotalProductAmount int     `json:"total_product_amount"`
 	Image              string  `json:"image"`
+	IsReview           bool    `json:"is_review"`
 }
 
 // type OrderRespOrderDetail struct {
