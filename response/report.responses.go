@@ -14,19 +14,40 @@ type ProductSales struct {
 }
 
 type DashboardCategoryResponses struct {
-	Category           string         `json:"category"`
-	TotalCategorySales float64        `json:"total_category_sales"`
-	Products           []ProductSales `json:"products"`
-	Month              string         `json:"month"`
-	Year               string         `json:"year"`
+	Category           string  `json:"category"`
+	TotalCategorySales float64 `json:"total_category_sales"`
+	// Products           []ProductSales `json:"products"`
+	// Month              string         `json:"month"`
+	// Year               string         `json:"year"`
 }
 
+// type ReportReponses struct {
+//     OrderID     int        `json:"order_id"`
+//     UserName    string     `json:"username"`
+//     Firstname   string     `json:"firstname"`
+//     Lastname    string     `json:"lastname"`
+//     TotalAmount int        `json:"total_amount"`  // แสดงผลรวมของจำนวนสินค้าทั้งหมด
+//     TotalPrice  float64    `json:"total_price"`
+//     Products    []ProductInfo `json:"products"`  // แสดงข้อมูลของสินค้าที่สั่งซื้อ
+//     Created_at  int64      `json:"created_at"`
+// }
+
 type ReportReponses struct {
-	OrderID     int     `bun:"order_id"`
-	UserName    string  `bun:"username"`
-	ProductName string  `bun:"product_name"`
-	Amount      int     `bun:"amount"`
-	Price       float64 `bun:"price"`
-	TotalPrice  float64 `bun:"total_price"`
-	Created_at  int64   `bun:"created_at"`
+    OrderID     int        `json:"order_id" bun:"order_id"`
+    UserName    string     `json:"username" bun:"username"`
+    Firstname   string     `json:"firstname" bun:"firstname"`
+    Lastname    string     `json:"lastname" bun:"lastname"`
+    TotalAmount int    `json:"total_amount" bun:"total_amount"`  // เปลี่ยนเป็น int64
+    TotalPrice  float64    `json:"total_price" bun:"total_price"`
+    Products    []ProductInfoo `json:"products" bun:"products"`
+    Created_at  int64      `json:"created_at" bun:"created_at"`
 }
+
+
+
+type ProductInfoo struct {
+    ProductName        string  `json:"product_name"`
+    Price              float64 `json:"price"`
+    TotalProductAmount int     `json:"total_product_amount"`  // จำนวนสินค้าที่สั่งซื้อ
+}
+

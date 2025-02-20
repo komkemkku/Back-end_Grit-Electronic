@@ -3,7 +3,6 @@ package reports
 import (
 	"context"
 	"fmt"
-	"time"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/requests"
@@ -75,18 +74,20 @@ func GetReport(ctx context.Context, req requests.ReportRequest) ([]response.Repo
 
 	resp := []response.ReportReponses{}
 
-	// สร้าง query สำหรับดึงข้อมูลจาก order_details
+	// สร้าง query สำหรับดึงข้อมูลจาก order_details และรวมสินค้าเป็น JSON array
 	query := db.NewSelect().
-		TableExpr("orders AS o").
-		ColumnExpr("o.id AS order_id").
-		ColumnExpr("o.created_at AS created_at").
-		ColumnExpr("o.total_price AS total_price").
-		ColumnExpr("u.username AS username").
-		ColumnExpr("od.product_name AS product_name").
-		ColumnExpr("od.total_product_amount AS amount").
-		ColumnExpr("od.total_product_price AS price").
-		Join("JOIN users AS u ON o.user_id = u.id").
-		Join("JOIN order_details AS od ON o.id = od.order_id")
+    TableExpr("orders AS o").
+    ColumnExpr("o.id AS order_id").
+    ColumnExpr("o.created_at AS created_at").
+    ColumnExpr("o.total_price AS total_price").
+    ColumnExpr("o.total_amount AS total_amount").  // Add total_amount
+    ColumnExpr("u.username AS username").
+    ColumnExpr("u.firstname AS firstname").
+    ColumnExpr("u.lastname AS lastname").
+    ColumnExpr("json_agg(json_build_object('product_name', od.product_name, 'amount', od.total_product_amount, 'price', od.total_product_price, 'total_product_amount', od.total_product_amount)) AS products"). // Ensure total_product_amount is part of the products JSON
+    Join("JOIN users AS u ON o.user_id = u.id").
+    Join("JOIN order_details AS od ON o.id = od.order_id").
+    GroupExpr("o.id, o.created_at, o.total_price, o.total_amount, u.username, u.firstname, u.lastname")
 
 	// เพิ่มตัวกรองเดือนและปี
 	if req.Month != "" {
@@ -116,10 +117,9 @@ func GetReport(ctx context.Context, req requests.ReportRequest) ([]response.Repo
 	// นับจำนวนแถวทั้งหมด
 	var total int
 	countQuery := db.NewSelect().
-		TableExpr("order_details AS od").
-		Join("JOIN orders AS o ON o.id = od.order_id").
+		TableExpr("orders AS o").
 		Join("JOIN users AS u ON o.user_id = u.id").
-		ColumnExpr("COUNT(od.id)").
+		ColumnExpr("COUNT(o.id)").
 		Scan(ctx, &total)
 
 	// ตรวจสอบหากเกิดข้อผิดพลาดใน query การนับจำนวน
@@ -136,26 +136,38 @@ func GetReport(ctx context.Context, req requests.ReportRequest) ([]response.Repo
 	return resp, total, nil
 }
 
+
 func DashboardlistCategorye(ctx context.Context, req requests.ReportRequest) ([]response.DashboardCategoryResponses, int, error) {
-	categorySalesMap := make(map[string]*response.DashboardCategoryResponses)
+	categorySales := []response.DashboardCategoryResponses{}
 
 	query := db.NewSelect().
 		TableExpr("order_details AS od").
-		ColumnExpr("c.name AS category, " +
-			"EXTRACT(YEAR FROM TO_TIMESTAMP(o.created_at)) AS year, " +
-			"EXTRACT(MONTH FROM TO_TIMESTAMP(o.created_at)) AS month, " +
-			"p.name AS product_name, " +
-			"SUM(od.total_product_amount * p.price) AS total_sales, " +
-			"SUM(od.total_product_amount) AS quantity").
+		ColumnExpr("c.name AS category, SUM(od.total_product_amount * p.price) AS total_category_sales").
 		Join("JOIN products AS p ON od.product_name = p.name").
 		Join("JOIN categories AS c ON c.id = p.category_id").
 		Join("JOIN orders AS o ON o.id = od.order_id").
 		Where("o.status = ?", "success").
-		GroupExpr("c.name, year, month, p.name")
+		GroupExpr("c.name")
 
-	// เพิ่มเงื่อนไขกรองเฉพาะเดือนที่ค้นหา
+	// เพิ่มเงื่อนไขการกรองตามเดือน (Month)
 	if req.Month != "" {
-		query.Where("TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = ?", req.Month)
+		query.Where("(TRIM(TO_CHAR(TO_TIMESTAMP(o.created_at), 'Month')) ILIKE ? OR "+
+			"TO_CHAR(TO_TIMESTAMP(o.created_at), 'Mon') ILIKE ? OR "+
+			"TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = ? OR "+
+			"CASE "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '01' THEN 'มกราคม' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '02' THEN 'กุมภาพันธ์' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '03' THEN 'มีนาคม' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '04' THEN 'เมษายน' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '05' THEN 'พฤษภาคม' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '06' THEN 'มิถุนายน' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '07' THEN 'กรกฎาคม' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '08' THEN 'สิงหาคม' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '09' THEN 'กันยายน' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '10' THEN 'ตุลาคม' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '11' THEN 'พฤศจิกายน' "+
+			"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '12' THEN 'ธันวาคม' "+
+			"END ILIKE ?)", req.Month, req.Month, req.Month, req.Month)
 	}
 
 	rows, err := query.Rows(ctx)
@@ -166,63 +178,16 @@ func DashboardlistCategorye(ctx context.Context, req requests.ReportRequest) ([]
 
 	for rows.Next() {
 		var category string
-		var yearFloat, monthFloat float64
-		var productName string
-		var totalSales float64
-		var quantity int64
+		var totalCategorySales float64
 
-		if err := rows.Scan(&category, &yearFloat, &monthFloat, &productName, &totalSales, &quantity); err != nil {
+		if err := rows.Scan(&category, &totalCategorySales); err != nil {
 			return nil, 0, fmt.Errorf("failed to scan row: %v", err)
 		}
 
-		month := int(monthFloat)
-		monthName := time.Month(month).String() // แปลงเลขเดือนเป็นชื่อเดือนภาษาอังกฤษ
-
-		// ถ้าเดือนนั้นไม่มีสินค้า ข้ามข้อมูลนี้
-		if totalSales == 0 {
-			continue
-		}
-
-		if cat, exists := categorySalesMap[category]; exists {
-			product := response.ProductSales{
-				ProductName: productName,
-				TotalSales:  totalSales,
-			}
-			if quantity > 0 {
-				product.Quantity = int(quantity)
-			}
-
-			cat.Products = append(cat.Products, product)
-			cat.TotalCategorySales += totalSales
-		} else {
-			product := response.ProductSales{
-				ProductName: productName,
-				TotalSales:  totalSales,
-			}
-			if quantity > 0 {
-				product.Quantity = int(quantity)
-			}
-
-			categorySalesMap[category] = &response.DashboardCategoryResponses{
-				Category:          category,
-				Month:             monthName, // เพิ่มชื่อเดือนเข้าไปใน JSON
-				Products:          []response.ProductSales{product},
-				TotalCategorySales: totalSales,
-			}
-		}
-	}
-
-	// ลบหมวดหมู่ที่ไม่มีสินค้า
-	categorySales := make([]response.DashboardCategoryResponses, 0, len(categorySalesMap))
-	for _, cat := range categorySalesMap {
-		if len(cat.Products) > 0 { // แสดงเฉพาะหมวดหมู่ที่มีสินค้า
-			categorySales = append(categorySales, *cat)
-		}
-	}
-
-	// ถ้าไม่มีข้อมูลเลยให้คืนค่าเป็น `nil`
-	if len(categorySales) == 0 {
-		return nil, 0, nil
+		categorySales = append(categorySales, response.DashboardCategoryResponses{
+			Category:           category,
+			TotalCategorySales: totalCategorySales,
+		})
 	}
 
 	return categorySales, len(categorySales), nil

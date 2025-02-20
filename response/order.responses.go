@@ -50,7 +50,7 @@ type OrderResponses struct {
 type OrderRespOrderDetail struct {
 	ID             int                     `json:"id"`
 	User           UserRespOrderDetail     `bun:"user"`
-	Products       []ProductInfo           `json:"products"` // แก้จาก []string เป็น []ProductInfo
+	Products       []ProductInfo           `json:"products"` 
 	Payment        PaymentRespOrderDetail  `bun:"payment"`
 	Shipment       ShipmentRespOrderDetail `bun:"shipment"`
 	TotalAmount    int                     `json:"total_amount"`

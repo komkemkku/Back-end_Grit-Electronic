@@ -377,120 +377,119 @@ func GetUserByIdOrderService(ctx context.Context, orderID int64) (*response.Orde
 }
 
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to start transaction: %v", err)
-	}
-	defer tx.Rollback()
+    tx, err := db.BeginTx(ctx, nil)
+    if err != nil {
+        return nil, fmt.Errorf("failed to start transaction: %v", err)
+    }
+    defer tx.Rollback()
 
-	// 1. ดึงข้อมูลตะกร้าสินค้า
-	var cartID int64
-	if err := tx.NewSelect().Table("carts").Column("id").Where("user_id = ?", req.UserID).Scan(ctx, &cartID); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("no cart found for user_id: %d", req.UserID)
-		}
-		return nil, fmt.Errorf("failed to find cart: %v", err)
-	}
+    // 1. ดึงข้อมูลตะกร้าสินค้า
+    var cartID int64
+    if err := tx.NewSelect().Table("carts").Column("id").Where("user_id = ?", req.UserID).Scan(ctx, &cartID); err != nil {
+        if errors.Is(err, sql.ErrNoRows) {
+            return nil, fmt.Errorf("no cart found for user_id: %d", req.UserID)
+        }
+        return nil, fmt.Errorf("failed to find cart: %v", err)
+    }
 
-	// 2. บันทึกข้อมูลการชำระเงินในตาราง payments ก่อน
-	payment := &model.Payments{
-		SystemBankID: req.SystemBankID,
-		Date:         req.PaymentDate, // เก็บวันที่ที่ลูกค้าระบุ
-	}
-	payment.SetCreatedNow()
-	payment.SetUpdateNow()
+    // 2. ดึง payment_id จาก payments โดยใช้วันที่ที่ลูกค้ากรอก
+    var paymentID int64
+    err = tx.NewSelect().Table("payments").
+        Column("id").
+        Where("date = ?", req.PaymentDate). // ใช้ req.PaymentDate เพื่อดึง payment_id
+        Limit(1). // เฉพาะ 1 รายการ
+        Scan(ctx, &paymentID)
 
-	// ทำการเพิ่ม payment ลงใน DB และดึง payment_id กลับมา
-	if _, err := tx.NewInsert().Model(payment).Returning("id").Exec(ctx); err != nil {
-		return nil, fmt.Errorf("failed to create payment record: %v", err)
-	}
+    if err != nil {
+        return nil, fmt.Errorf("failed to fetch payment data: %v", err)
+    }
 
-	// 3. ดึงข้อมูลสินค้าในตะกร้า
-	var cartItems []struct {
-		ProductID   int64   `json:"product_id"`
-		ProductName string  `json:"product_name"`
-		Amount      int64   `json:"amount"`
-		Price       float64 `json:"price"`
-		Stock       int64   `json:"stock"`
-	}
+    // 3. ดึงข้อมูลสินค้าในตะกร้า
+    var cartItems []struct {
+        ProductID   int64   `json:"product_id"`
+        ProductName string  `json:"product_name"`
+        Amount      int64   `json:"amount"`
+        Price       float64 `json:"price"`
+        Stock       int64   `json:"stock"`
+    }
 
-	if err := tx.NewSelect().Table("cart_items").
-		ColumnExpr("cart_items.product_id, products.name AS product_name, cart_items.total_product_amount AS amount, products.price, products.stock").
-		Join("JOIN products ON products.id = cart_items.product_id").
-		Where("cart_id = ?", cartID).
-		Scan(ctx, &cartItems); err != nil {
-		return nil, fmt.Errorf("failed to fetch cart items: %v", err)
-	}
+    if err := tx.NewSelect().Table("cart_items").
+        ColumnExpr("cart_items.product_id, products.name AS product_name, cart_items.total_product_amount AS amount, products.price, products.stock").
+        Join("JOIN products ON products.id = cart_items.product_id").
+        Where("cart_id = ?", cartID).
+        Scan(ctx, &cartItems); err != nil {
+        return nil, fmt.Errorf("failed to fetch cart items: %v", err)
+    }
 
-	// 4. ตรวจสอบสต็อกสินค้า
-	for _, item := range cartItems {
-		if item.Amount > item.Stock {
-			return nil, fmt.Errorf("not enough stock for product %s", item.ProductName)
-		}
-	}
+    // 4. ตรวจสอบสต็อกสินค้า
+    for _, item := range cartItems {
+        if item.Amount > item.Stock {
+            return nil, fmt.Errorf("not enough stock for product %s", item.ProductName)
+        }
+    }
 
-	// 5. คำนวณราคารวมและจำนวนรวม
-	totalPrice := 0.0
-	totalAmount := 0
-	for _, item := range cartItems {
-		totalPrice += item.Price * float64(item.Amount)
-		totalAmount += int(item.Amount)
-	}
+    // 5. คำนวณราคารวมและจำนวนรวม
+    totalPrice := 0.0
+    totalAmount := 0
+    for _, item := range cartItems {
+        totalPrice += item.Price * float64(item.Amount)
+        totalAmount += int(item.Amount)
+    }
 
-	// 6. บันทึก Order ลงในฐานข้อมูล พร้อมเชื่อมโยงกับ Payment ID
-	order := &model.Orders{
-		UserID:       req.UserID,
-		ShipmentID:   req.ShipmentID,
-		PaymentID:    payment.ID,
-		Total_price:  totalPrice,
-		Total_amount: totalAmount,
-		Status:       "pending",
-	}
-	order.SetCreatedNow()
-	order.SetUpdateNow()
+    // 6. บันทึก Order ลงในฐานข้อมูล พร้อมเชื่อมโยงกับ Payment ID ที่ได้จากการค้นหา
+    order := &model.Orders{
+        UserID:       req.UserID,
+        ShipmentID:   req.ShipmentID,
+        PaymentID:    req.PaymentID, // ใช้ paymentID ที่ดึงจาก payments
+        Total_price:  totalPrice,
+        Total_amount: totalAmount,
+        Status:       "pending",
+    }
+    order.SetCreatedNow()
+    order.SetUpdateNow()
 
-	if _, err := tx.NewInsert().Model(order).Returning("id").Exec(ctx); err != nil {
-		return nil, fmt.Errorf("failed to create order: %v", err)
-	}
+    if _, err := tx.NewInsert().Model(order).Returning("id").Exec(ctx); err != nil {
+        return nil, fmt.Errorf("failed to create order: %v", err)
+    }
 
-	// 7. หักสต็อกสินค้า
-	for _, item := range cartItems {
-		if _, err := tx.NewUpdate().
-			Table("products").
-			Set("stock = stock - ?", item.Amount).
-			Where("id = ?", item.ProductID).
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("failed to update stock for product %s: %v", item.ProductName, err)
-		}
-	}
+    // 7. หักสต็อกสินค้า
+    for _, item := range cartItems {
+        if _, err := tx.NewUpdate().
+            Table("products").
+            Set("stock = stock - ?", item.Amount).
+            Where("id = ?", item.ProductID).
+            Exec(ctx); err != nil {
+            return nil, fmt.Errorf("failed to update stock for product %s: %v", item.ProductName, err)
+        }
+    }
 
-	// 8. บันทึกรายละเอียด Order
-	for _, item := range cartItems {
-		orderDetail := &model.OrderDetail{
-			OrderID:            order.ID,
-			ProductName:        item.ProductName,
-			TotalProductPrice:  item.Price * float64(item.Amount),
-			TotalProductAmount: int(item.Amount),
-		}
-		if _, err := tx.NewInsert().Model(orderDetail).Exec(ctx); err != nil {
-			return nil, fmt.Errorf("failed to create order detail: %v", err)
-		}
-	}
+    // 8. บันทึกรายละเอียด Order
+    for _, item := range cartItems {
+        orderDetail := &model.OrderDetail{
+            OrderID:            order.ID,
+            ProductName:        item.ProductName,
+            TotalProductPrice:  item.Price * float64(item.Amount),
+            TotalProductAmount: int(item.Amount),
+        }
+        if _, err := tx.NewInsert().Model(orderDetail).Exec(ctx); err != nil {
+            return nil, fmt.Errorf("failed to create order detail: %v", err)
+        }
+    }
 
-	// 9. ลบตะกร้าสินค้า
-	if _, err := tx.NewDelete().Table("cart_items").Where("cart_id = ?", cartID).Exec(ctx); err != nil {
-		return nil, fmt.Errorf("failed to delete cart items: %v", err)
-	}
-	if _, err := tx.NewDelete().Table("carts").Where("id = ?", cartID).Exec(ctx); err != nil {
-		return nil, fmt.Errorf("failed to delete cart: %v", err)
-	}
+    // 9. ลบตะกร้าสินค้า
+    if _, err := tx.NewDelete().Table("cart_items").Where("cart_id = ?", cartID).Exec(ctx); err != nil {
+        return nil, fmt.Errorf("failed to delete cart items: %v", err)
+    }
+    if _, err := tx.NewDelete().Table("carts").Where("id = ?", cartID).Exec(ctx); err != nil {
+        return nil, fmt.Errorf("failed to delete cart: %v", err)
+    }
 
-	// 10. คอมมิตธุรกรรม
-	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %v", err)
-	}
+    // 10. คอมมิตธุรกรรม
+    if err := tx.Commit(); err != nil {
+        return nil, fmt.Errorf("failed to commit transaction: %v", err)
+    }
 
-	return order, nil
+    return order, nil
 }
 
 func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateRequest) (*model.Orders, error) {
