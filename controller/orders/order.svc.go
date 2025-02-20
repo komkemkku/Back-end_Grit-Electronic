@@ -382,20 +382,20 @@ func GetUserByIdOrderService(ctx context.Context, orderID int64) (*response.Orde
 }
 
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to start transaction: %v", err)
-	}
-	defer tx.Rollback()
+    tx, err := db.BeginTx(ctx, nil)
+    if err != nil {
+        return nil, fmt.Errorf("failed to start transaction: %v", err)
+    }
+    defer tx.Rollback()
 
-	// 1. ดึงข้อมูลตะกร้าสินค้า
-	var cartID int64
-	if err := tx.NewSelect().Table("carts").Column("id").Where("user_id = ?", req.UserID).Scan(ctx, &cartID); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("no cart found for user_id: %d", req.UserID)
-		}
-		return nil, fmt.Errorf("failed to find cart: %v", err)
-	}
+    // 1. ดึงข้อมูลตะกร้าสินค้า
+    var cartID int64
+    if err := tx.NewSelect().Table("carts").Column("id").Where("user_id = ?", req.UserID).Scan(ctx, &cartID); err != nil {
+        if errors.Is(err, sql.ErrNoRows) {
+            return nil, fmt.Errorf("no cart found for user_id: %d", req.UserID)
+        }
+        return nil, fmt.Errorf("failed to find cart: %v", err)
+    }
 
 	// 2. ดึง payment_id จาก payments โดยใช้วันที่ที่ลูกค้ากรอก
 	// var paymentID int64
@@ -455,9 +455,9 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 	order.SetCreatedNow()
 	order.SetUpdateNow()
 
-	if _, err := tx.NewInsert().Model(order).Returning("id").Exec(ctx); err != nil {
-		return nil, fmt.Errorf("failed to create order: %v", err)
-	}
+    if _, err := tx.NewInsert().Model(order).Returning("id").Exec(ctx); err != nil {
+        return nil, fmt.Errorf("failed to create order: %v", err)
+    }
 
 	// // 7. หักสต็อกสินค้า
 	for _, item := range cartItems {
@@ -496,12 +496,12 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 		tx.NewDelete().Table("carts").Where("id = ?", cartID).Exec(ctx)
 	}
 
-	// 10. คอมมิตธุรกรรม
-	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %v", err)
-	}
+    // 10. คอมมิตธุรกรรม
+    if err := tx.Commit(); err != nil {
+        return nil, fmt.Errorf("failed to commit transaction: %v", err)
+    }
 
-	return order, nil
+    return order, nil
 }
 
 func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateRequest) (*model.Orders, error) {

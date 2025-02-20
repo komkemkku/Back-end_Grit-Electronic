@@ -14,9 +14,11 @@ type ProductSales struct {
 }
 
 type DashboardCategoryResponses struct {
-	Category           string  `json:"category"`
-	TotalCategorySales float64 `json:"total_category_sales"`
-	// Products           []ProductSales `json:"products"`
+	Category           string         `json:"category"`
+	TotalCategorySales float64        `json:"total_category_sales"`
+	Products           []ProductSales `json:"products"`
+	Month              string         `json:"month"`
+	Year               string         `json:"year"`
 }
 
 type ReportReponses struct {
@@ -35,3 +37,4 @@ type ProductInfoo struct {
 	Price              float64 `json:"price"`
 	TotalProductAmount int     `json:"total_product_amount"`
 }
+
