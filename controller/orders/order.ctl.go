@@ -60,7 +60,9 @@ func GetOrderByID(c *gin.Context) {
 		return
 	}
 
-	data, err := GetByIdOrderService(c, int64(id.ID))
+	user := c.GetInt("user_id")
+
+	data, err := GetByIdOrderService(c, int64(id.ID), int64(user))
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return

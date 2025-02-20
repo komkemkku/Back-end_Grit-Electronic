@@ -121,32 +121,31 @@ func CreatePaymentService(ctx context.Context, req requests.PaymentCreateRequest
 }
 
 func UpdatePaymentService(ctx context.Context, id int64, req requests.PaymentUpdateRequest) (*model.Payments, error) {
-	// ตรวจสอบว่ามี Payment อยู่ในระบบหรือไม่
-	ex, err := db.NewSelect().TableExpr("payments").Where("id=?", id).Exists(ctx)
+	ex, err := db.NewSelect().Table("orders").Where("id = ?", id).Exists(ctx)
 	if err != nil {
 		return nil, err
 	}
+
 	if !ex {
-		return nil, errors.New("payment not found")
+		return nil, errors.New("order not found")
 	}
-
-	payment := &model.Payments{}
-
-	err = db.NewSelect().Model(payment).Where("id = ?", id).Scan(ctx)
-	if err != nil {
-		return nil, err
+	// ตรวจสอบว่ามี Payment อยู่ในระบบหรือไม่
+	payment := &model.Payments{
+		Date: req.Date,
 	}
-
-	// อัปเดตข้อมูลใน Payment
-	payment.Date = req.Date
+	payment.SetCreatedNow()
 	payment.SetUpdateNow()
 
-	_, err = db.NewUpdate().Model(payment).Where("id = ?", id).Exec(ctx)
+	_, err = db.NewInsert().Model(payment).Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return payment, nil
+	_, err = db.NewUpdate().Table("orders").
+		Set("payment_id = ?", payment.ID).
+		Set("status =  ?", "paid").
+		Where("id = ?", id).Exec(ctx)
+	return payment, err
 }
 
 func DeletePaymentService(ctx context.Context, id int64) error {

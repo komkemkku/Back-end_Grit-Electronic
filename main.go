@@ -147,11 +147,11 @@ func main() {
 	r.PATCH("/category/:id", md, categories.UpdateCategory)
 
 	// Shipment
-	r.POST("/shipment/create", shipments.CreateShipment)
-	r.GET("/shipment/:id", shipments.GetShipmentByID)
+	r.POST("/shipment/create", md, shipments.CreateShipment)
+	r.GET("/shipment/:id", md, shipments.GetShipmentByID)
 	r.GET("/shipment", md, shipments.ShipmenttList)
-	r.DELETE("/shipment/:id", shipments.DeleteShipment)
-	r.PATCH("/shipment/:id", shipments.UpdateShipment)
+	r.DELETE("/shipment/:id", md, shipments.DeleteShipment)
+	r.PATCH("/shipment/:id", md, shipments.UpdateShipment)
 
 	// Payment
 	r.POST("/payment/create", payments.CreatePayment)
@@ -161,7 +161,7 @@ func main() {
 	r.PATCH("/payment/:id", md, payments.UpdatePayment)
 
 	// banner
-	r.GET("/banner", md, image.BannerList)
+	r.GET("/banner", image.BannerList)
 	r.POST("/banner/create", md, image.CreateImageBanner)
 	r.DELETE("/banner/:id", md, image.DeleteImageBanner)
 

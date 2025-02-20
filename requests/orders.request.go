@@ -21,11 +21,16 @@ type OrderIdRequest struct {
 }
 
 type OrderCreateRequest struct {
-	UserID       int    `json:"user_id"`
-	PaymentID    int    `json:"payment_id"`
-	ShipmentID   int    `json:"shipment_id"`
-	PaymentDate  string `json:"payment_date"`
-	SystemBankID int    `json:"system_bank_id"`
+	UserID       int         `json:"user_id"`
+	ShipmentID   int         `json:"shipment_id"`
+	SystemBankID int         `json:"system_bank_id"`
+	PaymentDate  string      `json:"payment_date"`
+	CartItems    []CartItems `json:"cart_items"`
+}
+
+type CartItems struct {
+	CartID             int64 `json:"cart_id"`
+	TotalProductAmount int64 `json:"total_product_amount"`
 }
 
 type OrderUpdateRequest struct {

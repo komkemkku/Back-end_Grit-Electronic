@@ -87,7 +87,7 @@ func CreateAdminService(ctx context.Context, req requests.AdminCreateRequest) (*
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: hashpassword,
-		IsActive: req.IsActive,
+		IsActive: true,
 	}
 	admin.SetCreatedNow()
 	admin.SetUpdateNow()
@@ -122,7 +122,7 @@ func UpdateAdminService(ctx context.Context, id int64, req requests.AdminUpdateR
 	admin.Name = req.Name
 	admin.Email = req.Email
 	admin.Password = hashpassword
-	admin.IsActive = req.IsActive
+	admin.IsActive = true
 	admin.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(admin).Where("id = ?", id).Exec(ctx)

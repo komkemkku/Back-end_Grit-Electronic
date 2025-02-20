@@ -96,7 +96,7 @@ func CreateCategoryService(ctx context.Context, req requests.CategoryCreateReque
 	category := &model.Categories{
 		Name:     req.Name,
 		Image:    req.Image,
-		IsActive: req.IsActive,
+		IsActive: true,
 	}
 	category.SetCreatedNow()
 	category.SetUpdateNow()
@@ -141,7 +141,7 @@ func UpdateCategoryService(ctx context.Context, id int64, req requests.CategoryU
 	// อัปเดตข้อมูลหมวดหมู่
 	category.Name = req.Name
 	category.Image = req.Image
-	category.IsActive = req.IsActive
+	category.IsActive = true
 	category.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(category).Where("id = ?", id).Exec(ctx)

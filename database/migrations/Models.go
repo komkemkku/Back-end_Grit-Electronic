@@ -10,7 +10,7 @@ func Models() []any {
 		// (*model.Permissions)(nil),
 		// (*model.RolePermissions)(nil),
 		// (*model.Admins)(nil),
-		// (*model.AdminLogs)(nil),
+		(*model.AdminLogs)(nil),
 		// (*model.AdminRoles)(nil),
 		// (*model.Products)(nil),
 		// (*model.Categories)(nil),
@@ -23,9 +23,9 @@ func Models() []any {
 		// (*model.OrderDetail)(nil),
 		// (*model.CartItem)(nil),
 		// (*model.Notifications)(nil),
-		// (*model.Images)(nil),
+		(*model.Images)(nil),
 		// (*model.Shipments)(nil),
-		(*model.Report)(nil),
+		// (*model.Report)(nil),
 
 	}
 }

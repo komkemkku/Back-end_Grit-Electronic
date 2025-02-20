@@ -8,14 +8,20 @@ import (
 )
 
 func Dashboard(c *gin.Context) {
+	req := requests.ReportRequest{}
 
-	data, err := GetDashboard(c)
+	if err := c.ShouldBindQuery(&req); err != nil {
+		response.BadRequest(c, "Invalid request parameters: "+err.Error())
+		return
+	}
+
+	data, err := GetDashboard(c.Request.Context(), req)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
-	response.Success(c, data)
 
+	response.Success(c, data)
 }
 
 func Report(c *gin.Context) {

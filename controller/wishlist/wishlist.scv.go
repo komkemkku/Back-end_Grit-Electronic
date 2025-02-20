@@ -3,6 +3,7 @@ package wishlist
 import (
 	"context"
 	"errors"
+	"log"
 
 	configs "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
@@ -144,7 +145,7 @@ func DeleteWishlistsService(ctx context.Context, id int64) error {
 	return nil
 }
 
-func UpdateWishlistsService(ctx context.Context, userID int, productID int) (*model.Wishlists, string, bool, error) {
+func UpdateWishlistsService(ctx context.Context, userID int, productID int) error {
 	// ตรวจสอบว่าสินค้าอยู่ในระบบหรือไม่
 	productExists, err := db.NewSelect().
 		Table("products").
@@ -152,10 +153,10 @@ func UpdateWishlistsService(ctx context.Context, userID int, productID int) (*mo
 		Exists(ctx)
 
 	if err != nil {
-		return nil, "", false, errors.New("failed to check product")
+		return errors.New("failed to check product")
 	}
 	if !productExists {
-		return nil, "", false, errors.New("invalid product ID")
+		return errors.New("invalid product ID")
 	}
 
 	// ตรวจสอบว่าสินค้านี้อยู่ใน Wishlist ของผู้ใช้หรือไม่
@@ -165,10 +166,11 @@ func UpdateWishlistsService(ctx context.Context, userID int, productID int) (*mo
 		Exists(ctx)
 
 	if err != nil {
-		return nil, "", false, errors.New("failed to check wishlist")
+		return errors.New("failed to check wishlist")
 	}
 
 	if wishlistExists {
+		log.Println(wishlistExists)
 		// ถ้ากดถูกใจอยู่แล้ว ให้ลบออกจาก Wishlist
 		_, err = db.NewDelete().
 			Table("wishlists").
@@ -176,27 +178,24 @@ func UpdateWishlistsService(ctx context.Context, userID int, productID int) (*mo
 			Exec(ctx)
 
 		if err != nil {
-			return nil, "", false, errors.New("failed to remove from wishlist")
+			return errors.New("failed to remove from wishlist")
 		}
+	} else {
+		// ถ้ายังไม่ได้กด ให้เพิ่มสินค้าเข้า Wishlist
+		newWish := &model.Wishlists{
+			UserID:    userID,
+			ProductID: productID,
+		}
+		newWish.SetCreatedNow()
 
-		return nil, "Product removed from wishlist", false, nil
+		_, err = db.NewInsert().Model(newWish).Returning("*").Exec(ctx)
+		if err != nil {
+			return err
+		}
 	}
 
-	// ถ้ายังไม่ได้กด ให้เพิ่มสินค้าเข้า Wishlist
-	newWish := &model.Wishlists{
-		UserID:    userID,
-		ProductID: productID,
-	}
-	newWish.SetCreatedNow()
-
-	_, err = db.NewInsert().Model(newWish).Returning("*").Exec(ctx)
-	if err != nil {
-		return nil, "", false, errors.New("failed to add to wishlist")
-	}
-
-	return newWish, "Product added to wishlist", true, nil
+	return nil
 }
-
 
 func GetWishlistStatusService(ctx context.Context, userID int64, productID int64) (bool, error) {
 	var count int
@@ -213,4 +212,3 @@ func GetWishlistStatusService(ctx context.Context, userID int64, productID int64
 	// ถ้าจำนวนมากกว่า 0 แสดงว่าผู้ใช้กดถูกใจสินค้าแล้ว
 	return count > 0, nil
 }
-
