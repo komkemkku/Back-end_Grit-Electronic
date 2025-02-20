@@ -3,6 +3,8 @@ package users
 import (
 	"context"
 	"errors"
+	"regexp"
+	"strings"
 
 	config "github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/configs"
 	"github.com/komkemkku/komkemkku/Back-end_Grit-Electronic/model"
@@ -76,6 +78,11 @@ func GetByIdUserService(ctx context.Context, ID int) (*response.UserResponses, e
 func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*model.Users, error) {
 
 	// ตรวจสอบว่า email ซ้ำหรือไม่
+	if !strings.HasSuffix(req.Email, "@gmail.com") {
+		return nil, errors.New("invalid email format: only @gmail.com is allowed")
+	}
+
+	// ตรวจสอบว่า email ซ้ำหรือไม่
 	exists, err := db.NewSelect().
 		TableExpr("users").
 		Where("email = ?", req.Email).
@@ -87,6 +94,17 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*m
 
 	if exists {
 		return nil, errors.New("email already exists")
+	}
+
+	// ตรวจสอบรูปแบบเบอร์โทรศัพท์
+	phonePattern := `^\d{10}$`
+	matched, err := regexp.MatchString(phonePattern, req.Phone)
+	if err != nil {
+		return nil, errors.New("failed to validate phone number")
+	}
+
+	if !matched {
+		return nil, errors.New("invalid phone number: must be exactly 10 digits and contain only numbers")
 	}
 
 	// ตรวจสอบว่า phone ซ้ำหรือไม่
@@ -122,65 +140,6 @@ func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) (*m
 
 	return user, nil
 }
-
-// func CreateUsersService(ctx context.Context, req requests.UserCreateRequest) error {
-//     // แฮชรหัสผ่าน
-//     hashpassword, err := utils.HashPassword(req.Password)
-//     if err != nil {
-//         return errors.New("failed to hash password: " + err.Error())
-//     }
-
-//     // สร้างผู้ใช้ใหม่
-//     user := &model.Users{
-//         FirstName: req.Firstname,
-//         LastName:  req.Lastname,
-//         Username:  req.Username,
-//         Password:  hashpassword,
-//         Email:     req.Email,
-//         Phone:     req.Phone,
-//     }
-//     user.SetCreatedNow()
-//     user.SetUpdateNow()
-
-//     // บันทึกผู้ใช้
-//     if _, err := db.NewInsert().Model(user).Exec(ctx); err != nil {
-//         return errors.New("failed to create user: " + err.Error())
-//     }
-
-//     return nil
-// }
-
-// func CreateUserHandler(c *gin.Context) {
-//   var req requests.UserCreateRequest
-//   if err := c.ShouldBindJSON(&req); err != nil {
-//     c.JSON(http.StatusBadRequest, gin.H{
-//       "status": gin.H{
-//         "code":    400,
-//         "message": err.Error(),
-//       },
-//     })
-//     return
-//   }
-
-//   // เรียก Service ที่แก้ไขแล้ว (ไม่ return user แล้ว)
-//   if err := CreateUsersService(c.Request.Context(), req); err != nil {
-//     c.JSON(http.StatusInternalServerError, gin.H{
-//       "status": gin.H{
-//         "code":    500,
-//         "message": err.Error(),
-//       },
-//     })
-//     return
-//   }
-
-//   // ตรงนี้ส่งกลับเฉพาะ status ตามต้องการ
-//   c.JSON(http.StatusOK, gin.H{
-//     "status": gin.H{
-//       "code":    200,
-//       "message": "Success",
-//     },
-//   })
-// }
 
 func UpdateUserService(ctx context.Context, ID int, req requests.UserUpdateRequest) (*model.Users, error) {
 	ex, err := db.NewSelect().TableExpr("users").Where("id=?", ID).Exists(ctx)
