@@ -37,4 +37,3 @@ type ProductInfoo struct {
 	Price              float64 `json:"price"`
 	TotalProductAmount int     `json:"total_product_amount"`
 }
-
