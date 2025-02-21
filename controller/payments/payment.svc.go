@@ -144,6 +144,7 @@ func UpdatePaymentService(ctx context.Context, id int64, req requests.PaymentUpd
 	_, err = db.NewUpdate().Table("orders").
 		Set("payment_id = ?", payment.ID).
 		Set("status =  ?", "paid").
+		Set("total_price_ship = ?", req.TotalPriceShip).
 		Where("id = ?", id).Exec(ctx)
 	return payment, err
 }

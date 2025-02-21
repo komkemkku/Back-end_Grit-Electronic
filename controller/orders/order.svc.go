@@ -51,7 +51,7 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("orders AS o").
-		Column("o.id", "o.user_id", "o.payment_id", "o.total_price", "o.total_amount", "o.status").
+		Column("o.id", "o.user_id", "o.payment_id", "o.total_price", "o.total_price_ship", "o.total_amount", "o.status").
 		ColumnExpr("floor(EXTRACT(EPOCH FROM to_timestamp(o.created_at)))::bigint AS created_at").
 		ColumnExpr("floor(EXTRACT(EPOCH FROM to_timestamp(o.updated_at)))::bigint AS updated_at").
 		ColumnExpr("u.username").
@@ -216,7 +216,7 @@ func ListOrderUserServiceByStatus(ctx context.Context, req requests.OrderUserReq
 	// สร้าง query
 	query := db.NewSelect().
 		TableExpr("orders AS o").
-		Column("o.id", "o.user_id", "o.payment_id", "o.total_price", "o.total_amount", "o.status").
+		Column("o.id", "o.user_id", "o.payment_id", "o.total_price", "o.total_price_ship", "o.total_amount", "o.status").
 		ColumnExpr("floor(EXTRACT(EPOCH FROM to_timestamp(o.created_at)))::bigint AS created_at").
 		ColumnExpr("floor(EXTRACT(EPOCH FROM to_timestamp(o.updated_at)))::bigint AS updated_at").
 		ColumnExpr("u.username").
@@ -275,7 +275,7 @@ func GetByIdOrderService(ctx context.Context, orderID, UserID int64) (*response.
 	// 3) ดึงข้อมูลหลักของ order
 	err = db.NewSelect().
 		TableExpr("orders AS o").
-		Column("o.id", "o.total_price", "o.total_amount", "o.status", "o.tracking_number", "o.created_at", "o.updated_at").
+		Column("o.id", "o.total_price", "o.total_price_ship", "o.total_amount", "o.status", "o.tracking_number", "o.created_at", "o.updated_at").
 		ColumnExpr("u.id AS user__id").
 		ColumnExpr("u.firstname AS user__firstname").
 		ColumnExpr("u.lastname AS user__lastname").
@@ -339,7 +339,7 @@ func GetUserByIdOrderService(ctx context.Context, orderID int64) (*response.Orde
 	// 3) ดึงข้อมูลหลักของ order
 	err = db.NewSelect().
 		TableExpr("orders AS o").
-		Column("o.id", "o.total_price", "o.total_amount", "o.status", "o.tracking_number", "o.created_at", "o.updated_at").
+		Column("o.id", "o.total_price", "o.total_price_ship", "o.total_amount", "o.status", "o.tracking_number", "o.created_at", "o.updated_at").
 		ColumnExpr("u.id AS user__id").
 		ColumnExpr("u.firstname AS user__firstname").
 		ColumnExpr("u.lastname AS user__lastname").

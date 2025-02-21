@@ -30,7 +30,8 @@ func ListUserService(ctx context.Context, req requests.UserRequest) ([]response.
 		Column("u.id", "u.firstname", "u.lastname", "u.username", "u.email", "u.phone", "u.created_at", "u.updated_at")
 
 	if req.Search != "" {
-		query.Where("u.username ILIKE ?", "%"+req.Search+"%")
+		query.Where("u.username ILIKE ? OR u.firstname ILIKE ? OR u.lastname ILIKE ?",
+			"%"+req.Search+"%", "%"+req.Search+"%", "%"+req.Search+"%")
 	}
 
 	total, err := query.Count(ctx)

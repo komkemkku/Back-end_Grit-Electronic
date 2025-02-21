@@ -17,6 +17,7 @@ type OrderResponses struct {
 	ShipmentDistrict    string  `json:"shipment_district"`
 	ShipmentProvince    string  `json:"shipment_province"`
 	TotalPrice          float64 `json:"total_price"`
+	TotalPriceShip     float64 `json:"total_price_ship"`
 	TotalAmount         int     `json:"total_amount"`
 	Status              string  `json:"status"`
 	CreatedAt           int64   `json:"created_at"`
@@ -24,17 +25,18 @@ type OrderResponses struct {
 }
 
 type OrderRespOrderDetail struct {
-	ID             int                     `json:"id"`
-	User           UserRespOrderDetail     `bun:"user"`
-	Products       []ProductInfo           `json:"products"` 
-	Payment        PaymentRespOrderDetail  `bun:"payment"`
-	Shipment       ShipmentRespOrderDetail `bun:"shipment"`
-	TotalAmount    int                     `json:"total_amount"`
-	TotalPrice     float64                 `json:"total_price"`
-	TrackingNumber string                  `json:"tracking_number"`
-	Status         string                  `json:"status"`
-	Created_at     int64                   `json:"created_at"`
-	Updated_at     int64                   `json:"updated_at"`
+	ID              int                     `json:"id"`
+	User            UserRespOrderDetail     `bun:"user"`
+	Products        []ProductInfo           `json:"products"`
+	Payment         PaymentRespOrderDetail  `bun:"payment"`
+	Shipment        ShipmentRespOrderDetail `bun:"shipment"`
+	TotalAmount     int                     `json:"total_amount"`
+	TotalPrice      float64                 `json:"total_price"`
+	TotalPriceShip float64                 `json:"total_price_ship"`
+	TrackingNumber  string                  `json:"tracking_number"`
+	Status          string                  `json:"status"`
+	Created_at      int64                   `json:"created_at"`
+	Updated_at      int64                   `json:"updated_at"`
 }
 
 // สร้าง struct เก็บข้อมูลสินค้า
