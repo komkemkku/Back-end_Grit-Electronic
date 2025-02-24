@@ -93,15 +93,14 @@ func ListOrderService(ctx context.Context, req requests.OrderRequest) ([]respons
 	// เพิ่มเงื่อนไขการเรียงข้อมูลตามลำดับ status และวันที่สร้างล่าสุด
 	query.OrderExpr(fmt.Sprintf("%s, o.status DESC", caseStatement))
 
-	// นับจำนวนทั้งหมด
 	total, err := query.Count(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	//
+	// 🔹 ถ้าไม่มีข้อมูลให้ส่งค่าเป็นอาร์เรย์ว่าง
 	if total == 0 {
-		return nil, 0, nil
+		return []response.OrderResponses{}, 0, nil
 	}
 
 	// ดึงข้อมูลพร้อม pagination โดยใช้ offset และ limit
@@ -382,20 +381,20 @@ func GetUserByIdOrderService(ctx context.Context, orderID int64) (*response.Orde
 }
 
 func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*model.Orders, error) {
-    tx, err := db.BeginTx(ctx, nil)
-    if err != nil {
-        return nil, fmt.Errorf("failed to start transaction: %v", err)
-    }
-    defer tx.Rollback()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start transaction: %v", err)
+	}
+	defer tx.Rollback()
 
-    // 1. ดึงข้อมูลตะกร้าสินค้า
-    var cartID int64
-    if err := tx.NewSelect().Table("carts").Column("id").Where("user_id = ?", req.UserID).Scan(ctx, &cartID); err != nil {
-        if errors.Is(err, sql.ErrNoRows) {
-            return nil, fmt.Errorf("no cart found for user_id: %d", req.UserID)
-        }
-        return nil, fmt.Errorf("failed to find cart: %v", err)
-    }
+	// 1. ดึงข้อมูลตะกร้าสินค้า
+	var cartID int64
+	if err := tx.NewSelect().Table("carts").Column("id").Where("user_id = ?", req.UserID).Scan(ctx, &cartID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("no cart found for user_id: %d", req.UserID)
+		}
+		return nil, fmt.Errorf("failed to find cart: %v", err)
+	}
 
 	// 2. ดึง payment_id จาก payments โดยใช้วันที่ที่ลูกค้ากรอก
 	// var paymentID int64
@@ -455,9 +454,9 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 	order.SetCreatedNow()
 	order.SetUpdateNow()
 
-    if _, err := tx.NewInsert().Model(order).Returning("id").Exec(ctx); err != nil {
-        return nil, fmt.Errorf("failed to create order: %v", err)
-    }
+	if _, err := tx.NewInsert().Model(order).Returning("id").Exec(ctx); err != nil {
+		return nil, fmt.Errorf("failed to create order: %v", err)
+	}
 
 	// // 7. หักสต็อกสินค้า
 	for _, item := range cartItems {
@@ -496,12 +495,12 @@ func CreateOrderService(ctx context.Context, req requests.OrderCreateRequest) (*
 		tx.NewDelete().Table("carts").Where("id = ?", cartID).Exec(ctx)
 	}
 
-    // 10. คอมมิตธุรกรรม
-    if err := tx.Commit(); err != nil {
-        return nil, fmt.Errorf("failed to commit transaction: %v", err)
-    }
+	// 10. คอมมิตธุรกรรม
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %v", err)
+	}
 
-    return order, nil
+	return order, nil
 }
 
 func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateRequest) (*model.Orders, error) {
@@ -535,8 +534,8 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 	// order.ShipmentID = req.ShipmentID
 	order.SetUpdateNow()
 
-	// // 4) ถ้าสถานะเป็น "ship" ให้บันทึก TrackingNumber ด้วย
-	if req.Status == "ship" {
+	// 4) ถ้าสถานะเป็น "ship" ให้บันทึก TrackingNumber ด้วย
+	if req.Status == "" {
 		// ตรวจสอบว่า TrackingNumber ถูกตั้งค่าหรือไม่
 		if req.TrackingNumber == "" {
 			return nil, errors.New("tracking number must be provided when the order is ship")
@@ -546,7 +545,7 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 		if err != nil {
 			return nil, fmt.Errorf("failed to update order: %v", err)
 		}
-	} else if req.Status != "ship" && req.TrackingNumber != "" {
+	} else if req.Status != "" && req.TrackingNumber != "" {
 		// ถ้าสถานะไม่ใช่ "ship" จะไม่สามารถอัปเดต TrackingNumber ได้
 		return nil, errors.New("cannot set tracking number when order status is not ship")
 	} else {
@@ -573,7 +572,7 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 		// JOIN order_details กับ products เพื่อให้ได้ product_id
 		err := db.NewSelect().
 			TableExpr("order_details AS od").
-			Join("JOIN products AS p ON od.product_name = p.name"). // JOIN เพื่อให้ได้ product_id
+			Join("JOIN products AS p ON od.product_name = p.name").
 			ColumnExpr("p.id AS product_id, od.product_name, od.total_product_amount").
 			Where("od.order_id = ?", order.ID).
 			Scan(ctx, &orderDetails)
