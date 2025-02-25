@@ -16,9 +16,9 @@ type ProductSales struct {
 type DashboardCategoryResponses struct {
 	Category           string         `json:"category"`
 	TotalCategorySales float64        `json:"total_category_sales"`
-	Products           []ProductSales `json:"products"`
-	Month              string         `json:"month"`
-	Year               string         `json:"year"`
+	// Products           []ProductSales `json:"products"`
+	// Month              string         `json:"month"`
+	// Year               string         `json:"year"`
 }
 
 type ReportReponses struct {
@@ -26,7 +26,7 @@ type ReportReponses struct {
 	UserName    string         `json:"username" bun:"username"`
 	Firstname   string         `json:"firstname" bun:"firstname"`
 	Lastname    string         `json:"lastname" bun:"lastname"`
-	TotalAmount int            `json:"total_amount" bun:"total_amount"`
+	TotalAmount int            `json:"total_amount" bun:"total_amount"` // เปลี่ยนเป็น int64
 	TotalPrice  float64        `json:"total_price" bun:"total_price"`
 	Products    []ProductInfoo `json:"products" bun:"products"`
 	Created_at  int64          `json:"created_at" bun:"created_at"`
@@ -35,5 +35,5 @@ type ReportReponses struct {
 type ProductInfoo struct {
 	ProductName        string  `json:"product_name"`
 	Price              float64 `json:"price"`
-	TotalProductAmount int     `json:"total_product_amount"`
+	TotalProductAmount int     `json:"total_product_amount"` // จำนวนสินค้าที่สั่งซื้อ
 }
