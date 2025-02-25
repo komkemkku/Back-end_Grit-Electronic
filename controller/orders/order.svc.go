@@ -572,7 +572,7 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 	// อัปเดตข้อมูลในฐานข้อมูล
 	_, err = db.NewUpdate().
 		Model(order).
-		Column("status", "updated_at").
+		Column("status", "tracking_number", "updated_at").
 		Where("id = ?", id).
 		Exec(ctx)
 	if err != nil {
