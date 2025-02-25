@@ -181,83 +181,55 @@ func GetReport(ctx context.Context, req requests.ReportRequest) ([]response.Repo
 
 func DashboardlistCategorye(ctx context.Context, req requests.ReportRequest) ([]response.DashboardCategoryResponses, int, error) {
 	categorySales := []response.DashboardCategoryResponses{}
-
-	// ดึงรายการหมวดหมู่สินค้าทั้งหมดก่อน เพื่อให้มั่นใจว่าหมวดหมู่ที่ไม่มียอดขายก็จะถูกคืนค่า
-	allCategories := []string{}
-	err := db.NewSelect().
-		Table("categories").
-		Column("name").
-		Scan(ctx, &allCategories)
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to fetch categories: %v", err)
-	}
-
-	// Query หายอดขายของแต่ละหมวดหมู่
+  
 	query := db.NewSelect().
-		TableExpr("categories AS c").
-		ColumnExpr("c.name AS category").
-		ColumnExpr("COALESCE(SUM(od.total_product_amount * p.price), 0) AS total_category_sales").
-		Join("LEFT JOIN products AS p ON c.id = p.category_id").
-		Join("LEFT JOIN order_details AS od ON od.product_name = p.name").
-		Join("LEFT JOIN orders AS o ON o.id = od.order_id AND o.status = 'success'"). // ย้ายเงื่อนไขไปใน JOIN
-		GroupExpr("c.name")
-
-	// กรองตามเดือนที่เลือก
+	  TableExpr("order_details AS od").
+	  ColumnExpr("c.name AS category, SUM(od.total_product_amount * p.price) AS total_category_sales").
+	  Join("JOIN products AS p ON od.product_name = p.name").
+	  Join("JOIN categories AS c ON c.id = p.category_id").
+	  Join("JOIN orders AS o ON o.id = od.order_id").
+	  Where("o.status = ?", "success").
+	  GroupExpr("c.name")
+  
+	// เพิ่มเงื่อนไขการกรองตามเดือน (Month)
 	if req.Month != "" {
-		query.Where("(EXTRACT(MONTH FROM TO_TIMESTAMP(o.created_at))::TEXT = ? OR "+
-			"TO_CHAR(TO_TIMESTAMP(o.created_at), 'Mon') ILIKE ? OR "+
-			"TO_CHAR(TO_TIMESTAMP(o.created_at), 'Month') ILIKE ? OR "+
-			"CASE "+
-			"  WHEN EXTRACT(MONTH FROM TO_TIMESTAMP(o.created_at)) = 1 THEN 'มกราคม' "+
-			"  WHEN EXTRACT(MONTH FROM TO_TIMESTAMP(o.created_at)) = 2 THEN 'กุมภาพันธ์' "+
-			"  WHEN EXTRACT(MONTH FROM TO_TIMESTAMP(o.created_at)) = 3 THEN 'มีนาคม' "+
-			"  WHEN EXTRACT(MONTH FROM TO_TIMESTAMP(o.created_at)) = 4 THEN 'เมษายน' "+
-			"  WHEN EXTRACT(MONTH FROM TO_TIMESTAMP(o.created_at)) = 5 THEN 'พฤษภาคม' "+
-			"  WHEN EXTRACT(MONTH FROM TO_TIMESTAMP(o.created_at)) = 6 THEN 'มิถุนายน' "+
-			"  WHEN EXTRACT(MONTH FROM TO_TIMESTAMP(o.created_at)) = 7 THEN 'กรกฎาคม' "+
-			"  WHEN EXTRACT(MONTH FROM TO_TIMESTAMP(o.created_at)) = 8 THEN 'สิงหาคม' "+
-			"  WHEN EXTRACT(MONTH FROM TO_TIMESTAMP(o.created_at)) = 9 THEN 'กันยายน' "+
-			"  WHEN EXTRACT(MONTH FROM TO_TIMESTAMP(o.created_at)) = 10 THEN 'ตุลาคม' "+
-			"  WHEN EXTRACT(MONTH FROM TO_TIMESTAMP(o.created_at)) = 11 THEN 'พฤศจิกายน' "+
-			"  WHEN EXTRACT(MONTH FROM TO_TIMESTAMP(o.created_at)) = 12 THEN 'ธันวาคม' "+
-			"END ILIKE ?)", req.Month, req.Month, req.Month, req.Month)
+	  query.Where("(TRIM(TO_CHAR(TO_TIMESTAMP(o.created_at), 'Month')) ILIKE ? OR "+
+		"TO_CHAR(TO_TIMESTAMP(o.created_at), 'Mon') ILIKE ? OR "+
+		"TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = ? OR "+
+		"CASE "+
+		"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '01' THEN 'มกราคม' "+
+		"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '02' THEN 'กุมภาพันธ์' "+
+		"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '03' THEN 'มีนาคม' "+
+		"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '04' THEN 'เมษายน' "+
+		"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '05' THEN 'พฤษภาคม' "+
+		"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '06' THEN 'มิถุนายน' "+
+		"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '07' THEN 'กรกฎาคม' "+
+		"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '08' THEN 'สิงหาคม' "+
+		"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '09' THEN 'กันยายน' "+
+		"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '10' THEN 'ตุลาคม' "+
+		"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '11' THEN 'พฤศจิกายน' "+
+		"  WHEN TO_CHAR(TO_TIMESTAMP(o.created_at), 'MM') = '12' THEN 'ธันวาคม' "+
+		"END ILIKE ?)", req.Month, req.Month, req.Month, req.Month)
 	}
-
-	// กรองตามปีที่เลือก
-	if req.Year > 0 {
-		query.Where("EXTRACT(YEAR FROM TO_TIMESTAMP(o.created_at)) = ?", req.Year)
-	}
-
-	// ดึงข้อมูลยอดขาย
+  
 	rows, err := query.Rows(ctx)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to execute query: %v", err)
 	}
 	defer rows.Close()
-
-	salesMap := make(map[string]float64) // เก็บยอดขายของแต่ละหมวดหมู่
-
+  
 	for rows.Next() {
-		var category string
-		var totalCategorySales float64
-
-		if err := rows.Scan(&category, &totalCategorySales); err != nil {
-			return nil, 0, fmt.Errorf("failed to scan row: %v", err)
-		}
-
-		salesMap[category] = totalCategorySales
-	}
-
-	// รวมหมวดหมู่ทั้งหมดเข้ากับยอดขายที่หาได้
-	for _, cat := range allCategories {
-		sales, exists := salesMap[cat]
-		if !exists {
-			sales = 0 // ถ้าหมวดหมู่ไม่มีการขาย ให้กำหนดยอดขายเป็น 0
-		}
-		categorySales = append(categorySales, response.DashboardCategoryResponses{
-			Category:           cat,
-			TotalCategorySales: sales,
-		})
+	  var category string
+	  var totalCategorySales float64
+  
+	  if err := rows.Scan(&category, &totalCategorySales); err != nil {
+		return nil, 0, fmt.Errorf("failed to scan row: %v", err)
+	  }
+  
+	  categorySales = append(categorySales, response.DashboardCategoryResponses{
+		Category:           category,
+		TotalCategorySales: totalCategorySales,
+	  })
 	}
 
 	return categorySales, len(categorySales), nil

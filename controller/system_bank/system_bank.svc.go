@@ -57,8 +57,6 @@ func GetByIdSystemBankService(ctx context.Context, id int64) (*response.SystemBa
 
 	err = db.NewSelect().TableExpr("system_banks AS sb").
 		Column("sb.id", "sb.bank_name", "sb.account_name", "sb.account_number", "sb.description", "sb.image", "sb.is_active", "sb.created_at", "sb.updated_at").
-		// ColumnExpr("json_build_object('id', i.id, 'ref_id', i.ref_id, 'type', i.type, 'description', i.description) AS image").
-		// Join("LEFT JOIN images AS i ON i.ref_id = sb.id AND i.type = 'systembank_image'").
 		Where("sb.id = ?", id).Scan(ctx, systembank)
 	if err != nil {
 		return nil, err

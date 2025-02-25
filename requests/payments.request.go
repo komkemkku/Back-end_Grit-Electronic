@@ -17,5 +17,6 @@ type PaymentCreateRequest struct {
 }
 
 type PaymentUpdateRequest struct {
-	Date       string `json:"date"`
+	Date           string  `json:"date"`
+	TotalPriceShip float64 `json:"total_price_ship"`
 }

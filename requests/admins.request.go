@@ -26,3 +26,8 @@ type AdminUpdateRequest struct {
 	Password string `json:"password"`
 	IsActive bool   `json:"is_active"`
 }
+
+type PasswordAdminUpdate struct {
+	ID       int    `json:"id"`
+	Password string `json:"password"`
+}

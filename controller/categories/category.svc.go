@@ -38,6 +38,11 @@ func ListCategoryService(ctx context.Context, req requests.CategoryRequest) ([]r
 		return nil, 0, err
 	}
 
+	// ถ้าไม่พบสินค้า ให้คืนค่าว่าง
+	if total == 0 {
+		return []response.CategoryResponses{}, 0, nil
+	}
+
 	// Execute query
 	err = query.Offset(int(Offset)).Limit(int(req.Size)).Scan(ctx, &resp)
 	if err != nil {

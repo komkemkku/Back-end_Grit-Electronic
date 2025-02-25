@@ -43,7 +43,7 @@ func ListProductService(ctx context.Context, req requests.ProductRequest) ([]res
 
 	// **เพิ่มเงื่อนไขค้นหาด้วยชื่อสินค้า**
 	if req.Search != "" {
-		query.Where("p.name ILIKE ?", "%"+req.Search+"%")
+		query.Where("p.name LIKE ? OR c.name LIKE ?", "%"+req.Search+"%", "%"+req.Search+"%")
 	}
 
 	query.Order("p.id ASC")
@@ -51,6 +51,11 @@ func ListProductService(ctx context.Context, req requests.ProductRequest) ([]res
 	total, err := query.Count(ctx)
 	if err != nil {
 		return nil, 0, err
+	}
+
+	// ถ้าไม่พบสินค้า ให้คืนค่าว่าง
+	if total == 0 {
+		return []response.ProductResponses{}, 0, nil
 	}
 
 	// Execute query
