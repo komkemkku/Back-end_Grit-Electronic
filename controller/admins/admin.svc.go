@@ -112,8 +112,6 @@ func UpdateAdminService(ctx context.Context, id int64, req requests.AdminUpdateR
 
 	admin := &model.Admins{}
 
-	hashpassword, _ := utils.HashPassword(req.Password)
-
 	err = db.NewSelect().Model(admin).Where("id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -121,11 +119,45 @@ func UpdateAdminService(ctx context.Context, id int64, req requests.AdminUpdateR
 	admin.RoleID = req.RoleID
 	admin.Name = req.Name
 	admin.Email = req.Email
-	admin.Password = hashpassword
 	admin.IsActive = true
 	admin.SetUpdateNow()
 
 	_, err = db.NewUpdate().Model(admin).Where("id = ?", id).Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return admin, nil
+}
+
+func UpdatePasswordAdminService(ctx context.Context, id int64, req requests.PasswordAdminUpdate) (*model.Admins, error) {
+
+	ex, err := db.NewSelect().TableExpr("admins").Where("id=?", id).Exists(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !ex {
+		return nil, errors.New("admin not found")
+	}
+
+	hashPassword, err := utils.HashPassword(req.Password)
+	if err != nil {
+		return nil, errors.New("failed to hash password")
+	}
+
+	_, err = db.NewUpdate().
+		TableExpr("admins").
+		Set("password = ?", hashPassword).
+		Set("updated_at = EXTRACT(EPOCH FROM NOW())::BIGINT").
+		Where("id = ?", id).
+		Exec(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	admin := &model.Admins{}
+	err = db.NewSelect().Model(admin).Where("id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}

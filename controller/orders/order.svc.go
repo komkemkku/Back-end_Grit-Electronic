@@ -523,41 +523,60 @@ func UpdateOrderService(ctx context.Context, id int64, req requests.OrderUpdateR
 		return nil, fmt.Errorf("failed to fetch order: %v", err)
 	}
 
-	// ตรวจสอบว่ากรณีเรากำลังจะเปลี่ยนไปเป็น cancelled แต่สถานะปัจจุบันเป็น "ship" หรือ "shipped"
-	// ถ้าใช่ ให้ return error ไม่ให้ทำงานต่อ
-	if (order.Status == "ship" || order.Status == "success") && req.Status == "cancelled" {
-		return nil, errors.New("cannot cancel an order that is in ship or already shipped")
-	}
+	// // ตรวจสอบว่ากรณีเรากำลังจะเปลี่ยนไปเป็น cancelled แต่สถานะปัจจุบันเป็น "ship" หรือ "shipped"
+	// // ถ้าใช่ ให้ return error ไม่ให้ทำงานต่อ
+	// if (order.Status == "ship" || order.Status == "success") && req.Status == "cancelled" {
+	// 	return nil, errors.New("cannot cancel an order that is in ship or already shipped")
+	// }
 
-	// 3) อัปเดต Status ตาม request
+	// // 3) อัปเดต Status ตาม request
+	// order.Status = req.Status
+	// // order.ShipmentID = req.ShipmentID
+	// order.SetUpdateNow()
+
+	// // 4) ถ้าสถานะเป็น "ship" ให้บันทึก TrackingNumber ด้วย
+	// if req.Status == "" {
+	// 	// ตรวจสอบว่า TrackingNumber ถูกตั้งค่าหรือไม่
+	// 	if req.TrackingNumber == "" {
+	// 		return nil, errors.New("tracking number must be provided when the order is ship")
+	// 	}
+	// 	order.TrackingNumber = req.TrackingNumber
+	// 	_, err = db.NewUpdate().Model(order).Column("status", "tracking_number", "updated_at").Where("id = ?", id).Exec(ctx)
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("failed to update order: %v", err)
+	// 	}
+	// } else if req.Status != "" && req.TrackingNumber != "" {
+	// 	// ถ้าสถานะไม่ใช่ "ship" จะไม่สามารถอัปเดต TrackingNumber ได้
+	// 	return nil, errors.New("cannot set tracking number when order status is not ship")
+	// } else {
+	// 	// ถ้าเป็นสถานะอื่น ๆ ก็อัปเดตเฉพาะ status และ updated_at
+	// 	_, err = db.NewUpdate().
+	// 		Model(order).
+	// 		Column("status", "updated_at").
+	// 		Where("id = ?", id).
+	// 		Exec(ctx)
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("failed to update order: %v", err)
+	// 	}
+	// }
+
+	// 3) อัปเดตข้อมูลตาม request
 	order.Status = req.Status
-	// order.ShipmentID = req.ShipmentID
 	order.SetUpdateNow()
 
-	// 4) ถ้าสถานะเป็น "ship" ให้บันทึก TrackingNumber ด้วย
-	if req.Status == "" {
-		// ตรวจสอบว่า TrackingNumber ถูกตั้งค่าหรือไม่
-		if req.TrackingNumber == "" {
-			return nil, errors.New("tracking number must be provided when the order is ship")
-		}
+	// ถ้ามีการส่ง Tracking Number เข้ามา ให้อัปเดตด้วย
+	if req.TrackingNumber != "" {
 		order.TrackingNumber = req.TrackingNumber
-		_, err = db.NewUpdate().Model(order).Column("status", "tracking_number", "updated_at").Where("id = ?", id).Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update order: %v", err)
-		}
-	} else if req.Status != "" && req.TrackingNumber != "" {
-		// ถ้าสถานะไม่ใช่ "ship" จะไม่สามารถอัปเดต TrackingNumber ได้
-		return nil, errors.New("cannot set tracking number when order status is not ship")
-	} else {
-		// ถ้าเป็นสถานะอื่น ๆ ก็อัปเดตเฉพาะ status และ updated_at
-		_, err = db.NewUpdate().
-			Model(order).
-			Column("status", "updated_at").
-			Where("id = ?", id).
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update order: %v", err)
-		}
+	}
+
+	// อัปเดตข้อมูลในฐานข้อมูล
+	_, err = db.NewUpdate().
+		Model(order).
+		Column("status", "updated_at").
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update order: %v", err)
 	}
 
 	// 5) ถ้าสถานะเป็น "success" ให้บันทึกข้อมูลลงในตาราง report

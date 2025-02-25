@@ -128,6 +128,7 @@ func main() {
 	r.GET("/admin", md, admins.AdmintList)
 	r.DELETE("/admin/:id", md, admins.DeleteAdmin)
 	r.PATCH("/admin/:id", md, admins.UpdateAdmin)
+	r.PATCH("/admin/password/:id", md, admins.UpdatePasswordAdmin)
 
 	// Admin_log
 	r.GET("/adminlog", md, adminlogs.AdminLogList)

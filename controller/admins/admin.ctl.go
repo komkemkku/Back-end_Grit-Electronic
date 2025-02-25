@@ -149,3 +149,40 @@ func UpdateAdmin(c *gin.Context) {
 
 	response.Success(c, "Admin updated successfully")
 }
+
+func UpdatePasswordAdmin(c *gin.Context) {
+	AdminID := c.GetInt("admin_id")
+	id := requests.AdminIdRequest{}
+
+	if err := c.BindUri(&id); err != nil {
+		logMessage := fmt.Sprintf("แก้ไขแอดมินล้มเหลว - ข้อมูลไม่ถูกต้อง: %s", err.Error())
+		_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "UPDATE_ADMIN_FAILED", logMessage)
+
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	req := requests.PasswordAdminUpdate{}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		logMessage := fmt.Sprintf("แก้ไขแอดมินล้มเหลว - JSON ไม่ถูกต้อง: %s", err.Error())
+		_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "UPDATE_ADMIN_FAILED", logMessage)
+
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	_, err := UpdatePasswordAdminService(c, int64(id.ID), req)
+	if err != nil {
+		logMessage := fmt.Sprintf("แก้ไขแอดมินล้มเหลว - แอดมิน ID: %d, ข้อผิดพลาด: %s", id.ID, err.Error())
+		_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "UPDATE_ADMIN_FAILED", logMessage)
+
+		response.InternalError(c, err.Error())
+		return
+	}
+
+	logMessage := fmt.Sprintf("แอดมิน ID: %d แก้ไขแอดมิน ID: %d สำเร็จ", AdminID, id.ID)
+	_ = adminlogs.CreateAdminLog(c.Request.Context(), AdminID, "UPDATE_ADMIN_SUCCESS", logMessage)
+
+	response.Success(c, "Admin updated successfully")
+}
