@@ -71,19 +71,19 @@ func GetByIdAdminService(ctx context.Context, id int) (*response.AdminResponses,
 
 func CreateAdminService(ctx context.Context, req requests.AdminCreateRequest) (*model.Admins, error) {
 
-	ex, err := db.NewSelect().TableExpr("roles").Where("id =?", req.RoleID).Exists(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if !ex {
-		return nil, errors.New("role not found")
-	}
+	// ex, err := db.NewSelect().TableExpr("roles").Where("id =?", req.RoleID).Exists(ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if !ex {
+	// 	return nil, errors.New("role not found")
+	// }
 
 	hashpassword, _ := utils.HashPassword(req.Password)
 
 	// เพิ่มadmin
 	admin := &model.Admins{
-		RoleID:   int(req.RoleID),
+		// RoleID:   int(req.RoleID),
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: hashpassword,
@@ -92,7 +92,7 @@ func CreateAdminService(ctx context.Context, req requests.AdminCreateRequest) (*
 	admin.SetCreatedNow()
 	admin.SetUpdateNow()
 
-	_, err = db.NewInsert().Model(admin).Exec(ctx)
+	_, err := db.NewInsert().Model(admin).Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func UpdateAdminService(ctx context.Context, id int64, req requests.AdminUpdateR
 	if err != nil {
 		return nil, err
 	}
-	admin.RoleID = req.RoleID
+	// admin.RoleID = req.RoleID
 	admin.Name = req.Name
 	admin.Email = req.Email
 	admin.IsActive = true

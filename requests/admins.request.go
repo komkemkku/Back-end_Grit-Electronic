@@ -11,7 +11,7 @@ type AdminIdRequest struct {
 }
 
 type AdminCreateRequest struct {
-	RoleID   int    `json:"role_id"`
+	// RoleID   int    `json:"role_id"`
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -20,7 +20,7 @@ type AdminCreateRequest struct {
 
 type AdminUpdateRequest struct {
 	ID       int    `json:"id"`
-	RoleID   int    `json:"role_id"`
+	// RoleID   int    `json:"role_id"`
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
