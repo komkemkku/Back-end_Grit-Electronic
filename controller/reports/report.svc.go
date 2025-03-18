@@ -196,14 +196,11 @@ func DashboardlistCategorye(ctx context.Context, req requests.ReportRequest) ([]
 	query := db.NewSelect().
 		TableExpr("categories AS c").
 		ColumnExpr("c.name AS category").
-		ColumnExpr("COALESCE(SUM(od.total_product_amount * COALESCE(p.price, 0)), 0) AS total_category_sales"). // แก้ไขใช้ COALESCE
-		Join("FULL OUTER JOIN products AS p ON c.id = p.category_id").                                          // ใช้ FULL OUTER JOIN
-		ColumnExpr("COALESCE(c.name, 'ไม่ระบุ') AS category"). 
-		ColumnExpr("COALESCE(SUM(od.total_product_amount * COALESCE(p.price, 0)), 0) AS total_category_sales").
-		Join("FULL OUTER JOIN products AS p ON c.id = p.category_id").
+		ColumnExpr("COALESCE(SUM(od.total_product_amount * p.price), 0) AS total_category_sales").
+		Join("FULL OUTER JOIN products AS p ON c.id = p.category_id"). // ใช้ FULL OUTER JOIN
 		Join("LEFT JOIN order_details AS od ON od.product_name = p.name").
 		Join("LEFT JOIN orders AS o ON o.id = od.order_id AND o.status = 'success'").
-		GroupExpr("COALESCE(c.name, 'ไม่ระบุ')") 
+		GroupExpr("c.name")
 
 	// 🔹 กรองตามเดือนที่เลือก
 	if req.Month != "" {
